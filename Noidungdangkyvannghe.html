@@ -3,23 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Công cụ Quản lý Sự kiện</title>
+    <title>Công cụ Quản lý Sự kiện (Tùy chỉnh Cấu trúc)</title>
     <!-- Tailwind CSS for styling -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- html2canvas library for exporting to image -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <!-- SheetJS (xlsx) for Excel export -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <!-- Chart.js for statistics chart -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- SheetJS (xlsx) for Excel export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- html2canvas library for JPG export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700&display=swap" rel="stylesheet">
     
     <style>
-        body { font-family: 'Inter', sans-serif; }
+        body { font-family: 'Inter', sans-serif; scroll-behavior: smooth; background-color: #111827; }
         .form-input, .form-textarea, .form-select {
             background-color: #374151; border-color: #4B5563; color: #F9FAFB;
             border-radius: 0.5rem; padding: 0.75rem 1rem; width: 100%;
@@ -30,101 +29,27 @@
         }
         .btn {
             padding: 0.5rem 1rem; border-radius: 0.5rem; font-weight: 600;
-            text-align: center; cursor: pointer; transition: background-color 0.2s, transform 0.1s;
+            text-align: center; cursor: pointer; transition: all 0.2s;
             display: inline-flex; align-items: center; justify-content: center;
         }
-        .btn-lg { padding: 0.75rem 1.5rem; }
+        .btn:active { transform: scale(0.97); }
         .btn-primary { background-color: #2563EB; color: white; }
         .btn-primary:hover { background-color: #1D4ED8; }
         .btn-secondary { background-color: #4B5563; color: white; }
         .btn-secondary:hover { background-color: #6B7280; }
-        .btn-edit { background-color: #F59E0B; color: white; }
-        .btn-edit:hover { background-color: #D97706; }
         .btn-delete { background-color: #EF4444; color: white; }
         .btn-delete:hover { background-color: #DC2626; }
         .btn-save { background-color: #10B981; color: white; }
         .btn-save:hover { background-color: #059669; }
 
-        #reportContainer th, #reportContainer td, .export-table th, .export-table td {
+        #reportContainer th, #reportContainer td {
             border: 1px solid #4B5563; text-align: center; vertical-align: middle;
             padding: 0.75rem 0.5rem; white-space: normal; word-break: break-word;
         }
-        .editable-cell input, .editable-cell textarea {
-            width: 100%; background-color: #4b5563; border: 1px solid #6b7280; color: white;
-            padding: 4px 8px; border-radius: 4px; text-align: center;
-        }
-        .hide-actions th:last-child, .hide-actions td:last-child { display: none; }
+        #reportBody > tr { cursor: pointer; }
+        #reportBody > tr.editing-in-form { background-color: #3B82F6 !important; color: white; }
+        #reportBody > tr.editing-in-form:hover { background-color: #2563EB !important; }
         
-        :root {
-            --glow-color-red: rgba(255, 31, 113, 0.8);
-            --glow-color-blue: rgba(0, 191, 255, 0.7);
-        }
-        .header-nav-wrapper { font-family: 'Be Vietnam Pro', sans-serif; text-transform: uppercase; }
-        .nav-button-base {
-            background: #000; color: #fff; font-weight: 700; height: 44px; padding: 0 18px;
-            border-radius: 10px; text-decoration: none; transition: all 0.2s ease-in-out;
-            display: flex; justify-content: center; align-items: center; flex-shrink: 0;
-            cursor: pointer; position: relative;
-        }
-        .nav-button-base:hover { transform: translateY(-3px) scale(1.05); }
-        .nav-button-base:active { transform: translateY(0) scale(0.98); }
-        
-        .main-action-button {
-            border: 2px solid rgba(255, 255, 255, 0.15);
-            box-shadow: 0 0 25px 8px rgba(172, 92, 232, 0.5), inset 0 0 12px rgba(0, 0, 0, 0.8);
-        }
-        .main-action-button::before {
-            content: ''; position: absolute; top: 50%; left: 50%; width: 85%; height: 65%;
-            background: radial-gradient(circle, var(--glow-color-red) 0%, #4a0e69 80%);
-            border-radius: 8px; z-index: -1; animation: pulse-beat 1.2s infinite ease-in-out;
-            box-shadow: 0 0 18px 8px rgba(255, 31, 113, 0.7); 
-            transform: translate(-50%, -50%); pointer-events: none;
-        }
-        @keyframes pulse-beat {
-            0% { transform: translate(-50%, -50%) scale(0.95); box-shadow: 0 0 20px 8px rgba(255, 31, 113, 0.7); }
-            70% { transform: translate(-50%, -50%) scale(1.15); box-shadow: 0 0 40px 18px rgba(255, 31, 113, 1); }
-            100% { transform: translate(-50%, -50%) scale(0.95); box-shadow: 0 0 20px 8px rgba(255, 31, 113, 0.7); }
-        }
-        .main-action-button:hover { box-shadow: 0 0 45px 18px rgba(172, 92, 232, 0.8); }
-
-        .footer-action-button {
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 0 20px 7px rgba(172, 92, 232, 0.4), inset 0 0 10px rgba(0, 0, 0, 0.7);
-        }
-        .footer-action-button::before {
-            content: ''; position: absolute; top: 50%; left: 50%; width: 85%; height: 65%;
-            background: radial-gradient(circle, var(--glow-color-blue) 0%, #004d66 80%);
-            border-radius: 8px; z-index: -1; animation: pulse-beat-menu 1.5s infinite ease-in-out;
-            box-shadow: 0 0 15px 7px rgba(0, 191, 255, 0.6);
-            transform: translate(-50%, -50%); pointer-events: none;
-        }
-        @keyframes pulse-beat-menu {
-             0% { transform: translate(-50%, -50%) scale(0.95); } 70% { transform: translate(-50%, -50%) scale(1.1); } 100% { transform: translate(-50%, -50%) scale(0.95); }
-        }
-        .footer-action-button:hover { box-shadow: 0 0 30px 12px rgba(172, 92, 232, 0.6); }
-
-        .button-text-wrapper { font-size: 11px; z-index: 1; pointer-events: none; }
-        
-        .dropdown { position: relative; }
-        .dropdown-content {
-            position: absolute; top: calc(100% + 10px); right: 0; left: auto; transform: translateX(0);
-            display: flex; flex-direction: row; align-items: center; gap: 6px;
-            background: rgba(0, 0, 0, 0.8); border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 12px; padding: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            transition: opacity 0.2s ease, transform 0.2s ease;
-            opacity: 0; pointer-events: none; z-index: 1000;
-            backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
-        }
-        .dropdown.show .dropdown-content { opacity: 1; pointer-events: auto; }
-        .dropdown-content a {
-            display: flex; justify-content: center; align-items: center;
-            width: 40px; height: 40px; border-radius: 6px;
-            transition: background-color 0.2s ease, transform 0.2s ease;
-        }
-        .dropdown-content a img { width: 28px; height: 28px; }
-        .dropdown-content a:hover { background-color: #374151; transform: scale(1.1); }
-        
-        /* Toast Notification Styles */
         #toast-container { position: fixed; top: 1.25rem; right: 1.25rem; z-index: 9999; display: flex; flex-direction: column; gap: 0.75rem; }
         .toast {
             background-color: #2d3748; color: #e2e8f0; border-left: 4px solid;
@@ -135,6 +60,7 @@
         .toast.show { opacity: 1; transform: translateX(0); }
         .toast.success { border-color: #38a169; }
         .toast.error { border-color: #e53e3e; }
+        .toast.info { border-color: #3b82f6; }
     </style>
 </head>
 <body class="bg-gray-900 text-gray-100 min-h-screen p-4 sm:p-6 md:p-8">
@@ -142,42 +68,12 @@
     <div id="toast-container"></div>
 
     <div class="max-w-screen-2xl mx-auto">
-        <header class="mb-6 flex flex-col md:flex-row justify-between items-center gap-y-6 md:gap-x-4">
-            <div class="text-center md:text-left flex-shrink-0">
-                <h1 class="text-3xl sm:text-4xl font-bold text-white">Công cụ Quản lý Sự kiện</h1>
-                <p class="text-gray-400 mt-2">Tạo và quản lý nhiều danh sách đăng ký.</p>
-            </div>
-            
-            <div class="header-nav-wrapper">
-              <div class="flex flex-wrap gap-2.5 justify-center md:justify-end">
-                   <a href="https://sites.google.com/view/thiensutinhquang" target="_blank" rel="noopener noreferrer" class="nav-button-base footer-action-button">
-                         <span class="button-text-wrapper">TRANG CHỦ</span>
-                   </a>
-                   <a href="https://thiensutinhquang.github.io/PlayMusic/" target="_blank" rel="noopener noreferrer" class="nav-button-base main-action-button">
-                         <span class="button-text-wrapper">Play Nhạc</span>
-                   </a>
-                   <a href="https://thiensutinhquang.github.io/Playlist-YouTube/" target="_blank" rel="noopener noreferrer" class="nav-button-base footer-action-button">
-                         <span class="button-text-wrapper">Play Video</span>
-                   </a>
-                   <div class="dropdown" id="platforms-dropdown">
-                         <button class="nav-button-base footer-action-button" id="platforms-btn">
-                               <span class="button-text-wrapper">NỀN TẢNG</span>
-                         </button>
-                         <div class="dropdown-content">
-                            <a href="https://www.youtube.com/@Thi%C3%AAnS%E1%BB%A9TinhQuang" target="_blank" title="YouTube"><img src="https://upload.wikimedia.org/wikipedia/commons/0/09/YouTube_full-color_icon_%282017%29.svg" alt="YouTube" onError="this.onerror=null; this.src='https://placehold.co/28x28/ff0000/ffffff?text=YT';"></a>
-                            <a href="https://www.tiktok.com/@minhsutinhquang" target="_blank" title="TikTok"><img src="https://static-00.iconduck.com/assets.00/tiktok-icon-2048x2048-15w2g25h.png" alt="TikTok" onError="this.onerror=null; this.src='https://placehold.co/28x28/ffffff/000000?text=TT';"></a>
-                            <a href="https://www.facebook.com/phatphapnhiemmauTinhQuang" target="_blank" title="Facebook"><img src="https://upload.wikimedia.org/wikipedia/commons/1/1b/Facebook_icon.svg" alt="Facebook" onError="this.onerror=null; this.src='https://placehold.co/28x28/1877f2/ffffff?text=FB';"></a>
-                            <a href="https://t.me/Giaoly_phap_don_ngo" target="_blank" title="Telegram"><img src="https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg" alt="Telegram" onError="this.onerror=null; this.src='https://placehold.co/28x28/229ed9/ffffff?text=TG';"></a>
-                            <a href="https://zalo.me/g/dukrae245" target="_blank" title="Zalo"><img src="https://upload.wikimedia.org/wikipedia/commons/9/91/Icon_of_Zalo.svg" alt="Zalo" onError="this.onerror=null; this.src='https://placehold.co/28x28/0068ff/ffffff?text=ZL';"></a>
-                         </div>
-                   </div>
-                </div>
-           </div>
+        <header class="mb-6 text-center">
+            <h1 class="text-3xl sm:text-4xl font-bold text-white">Công cụ Quản lý Sự kiện Đa năng</h1>
+            <p class="text-gray-400 mt-2">Tạo, quản lý, và tùy chỉnh hoàn toàn cấu trúc danh sách.</p>
         </header>
 
-        <!-- List Management Section -->
         <section class="bg-gray-800 p-4 rounded-xl shadow-lg mb-8">
-            <!-- UPDATED: Improved responsive layout for this section -->
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div class="flex-grow w-full md:w-auto">
                     <label for="listSelector" class="block text-sm font-medium text-gray-300 mb-1">Sự kiện hiện tại:</label>
@@ -192,46 +88,54 @@
             </div>
         </section>
 
-
         <main class="grid grid-cols-1 lg:grid-cols-5 gap-8">
-            <!-- Left Panel: Input Form -->
-            <div class="bg-gray-800 p-6 rounded-xl shadow-lg lg:col-span-2">
+            <div id="form-panel" class="bg-gray-800 p-6 rounded-xl shadow-lg lg:col-span-2 self-start sticky top-8">
                 <h2 id="form-title" class="text-xl font-semibold mb-6 border-b border-gray-700 pb-4 text-center"></h2>
-                <form id="registrationForm" class="space-y-5">
-                    <div><label for="participantName" class="block mb-2 text-sm">Tên người tham gia</label><input type="text" id="participantName" class="form-input" required></div>
-                    <div><label for="province" class="block mb-2 text-sm">Tỉnh/Thành phố</label><input type="text" id="province" class="form-input"></div>
-                    <div><label for="contentType" class="block mb-2 text-sm">Thể loại</label><input type="text" id="contentType" class="form-input"></div>
-                    <div><label for="contentDetail" class="block mb-2 text-sm">Nội dung tham gia</label><textarea id="contentDetail" class="form-textarea" rows="3"></textarea></div>
-                    <div><label for="notes" class="block mb-2 text-sm">Ghi chú</label><textarea id="notes" class="form-textarea" rows="2"></textarea></div>
-                    <button type="submit" class="btn btn-lg btn-primary w-full">Thêm vào Báo cáo</button>
-                </form>
+                <form id="registrationForm" class="space-y-5"></form>
+                 <div id="form-actions" class="pt-5 space-y-3 border-t border-gray-700 mt-5">
+                    <button type="button" id="submitBtn" class="btn btn-lg w-full">Thêm vào Báo cáo</button>
+                    <div id="edit-actions" class="hidden grid grid-cols-2 gap-3">
+                         <button type="button" id="deleteFromFormBtn" class="btn btn-delete w-full">Xoá mục</button>
+                         <button type="button" id="cancelEditBtn" class="btn btn-secondary w-full">Huỷ bỏ</button>
+                    </div>
+                </div>
             </div>
 
-            <!-- Right Panel: Report -->
             <div class="bg-gray-800 p-6 rounded-xl shadow-lg flex flex-col lg:col-span-3">
                 <div class="flex flex-col xl:flex-row justify-between items-start xl:items-center mb-4 gap-4">
-                    <div>
+                    <div class="flex items-center gap-4">
                         <h2 class="text-2xl font-semibold">Nội dung Báo cáo chi tiết</h2>
-                        <p class="text-gray-400 mt-1">Tổng số người tham gia: <span id="participantCounter" class="font-bold text-white">0</span></p>
+                        <button id="manageColsBtn" class="btn btn-secondary text-xs p-2" title="Quản lý các cột trong bảng">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                            Quản lý Cột
+                        </button>
                     </div>
                     <div class="flex flex-wrap gap-2">
-                         <button id="exportExcelBtn" class="btn btn-secondary">Xuất ra Excel</button>
-                         <button id="exportTxtBtn" class="btn btn-secondary">Xuất ra .TXT</button>
-                         <button id="exportBtn" class="btn btn-secondary">Xuất ra ảnh JPG</button>
+                         <button id="exportExcelBtn" class="btn btn-secondary">Xuất Excel</button>
+                         <button id="exportTxtBtn" class="btn btn-secondary">Xuất TXT</button>
+                         <button id="exportJpgBtn" class="btn btn-secondary">Xuất ảnh JPG</button>
                          <button id="clearAllBtn" class="btn btn-delete">Xoá hết mục</button>
                     </div>
                 </div>
+                 <p class="text-gray-400 mt-1 mb-4">Tổng số mục: <span id="participantCounter" class="font-bold text-white">0</span></p>
+
                 <div id="reportContainer" class="bg-gray-800 overflow-x-auto flex-grow">
                     <table class="w-full text-sm text-gray-300 border-collapse">
-                        <thead class="text-xs text-gray-300 uppercase bg-gray-700">
-                            <tr><th>STT</th><th>Tên</th><th>Tỉnh</th><th>Thể loại</th><th>Nội dung</th><th>Ghi chú</th><th>Hành động</th></tr>
+                        <thead class="text-xs text-gray-300 uppercase bg-gray-700 sticky top-0">
+                            <tr id="reportHeaderRow"></tr>
                         </thead>
                         <tbody id="reportBody"></tbody>
                     </table>
                 </div>
                  <div class="mt-8">
-                     <h3 class="text-xl font-semibold mb-4 text-center">Thống kê theo Tỉnh/Thành phố</h3>
-                     <div class="bg-gray-700 p-4 rounded-lg"><canvas id="provinceChart"></canvas></div>
+                    <div class="flex justify-between items-center mb-4">
+                      <h3 id="chartTitle" class="text-xl font-semibold"></h3>
+                      <div class="flex items-center gap-2">
+                        <label for="chartColumnSelector" class="text-sm">Thống kê theo:</label>
+                        <select id="chartColumnSelector" class="form-select text-sm py-1 px-2 w-40"></select>
+                      </div>
+                    </div>
+                    <div class="bg-gray-700 p-4 rounded-lg h-80"><canvas id="provinceChart"></canvas></div>
                  </div>
             </div>
         </main>
@@ -250,532 +154,597 @@
         </div>
     </div>
     
-    <div id="exportCustomModal" class="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50 hidden">
+    <div id="manageColsModal" class="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50 hidden">
         <div class="bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-lg mx-4">
-            <h3 class="text-xl font-bold text-white mb-6">Tuỳ chỉnh Báo cáo</h3>
-            <div class="space-y-6">
-                <div>
-                    <label class="block text-sm font-medium text-gray-300 mb-2">Thêm Logo (cho file JPG)</label>
-                    <div class="flex items-center gap-4">
-                        <input type="file" id="logoUploader" accept="image/*" class="text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
-                        <img id="logoPreview" src="" alt="Logo Preview" class="h-12 w-auto hidden rounded">
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-300 mb-2">Các cột hiển thị</label>
-                    <div id="columnSelector" class="grid grid-cols-2 sm:grid-cols-3 gap-2"></div>
-                </div>
-                <div>
-                    <label for="headerColorPicker" class="block text-sm font-medium text-gray-300 mb-2">Màu tiêu đề (cho file JPG)</label>
-                    <input type="color" id="headerColorPicker" value="#4B5563" class="w-full h-10 p-1 bg-gray-700 rounded-lg cursor-pointer">
-                </div>
+            <h3 class="text-xl font-bold text-white mb-6">Quản lý Cột</h3>
+            <div id="manageColsForm" class="space-y-4 max-h-96 overflow-y-auto pr-2"></div>
+            <button id="addNewColBtn" class="btn btn-primary w-full mt-4">Thêm Cột Mới</button>
+            <div class="flex justify-end gap-4 mt-6">
+                <button id="cancelManageColsBtn" type="button" class="btn btn-secondary">Đóng</button>
+                <button id="saveManageColsBtn" type="button" class="btn btn-save">Lưu & Cập nhật</button>
             </div>
-            <div class="flex justify-end gap-4 mt-8">
-                <button id="cancelExportBtn" class="btn btn-secondary">Huỷ</button>
-                <button id="proceedExportBtn" class="btn btn-primary">Tiến hành xuất file</button>
+        </div>
+    </div>
+    
+    <div id="exportOptionsModal" class="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50 hidden">
+        <div class="bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md mx-4">
+            <h3 id="exportModalTitle" class="text-xl font-bold text-white mb-6">Tuỳ chọn Xuất File</h3>
+            <div class="space-y-4">
+                <div>
+                    <label for="signerNameInput" class="block mb-2 text-sm text-gray-300">Tên Người ký (Tuỳ chọn)</label>
+                    <input type="text" id="signerNameInput" class="form-input" placeholder="Nhập tên của bạn...">
+                </div>
+                <div id="logoUploaderContainer">
+                    <label for="logoUploader" class="block mb-2 text-sm text-gray-300">Thêm Logo (Tuỳ chọn)</label>
+                    <input type="file" id="logoUploader" accept="image/*" class="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                </div>
+                <img id="logoPreview" src="" alt="Logo Preview" class="max-h-20 mx-auto hidden rounded">
+            </div>
+            <div class="flex justify-end gap-4 mt-6">
+                <button id="cancelExportBtn" type="button" class="btn btn-secondary">Huỷ</button>
+                <button id="proceedExportBtn" type="button" class="btn btn-primary">Tiến hành Xuất</button>
             </div>
         </div>
     </div>
 
     <script>
         // DOM Elements
-        const form = document.getElementById('registrationForm');
-        const reportBody = document.getElementById('reportBody');
-        const listSelector = document.getElementById('listSelector');
-        const newListBtn = document.getElementById('newListBtn');
-        const renameListBtn = document.getElementById('renameListBtn');
-        const copyListBtn = document.getElementById('copyListBtn');
-        const deleteListBtn = document.getElementById('deleteListBtn');
-        const formTitle = document.getElementById('form-title');
-        
-        // Modal elements
-        const confirmModal = document.getElementById('confirmModal');
-        const modalTitle = document.getElementById('modalTitle');
-        const modalMessage = document.getElementById('modalMessage');
-        const modalInputWrapper = document.getElementById('modal-input-wrapper');
-        const modalInput = document.getElementById('modalInput');
-        const confirmBtn = document.getElementById('confirmBtn');
-        const cancelBtn = document.getElementById('cancelBtn');
-
-        // Export Modal elements
-        const exportCustomModal = document.getElementById('exportCustomModal');
-        const logoUploader = document.getElementById('logoUploader');
-        const logoPreview = document.getElementById('logoPreview');
-        const columnSelector = document.getElementById('columnSelector');
-        const headerColorPicker = document.getElementById('headerColorPicker');
-        const cancelExportBtn = document.getElementById('cancelExportBtn');
-        const proceedExportBtn = document.getElementById('proceedExportBtn');
-
-        // Other UI elements
-        const participantCounter = document.getElementById('participantCounter');
-        const clearAllBtn = document.getElementById('clearAllBtn');
-        const provinceChartCanvas = document.getElementById('provinceChart');
+        const registrationForm = document.getElementById('registrationForm'),
+              listSelector = document.getElementById('listSelector'),
+              reportHeaderRow = document.getElementById('reportHeaderRow'),
+              reportBody = document.getElementById('reportBody'),
+              formTitle = document.getElementById('form-title'),
+              submitBtn = document.getElementById('submitBtn'),
+              editActionsContainer = document.getElementById('edit-actions'),
+              participantCounter = document.getElementById('participantCounter'),
+              chartTitle = document.getElementById('chartTitle'),
+              chartColumnSelector = document.getElementById('chartColumnSelector'),
+              provinceChartCanvas = document.getElementById('provinceChart'),
+              manageColsBtn = document.getElementById('manageColsBtn'),
+              manageColsModal = document.getElementById('manageColsModal'),
+              exportOptionsModal = document.getElementById('exportOptionsModal');
 
         // Data & State
         let appData = { lists: {}, activeListId: null };
         let provinceChart = null;
         let confirmAction = null;
-        let exportAction = null;
+        let currentlyEditingId = null;
         let uploadedLogo = null;
-        const ALL_COLUMNS = {stt: "STT", name: "Tên", province: "Tỉnh", category: "Thể loại", content: "Nội dung", notes: "Ghi chú"};
+        let currentExportType = null;
 
+        const DEFAULT_COLUMNS = [
+            { id: 'col_name', label: "Tên" }, 
+            { id: 'col_province', label: "Tỉnh" }, 
+            { id: 'col_category', label: "Thể loại" },
+            { id: 'col_content', label: "Nội dung" }, 
+            { id: 'col_notes', label: "Ghi chú" }
+        ];
 
-        // --- UTILITY & SETUP ---
-        const toTitleCase = str => !str ? '' : str.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
-        
-        const triggerVibration = (duration = 50) => {
-            if ('vibrate' in navigator) {
-                navigator.vibrate(duration);
-            }
-        };
-        
+        // --- UTILS ---
+        const capitalizeFirst = str => !str ? '' : str.charAt(0).toUpperCase() + str.slice(1);
         const showToast = (message, type = 'success') => {
-            triggerVibration([20, 30]);
             const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            toast.className = `toast ${type}`;
-            toast.textContent = message;
+            const toast = Object.assign(document.createElement('div'), {
+                className: `toast ${type}`, textContent: message
+            });
             container.appendChild(toast);
-            setTimeout(() => { toast.classList.add('show'); }, 10);
+            setTimeout(() => toast.classList.add('show'), 10);
             setTimeout(() => {
                 toast.classList.remove('show');
                 toast.addEventListener('transitionend', () => toast.remove());
             }, 3000);
         };
-        const getFormattedDate = () => {
-            const today = new Date();
-            return `Việt Nam, ngày ${String(today.getDate()).padStart(2, '0')} tháng ${String(today.getMonth() + 1).padStart(2, '0')} năm ${today.getFullYear()}`;
-        };
-
-        // --- MODAL MANAGEMENT ---
         const showConfirmModal = (title, message, options = {}) => {
-            modalTitle.textContent = title;
-            modalMessage.textContent = message;
-            confirmAction = options.action;
+            const modal = document.getElementById('confirmModal');
+            modal.querySelector('#modalTitle').textContent = title;
+            modal.querySelector('#modalMessage').textContent = message;
+            const inputWrapper = modal.querySelector('#modal-input-wrapper');
+            inputWrapper.classList.toggle('hidden', !options.showInput);
             if (options.showInput) {
-                modalInput.value = options.defaultValue || '';
-                modalInputWrapper.classList.remove('hidden');
-                modalInput.focus();
-            } else {
-                modalInputWrapper.classList.add('hidden');
+                const input = modal.querySelector('#modalInput');
+                input.value = options.defaultValue || '';
+                input.focus();
             }
-            confirmModal.classList.remove('hidden');
+            confirmAction = options.action;
+            modal.classList.remove('hidden');
         };
-        const hideConfirmModal = () => {
-            confirmModal.classList.add('hidden');
-            confirmAction = null;
-        };
+        const hideConfirmModal = () => document.getElementById('confirmModal').classList.add('hidden');
 
-        const showExportModal = (action) => {
-            triggerVibration();
-            exportAction = action;
-            columnSelector.innerHTML = '';
-            Object.entries(ALL_COLUMNS).forEach(([key, value]) => {
-                const div = document.createElement('div');
-                div.className = "flex items-center";
-                div.innerHTML = `<input id="col-${key}" type="checkbox" value="${key}" checked class="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500"><label for="col-${key}" class="ml-2 text-sm font-medium text-gray-300">${value}</label>`;
-                columnSelector.appendChild(div);
-            });
-            logoUploader.value = '';
-            logoPreview.src = '';
-            logoPreview.classList.add('hidden');
-            uploadedLogo = null;
-            exportCustomModal.classList.remove('hidden');
-        };
-        const hideExportModal = () => {
-            exportCustomModal.classList.add('hidden');
-            exportAction = null;
-        };
-
-
-        // --- DATA PERSISTENCE & MANAGEMENT ---
+        // --- DATA PERSISTENCE ---
         const saveData = () => {
-            try {
-                localStorage.setItem('eventManagerData', JSON.stringify(appData));
-            } catch (e) {
-                console.error("Lỗi lưu dữ liệu:", e);
-                showToast("Lỗi: Không thể lưu dữ liệu.", "error");
-            }
+            try { localStorage.setItem('eventManagerData_v4', JSON.stringify(appData)); } 
+            catch (e) { console.error("Lỗi lưu dữ liệu:", e); showToast("Lỗi: Không thể lưu dữ liệu.", "error"); }
         };
-
         const loadData = () => {
-            const savedData = localStorage.getItem('eventManagerData');
+            const savedData = localStorage.getItem('eventManagerData_v4');
             if (savedData) {
                 appData = JSON.parse(savedData);
+                Object.values(appData.lists).forEach(list => {
+                    if (!list.columns) { // Migration for older structure
+                        list.columns = JSON.parse(JSON.stringify(DEFAULT_COLUMNS));
+                        list.selectedChartColumnId = 'col_province';
+                    }
+                });
             } else {
                 const defaultId = `list-${Date.now()}`;
                 appData = {
                     activeListId: defaultId,
-                    lists: {
-                        [defaultId]: { name: "Danh sách Mặc định", registrations: [], nextId: 1 }
-                    }
+                    lists: { [defaultId]: { name: "Danh sách Mặc định", registrations: [], nextId: 1, columns: JSON.parse(JSON.stringify(DEFAULT_COLUMNS)), selectedChartColumnId: 'col_province' } }
                 };
+            }
+            if (!appData.activeListId || !appData.lists[appData.activeListId]) {
+                 appData.activeListId = Object.keys(appData.lists)[0] || null;
             }
             populateListSelector();
         };
 
-        const createNewList = (name) => {
+        // --- CORE LIST MANAGEMENT ---
+        const createNewList = name => {
             if (!name.trim()) { showToast("Tên danh sách không được để trống.", "error"); return; }
-            triggerVibration();
             const newId = `list-${Date.now()}`;
-            appData.lists[newId] = { name: name.trim(), registrations: [], nextId: 1 };
+            appData.lists[newId] = { name: name.trim(), registrations: [], nextId: 1, columns: JSON.parse(JSON.stringify(DEFAULT_COLUMNS)), selectedChartColumnId: 'col_province' };
             appData.activeListId = newId;
-            updateUI();
-            populateListSelector();
+            populateListSelector(); updateUI();
             showToast(`Đã tạo danh sách "${name.trim()}"!`);
         };
-        
-        const renameActiveList = (newName) => {
-            if (!newName.trim()){ showToast("Tên danh sách không được để trống.", "error"); return; }
-            triggerVibration();
+        const renameActiveList = newName => {
             const activeList = appData.lists[appData.activeListId];
-            if (activeList) {
+            if (activeList && newName.trim()) {
                 activeList.name = newName.trim();
-                updateUI();
-                populateListSelector();
+                populateListSelector(); updateUI();
                 showToast(`Đã đổi tên thành "${newName.trim()}"!`);
             }
         };
-
         const copyActiveList = () => {
-             const activeList = appData.lists[appData.activeListId];
-             if(activeList){
-                triggerVibration();
-                const newName = `${activeList.name} (Bản sao)`;
-                const newId = `list-${Date.now()}`;
-                appData.lists[newId] = JSON.parse(JSON.stringify(activeList));
-                appData.lists[newId].name = newName;
-                appData.activeListId = newId;
-                updateUI();
-                populateListSelector();
-                showToast(`Đã sao chép danh sách!`);
-             }
+            const activeList = appData.lists[appData.activeListId];
+            if (!activeList) return;
+            const newId = `list-${Date.now()}`;
+            appData.lists[newId] = JSON.parse(JSON.stringify(activeList));
+            appData.lists[newId].name = `${activeList.name} (Bản sao)`;
+            appData.activeListId = newId;
+            populateListSelector(); updateUI();
+            showToast(`Đã sao chép danh sách!`);
         };
-
         const deleteActiveList = () => {
-            const listCount = Object.keys(appData.lists).length;
-            if (listCount <= 1) { showToast("Không thể xoá danh sách cuối cùng.", "error"); return; }
-            triggerVibration([100, 50, 100]);
+            if (Object.keys(appData.lists).length <= 1) { showToast("Không thể xoá danh sách cuối cùng.", "error"); return; }
             const listName = appData.lists[appData.activeListId].name;
             delete appData.lists[appData.activeListId];
             appData.activeListId = Object.keys(appData.lists)[0];
-            updateUI();
-            populateListSelector();
-            showToast(`Đã xoá danh sách "${listName}"!`);
+            populateListSelector(); updateUI();
+            showToast(`Đã xoá danh sách "${listName}"!`, 'info');
         };
 
-
-        // --- UI & RENDERING ---
+        // --- DYNAMIC UI RENDERING ---
         const populateListSelector = () => {
             listSelector.innerHTML = '';
-            for (const id in appData.lists) {
-                const option = document.createElement('option');
-                option.value = id;
-                option.textContent = appData.lists[id].name;
-                listSelector.appendChild(option);
-            }
-            listSelector.value = appData.activeListId;
-        };
-
-        const updateUI = () => {
-            const activeList = appData.lists[appData.activeListId];
-            if (!activeList) { loadData(); updateUI(); return; }
-            formTitle.textContent = `Thêm mục cho: ${activeList.name}`;
-            renderTable();
-            updateCounter();
-            updateChart();
-            saveData();
-        };
-
-        const renderTable = () => {
-            const registrations = appData.lists[appData.activeListId]?.registrations || [];
-            reportBody.innerHTML = '';
-            if (registrations.length === 0) {
-                reportBody.innerHTML = `<tr><td colspan="7">Chưa có dữ liệu.</td></tr>`;
-                return;
-            }
-            registrations.forEach((reg, index) => {
-                const row = document.createElement('tr');
-                row.className = 'hover:bg-gray-700/50';
-                row.dataset.id = reg.id;
-                row.innerHTML = `<td class="font-medium">${index + 1}</td>
-                    <td data-field="name">${reg.name}</td>
-                    <td data-field="province">${reg.province}</td>
-                    <td data-field="category">${reg.category}</td>
-                    <td data-field="content" style="white-space: pre-wrap;">${reg.content}</td>
-                    <td data-field="notes" style="white-space: pre-wrap;">${reg.notes}</td>
-                    <td><div class="flex items-center justify-center space-x-2"><button class="btn btn-edit text-xs">Sửa</button><button class="btn btn-delete text-xs">Xoá</button></div></td>`;
-                reportBody.appendChild(row);
+            Object.entries(appData.lists).forEach(([id, list]) => {
+                listSelector.add(new Option(list.name, id));
             });
+            if (appData.activeListId) listSelector.value = appData.activeListId;
         };
-
-        const updateCounter = () => participantCounter.textContent = appData.lists[appData.activeListId]?.registrations.length || 0;
-
+        const renderForm = () => {
+            const columns = appData.lists[appData.activeListId]?.columns || [];
+            registrationForm.innerHTML = columns.map(col => `
+                <div>
+                    <label for="form-field-${col.id}" class="block mb-2 text-sm">${col.label}</label>
+                    <input type="text" id="form-field-${col.id}" data-col-id="${col.id}" class="form-input">
+                </div>
+            `).join('');
+        };
+        const renderTable = () => {
+            const activeList = appData.lists[appData.activeListId];
+            if (!activeList) return;
+            const { registrations, columns } = activeList;
+            
+            reportHeaderRow.innerHTML = `<th>STT</th>` + columns.map(c => `<th>${c.label}</th>`).join('') + `<th>Hành động</th>`;
+            
+            reportBody.innerHTML = registrations.length === 0 
+                ? `<tr><td colspan="${columns.length + 2}" class="text-center p-4">Chưa có dữ liệu.</td></tr>` 
+                : registrations.map((reg, index) => `
+                    <tr class="hover:bg-gray-700/50 transition-colors duration-150 ${reg.id === currentlyEditingId ? 'editing-in-form' : ''}" data-id="${reg.id}">
+                        <td class="font-medium">${index + 1}</td>
+                        ${columns.map(c => `<td data-field="${c.id}" style="white-space: pre-wrap;">${reg.values[c.id] || ''}</td>`).join('')}
+                        <td><div class="flex items-center justify-center space-x-2"><button class="btn btn-edit text-xs">Sửa</button><button class="btn btn-delete text-xs">Xoá</button></div></td>
+                    </tr>
+                `).join('');
+        };
         const updateChart = () => {
-            const registrations = appData.lists[appData.activeListId]?.registrations || [];
-            const provinceCounts = registrations.reduce((acc, reg) => {
-                const province = reg.province.trim() || "Chưa xác định";
-                acc[province] = (acc[province] || 0) + 1;
+            const activeList = appData.lists[appData.activeListId];
+            if (!activeList) return;
+            const { registrations, columns } = activeList;
+            
+            chartColumnSelector.innerHTML = columns.map(c => `<option value="${c.id}">${c.label}</option>`).join('');
+            chartColumnSelector.value = activeList.selectedChartColumnId || columns[0]?.id;
+
+            const selectedColId = chartColumnSelector.value;
+            const selectedCol = columns.find(c => c.id === selectedColId);
+            if (!selectedCol) return;
+            
+            chartTitle.textContent = `Thống kê theo ${selectedCol.label}`;
+            
+            const counts = registrations.reduce((acc, reg) => {
+                const value = capitalizeFirst((reg.values[selectedColId] || "Chưa xác định").trim());
+                acc[value] = (acc[value] || 0) + 1;
                 return acc;
             }, {});
-            const labels = Object.keys(provinceCounts);
-            const data = Object.values(provinceCounts);
 
-            if (provinceChart) {
-                provinceChart.data.labels = labels;
-                provinceChart.data.datasets[0].data = data;
-                provinceChart.update();
-            } else {
-                provinceChart = new Chart(provinceChartCanvas, {type: 'bar', data: {labels, datasets: [{ label: 'Số người tham gia', data, backgroundColor: 'rgba(59, 130, 246, 0.5)', borderColor: 'rgba(59, 130, 246, 1)', borderWidth: 1 }]}, options: { scales: { y: { beginAtZero: true, ticks: { color: '#cbd5e0' } }, x: { ticks: { color: '#cbd5e0' } } }, plugins: { legend: { labels: { color: '#cbd5e0' } } }, responsive: true, maintainAspectRatio: false } });
-            }
-        };
-
-        // --- EVENT HANDLERS ---
-        listSelector.addEventListener('change', () => {
-            triggerVibration();
-            appData.activeListId = listSelector.value;
-            updateUI();
-        });
-        newListBtn.addEventListener('click', () => showConfirmModal("Tạo danh sách mới", "Nhập tên cho sự kiện hoặc danh sách mới của bạn:", { showInput: true, action: (name) => createNewList(name) }));
-        renameListBtn.addEventListener('click', () => showConfirmModal("Đổi tên danh sách", "Nhập tên mới:", { showInput: true, defaultValue: appData.lists[appData.activeListId].name, action: (name) => renameActiveList(name) }));
-        copyListBtn.addEventListener('click', () => showConfirmModal("Sao chép danh sách?", `Bạn có muốn tạo một bản sao của "${appData.lists[appData.activeListId].name}"?`, { action: copyActiveList }));
-        deleteListBtn.addEventListener('click', () => showConfirmModal("Xoá danh sách?", `Hành động này sẽ xoá vĩnh viễn danh sách "${appData.lists[appData.activeListId].name}" và không thể hoàn tác.`, { action: deleteActiveList }));
-
-        form.addEventListener('submit', (e) => {
-            e.preventDefault();
-            triggerVibration();
-            const activeList = appData.lists[appData.activeListId];
-            const name = document.getElementById('participantName').value.trim();
-            if (!name) { showToast('Vui lòng nhập tên người tham gia.', 'error'); return; }
-            activeList.registrations.push({
-                id: activeList.nextId++, name: toTitleCase(name), province: toTitleCase(document.getElementById('province').value.trim()),
-                category: toTitleCase(document.getElementById('contentType').value.trim()), content: document.getElementById('contentDetail').value.trim(), notes: document.getElementById('notes').value.trim(),
+            if (provinceChart) provinceChart.destroy();
+            
+            provinceChart = new Chart(provinceChartCanvas, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(counts),
+                    datasets: [{ label: 'Số lượng', data: Object.values(counts), backgroundColor: 'rgba(59, 130, 246, 0.5)', borderColor: 'rgba(59, 130, 246, 1)', borderWidth: 1 }]
+                },
+                options: { scales: { y: { beginAtZero: true, ticks: { color: '#cbd5e0' } }, x: { ticks: { color: '#cbd5e0' } } }, plugins: { legend: { display: false } }, responsive: true, maintainAspectRatio: false }
             });
-            updateUI();
-            form.reset();
-            showToast('Thêm thành công!');
-        });
-        
-        clearAllBtn.addEventListener('click', () => {
-             const activeList = appData.lists[appData.activeListId];
-             if (activeList.registrations.length === 0) { showToast("Danh sách này đã trống.", "error"); return; }
-             showConfirmModal('Xoá hết các mục?', 'Bạn có muốn xoá tất cả các mục trong danh sách này không?', {action: () => {
-                triggerVibration([100, 50, 100]);
-                activeList.registrations = [];
-                activeList.nextId = 1;
-                updateUI();
-                showToast('Đã xoá tất cả các mục!');
-             }});
-        });
-
-        confirmBtn.addEventListener('click', () => {
-            if (typeof confirmAction === 'function') {
-                const inputValue = modalInputWrapper.classList.contains('hidden') ? null : modalInput.value;
-                confirmAction(inputValue);
+        };
+        const updateUI = () => {
+            const activeListId = appData.activeListId;
+            if (!activeListId || !appData.lists[activeListId]) {
+                 appData.activeListId = Object.keys(appData.lists)[0] || null;
+                 if (!appData.activeListId) { console.error("No lists available."); return; }
             }
-            hideConfirmModal();
-        });
-        cancelBtn.addEventListener('click', hideConfirmModal);
+            switchToaddMode(); renderForm();
+            renderTable(); 
+            participantCounter.textContent = appData.lists[appData.activeListId]?.registrations.length || 0;
+            updateChart(); saveData();
+        };
         
-        const platformsDropdown = document.getElementById('platforms-dropdown');
-        const platformsBtn = document.getElementById('platforms-btn');
-        platformsBtn.addEventListener('click', (e) => { e.stopPropagation(); triggerVibration(); platformsDropdown.classList.toggle('show'); });
-        document.addEventListener('click', (e) => { if (!platformsDropdown.contains(e.target)) { platformsDropdown.classList.remove('show'); } });
+        // --- FORM MODE & ACTIONS ---
+        function switchToEditMode(entry) {
+            formTitle.textContent = `Chỉnh sửa mục`;
+            formTitle.classList.add('text-yellow-400');
+            submitBtn.textContent = 'Cập nhật mục';
+            submitBtn.classList.replace('btn-primary', 'btn-save');
+            editActionsContainer.classList.remove('hidden');
+            renderTable();
+        }
+        function switchToaddMode() {
+            const activeList = appData.lists[appData.activeListId];
+            registrationForm.reset();
+            currentlyEditingId = null;
+            formTitle.textContent = `Thêm mục cho: ${activeList ? activeList.name : '...'}`;
+            formTitle.classList.remove('text-yellow-400');
+            submitBtn.textContent = 'Thêm vào Báo cáo';
+            submitBtn.classList.replace('btn-save', 'btn-primary');
+            editActionsContainer.classList.add('hidden');
+            renderTable();
+        }
 
+        submitBtn.addEventListener('click', () => {
+            const activeList = appData.lists[appData.activeListId];
+            if (!activeList) return;
+            
+            const values = {};
+            let firstValue = '';
 
-        cancelExportBtn.addEventListener('click', () => { triggerVibration(); hideExportModal(); });
-        logoUploader.addEventListener('change', (e) => {
+            activeList.columns.forEach((col, index) => {
+                const input = registrationForm.querySelector(`input[data-col-id="${col.id}"]`);
+                const val = input ? input.value : '';
+                values[col.id] = capitalizeFirst(val);
+                 if(index === 0) firstValue = val.trim();
+            });
+
+            if (!firstValue) {
+                const firstColLabel = activeList.columns[0]?.label || 'trường đầu tiên';
+                showToast(`Vui lòng nhập ${firstColLabel}.`, 'error');
+                return;
+            }
+
+            if (currentlyEditingId !== null) {
+                const entryIndex = activeList.registrations.findIndex(r => r.id === currentlyEditingId);
+                if (entryIndex > -1) {
+                    activeList.registrations[entryIndex].values = values;
+                    showToast('Cập nhật thành công!', 'success');
+                }
+            } else {
+                activeList.registrations.push({ id: activeList.nextId++, values });
+                showToast('Thêm thành công!', 'success');
+            }
+            updateUI(); 
+            registrationForm.querySelector('input')?.focus();
+        });
+
+        // --- EVENT LISTENERS ---
+        document.addEventListener('click', e => {
+            const target = e.target;
+            const row = target.closest('tr[data-id]');
+            
+            if (target.closest('#newListBtn')) createNewList('Danh sách mới');
+            else if (target.closest('#renameListBtn')) showConfirmModal("Đổi tên danh sách", "Nhập tên mới:", { showInput: true, defaultValue: appData.lists[appData.activeListId]?.name, action: renameActiveList });
+            else if (target.closest('#copyListBtn')) showConfirmModal("Sao chép danh sách?", `Tạo bản sao của "${appData.lists[appData.activeListId]?.name}"?`, { action: copyActiveList });
+            else if (target.closest('#deleteListBtn')) showConfirmModal("Xoá danh sách?", `Hành động này sẽ xoá vĩnh viễn "${appData.lists[appData.activeListId]?.name}".`, { action: deleteActiveList });
+            else if (target.closest('#clearAllBtn')) {
+                const regs = appData.lists[appData.activeListId]?.registrations;
+                if (!regs || regs.length === 0) { showToast("Danh sách đã trống.", "info"); return; }
+                showConfirmModal('Xoá hết các mục?', 'Hành động này không thể hoàn tác.', { action: () => {
+                    appData.lists[appData.activeListId].registrations = [];
+                    updateUI(); showToast('Đã xoá tất cả các mục!');
+                }});
+            }
+            else if (target.closest('#cancelEditBtn')) { switchToaddMode(); showToast('Đã huỷ chỉnh sửa.', 'info'); }
+            else if (target.closest('#deleteFromFormBtn')) {
+                if (currentlyEditingId === null) return;
+                showConfirmModal('Xác nhận Xoá', 'Bạn có chắc chắn muốn xoá mục đang chọn?', { action: () => {
+                    appData.lists[appData.activeListId].registrations = appData.lists[appData.activeListId].registrations.filter(reg => reg.id !== currentlyEditingId);
+                    showToast('Đã xoá mục!', 'info');
+                    updateUI();
+                }});
+            }
+            else if (target.closest('#confirmBtn')) { if (typeof confirmAction === 'function') confirmAction(document.getElementById('modalInput').value); hideConfirmModal(); }
+            else if (target.closest('#cancelBtn')) hideConfirmModal();
+            else if (target.closest('#manageColsBtn')) openManageColsModal();
+            else if (target.closest('#exportJpgBtn')) openExportOptionsModal('jpg');
+            else if (target.closest('#exportExcelBtn')) openExportOptionsModal('excel');
+
+            if(row) {
+                 const id = Number(row.dataset.id);
+                 if (target.closest('button.btn-edit')) { alert('Sửa nhanh tại dòng đang được phát triển.'); }
+                 else if (target.closest('button.btn-delete')) {
+                    showConfirmModal('Xoá mục này?', 'Bạn có chắc chắn không?', { action: () => {
+                        appData.lists[appData.activeListId].registrations = appData.lists[appData.activeListId].registrations.filter(r => r.id !== id);
+                        updateUI(); showToast('Đã xoá mục.');
+                    }});
+                 } else { 
+                    const entry = appData.lists[appData.activeListId]?.registrations.find(r => r.id === id);
+                    if (!entry) return;
+                    registrationForm.querySelectorAll('input[data-col-id]').forEach(input => {
+                        input.value = entry.values[input.dataset.colId] || '';
+                    });
+                    currentlyEditingId = id;
+                    switchToEditMode(entry);
+                 }
+            }
+        });
+
+        listSelector.addEventListener('change', () => { appData.activeListId = listSelector.value; updateUI(); });
+        chartColumnSelector.addEventListener('change', (e) => {
+            const activeList = appData.lists[appData.activeListId];
+            if(activeList) {
+                activeList.selectedChartColumnId = e.target.value;
+                updateChart();
+            }
+        });
+        
+        // --- COLUMN MANAGEMENT MODAL ---
+        const openManageColsModal = () => {
+            renderManageColsForm();
+            manageColsModal.classList.remove('hidden');
+        };
+        const renderManageColsForm = () => {
+            const formContainer = manageColsModal.querySelector('#manageColsForm');
+            const columns = appData.lists[appData.activeListId]?.columns || [];
+            formContainer.innerHTML = columns.map(col => `
+                <div class="flex items-center gap-2">
+                    <input type="text" value="${col.label}" data-col-id="${col.id}" class="form-input flex-grow">
+                    <button data-col-id="${col.id}" class="btn btn-delete p-2 delete-col-btn" title="Xoá cột này">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    </button>
+                </div>
+            `).join('');
+        };
+        manageColsModal.addEventListener('click', (e) => {
+            const target = e.target;
+            const activeList = appData.lists[appData.activeListId];
+
+            if (target.closest('#addNewColBtn')) {
+                activeList.columns.push({ id: `col_${Date.now()}`, label: 'Cột Mới' });
+                renderManageColsForm();
+            } else if (target.closest('.delete-col-btn')) {
+                const colId = target.closest('.delete-col-btn').dataset.colId;
+                if (activeList.columns.length <= 1) {
+                    showToast("Phải có ít nhất một cột.", "error"); return;
+                }
+                showConfirmModal('Xoá Cột?', 'Hành động này sẽ xoá cột và toàn bộ dữ liệu bên trong nó. Bạn có chắc không?', {
+                    action: () => {
+                        activeList.columns = activeList.columns.filter(c => c.id !== colId);
+                        activeList.registrations.forEach(reg => {
+                            if (reg.values[colId]) delete reg.values[colId];
+                        });
+                        renderManageColsForm();
+                        showToast('Đã xoá cột!', 'info');
+                    }
+                });
+            } else if (target.closest('#saveManageColsBtn')) {
+                manageColsModal.querySelectorAll('#manageColsForm input').forEach(input => {
+                    const colId = input.dataset.colId;
+                    const col = activeList.columns.find(c => c.id === colId);
+                    if (col) col.label = input.value.trim() || 'Không tên';
+                });
+                manageColsModal.classList.add('hidden');
+                updateUI();
+                showToast('Cấu trúc cột đã được cập nhật!');
+            } else if (target.closest('#cancelManageColsBtn')) {
+                loadData();
+                manageColsModal.classList.add('hidden');
+            }
+        });
+
+        // --- EXPORT ---
+        document.getElementById('exportTxtBtn').addEventListener('click', () => {
+            const activeList = appData.lists[appData.activeListId];
+            if (!activeList?.registrations?.length) { showToast("Không có dữ liệu.", "error"); return; }
+            const { columns, registrations, name } = activeList;
+            let content = `${name.toUpperCase()}\n==================================\n\n`;
+            registrations.forEach((reg, i) => {
+                content += `STT: ${i + 1}\n` + columns.map(col => `${col.label}: ${capitalizeFirst(reg.values[col.id] || '')}`).join('\n') + `\n\n`;
+            });
+            const blob = new Blob([content], {type: 'text/plain;charset=utf-8'});
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `${name}.txt`;
+            link.click();
+            URL.revokeObjectURL(link.href);
+            showToast("Đã xuất file TXT!", "success");
+        });
+        
+        // --- UNIFIED EXPORT OPTIONS MODAL & LOGIC ---
+        const openExportOptionsModal = (exportType) => {
+            currentExportType = exportType;
+            const logoContainer = document.getElementById('logoUploaderContainer');
+            const signerInput = document.getElementById('signerNameInput');
+            const logoUploader = document.getElementById('logoUploader');
+            const logoPreview = document.getElementById('logoPreview');
+            
+            signerInput.value = '';
+            logoUploader.value = '';
+            logoPreview.src = '';
+            logoPreview.classList.add('hidden');
+            uploadedLogo = null;
+            logoContainer.style.display = (exportType === 'jpg') ? 'block' : 'none';
+            exportOptionsModal.classList.remove('hidden');
+        };
+        document.getElementById('cancelExportBtn').addEventListener('click', () => exportOptionsModal.classList.add('hidden'));
+        document.getElementById('logoUploader').addEventListener('change', (e) => {
             const file = e.target.files[0];
-            if(file && file.type.startsWith('image/')) {
+            if (file && file.type.startsWith('image/')) {
                 const reader = new FileReader();
                 reader.onload = (event) => {
                     uploadedLogo = event.target.result;
-                    logoPreview.src = uploadedLogo;
-                    logoPreview.classList.remove('hidden');
+                    const preview = document.getElementById('logoPreview');
+                    preview.src = uploadedLogo;
+                    preview.classList.remove('hidden');
                 };
                 reader.readAsDataURL(file);
-            } else {
-                uploadedLogo = null;
-                logoPreview.classList.add('hidden');
-            }
+            } else { uploadedLogo = null; }
         });
-        proceedExportBtn.addEventListener('click', () => {
-            if(typeof exportAction === 'function') exportAction();
-            hideExportModal();
+        document.getElementById('proceedExportBtn').addEventListener('click', () => {
+            const signerName = document.getElementById('signerNameInput').value.trim();
+            exportOptionsModal.classList.add('hidden');
+            
+            if (currentExportType === 'jpg') exportJpg(signerName, uploadedLogo);
+            else if (currentExportType === 'excel') exportExcel(signerName);
         });
 
-        // --- EXPORT FUNCTIONS ---
-        document.getElementById('exportBtn').addEventListener('click', () => showExportModal(exportJPG));
-        document.getElementById('exportExcelBtn').addEventListener('click', () => showExportModal(exportExcel));
-        document.getElementById('exportTxtBtn').addEventListener('click', exportTxt); 
-
-        function getExportConfig() {
-            const visibleColumns = {};
-             columnSelector.querySelectorAll('input[type="checkbox"]:checked').forEach(cb => {
-                visibleColumns[cb.value] = ALL_COLUMNS[cb.value];
-            });
-            return {
-                logo: uploadedLogo,
-                columns: visibleColumns,
-                headerColor: headerColorPicker.value,
-                registrations: appData.lists[appData.activeListId].registrations
-            }
-        }
-
-        function exportExcel() {
-            triggerVibration();
-            const config = getExportConfig();
-            if (config.registrations.length === 0) { showToast("Không có dữ liệu.", "error"); return; }
-            
-            const headers = Object.values(config.columns);
-            const keys = Object.keys(config.columns);
-
-            const dataToExport = config.registrations.map((reg, index) => {
-                const row = {};
-                keys.forEach(key => {
-                    if(key === 'stt') row[headers[0]] = index + 1;
-                    else row[ALL_COLUMNS[key]] = reg[key];
-                });
-                return row;
-            });
-
-            const worksheet = XLSX.utils.json_to_sheet(dataToExport);
-            const startingRow = dataToExport.length + 3;
-            const signatureData = [['', '', '', '', getFormattedDate()], [], ['', '', '', '', "Người làm văn bản"], [], [], ['', '', '', '', "(Đã ký)"]];
-            XLSX.utils.sheet_add_aoa(worksheet, signatureData, { origin: `A${startingRow}` });
-            const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, "DanhSach");
-            XLSX.writeFile(workbook, `${appData.lists[appData.activeListId].name}.xlsx`);
-        }
-
-        function exportTxt() {
-             triggerVibration();
-             const registrations = appData.lists[appData.activeListId].registrations;
-             if (registrations.length === 0) { showToast("Không có dữ liệu.", "error"); return; }
-             let content = `${appData.lists[appData.activeListId].name.toUpperCase()}\n==================================\n\n`;
-             registrations.forEach((r, i) => { content += `STT: ${i+1}\nTên: ${r.name}\nTỉnh: ${r.province}\nThể loại: ${r.category}\nNội dung: ${r.content}\nGhi chú: ${r.notes}\n\n`; });
-             content += `\n\n\n${' '.repeat(50)}${getFormattedDate()}\n\n${' '.repeat(50)}Người làm văn bản\n\n\n${' '.repeat(50)}(Đã ký)\n`;
-             const blob = new Blob([content], {type: 'text/plain;charset=utf-8'});
-             const link = document.createElement('a');
-             link.href = URL.createObjectURL(blob);
-             link.download = `${appData.lists[appData.activeListId].name}.txt`;
-             link.click();
-        }
-
-        function exportJPG() {
-            triggerVibration([50, 50, 50]);
-            const config = getExportConfig();
-            if (config.registrations.length === 0) { showToast("Không có dữ liệu.", "error"); return; }
-            
-            const exportWrapper = document.createElement('div');
-            Object.assign(exportWrapper.style, { position: 'absolute', top: '-9999px', left: '-9999px', padding: '24px', backgroundColor: '#1F2937', color: '#F9FAFB', width: (reportContainer.offsetWidth + 48) + 'px' });
-
-            const headerContainer = document.createElement('div');
-            Object.assign(headerContainer.style, {
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                marginBottom: '24px', borderBottom: '2px solid #4B5563', paddingBottom: '16px'
-            });
-
-            const leftDiv = document.createElement('div');
-            leftDiv.style.flex = '1'; leftDiv.style.textAlign = 'left';
-            if (config.logo) {
-                const logoImg = document.createElement('img');
-                logoImg.src = config.logo;
-                logoImg.style.maxHeight = '80px'; logoImg.style.display = 'inline-block';
-                leftDiv.appendChild(logoImg);
-            }
-            headerContainer.appendChild(leftDiv);
-
-            const centerDiv = document.createElement('div');
-            centerDiv.style.flex = '3'; centerDiv.style.textAlign = 'center';
-            const mainTitle = document.createElement('h2');
-            mainTitle.innerText = 'CÁC NỘI DUNG CỦA GIA ĐÌNH TỊNH QUANG';
-            Object.assign(mainTitle.style, { fontFamily: "'Inter', sans-serif", fontSize: '1.8rem', fontWeight: 'bold', textTransform: 'uppercase', color: 'white' });
-            const subTitle = document.createElement('p');
-            subTitle.innerText = `Sự kiện: ${appData.lists[appData.activeListId].name}`;
-            Object.assign(subTitle.style, { fontFamily: "'Inter', sans-serif", fontSize: '1rem', marginTop: '8px', color: '#cbd5e0' });
-            centerDiv.appendChild(mainTitle); centerDiv.appendChild(subTitle);
-            headerContainer.appendChild(centerDiv);
-
-            const rightDiv = document.createElement('div');
-            rightDiv.style.flex = '1';
-            headerContainer.appendChild(rightDiv);
-            exportWrapper.appendChild(headerContainer);
-
-            const table = document.createElement('table');
-            table.className = 'w-full text-sm text-gray-300 border-collapse export-table';
-            const thead = table.createTHead();
-            const headerRow = thead.insertRow();
-            Object.values(config.columns).forEach(headerText => {
-                const th = document.createElement('th');
-                th.textContent = headerText;
-                th.style.backgroundColor = config.headerColor;
-                headerRow.appendChild(th);
-            });
-            const tbody = table.createTBody();
-            config.registrations.forEach((reg, index) => {
-                const row = tbody.insertRow();
-                 Object.keys(config.columns).forEach(key => {
-                    const cell = row.insertCell();
-                    cell.textContent = key === 'stt' ? index + 1 : reg[key];
-                 });
-            });
-            exportWrapper.appendChild(table);
-            
-            const signatureBlock = document.createElement('div');
-            Object.assign(signatureBlock.style, { textAlign: 'right', marginTop: '40px', paddingRight: '20px' });
-            
-            const innerSignature = document.createElement('div');
-            Object.assign(innerSignature.style, { display: 'inline-block', textAlign: 'center' });
-
-            innerSignature.innerHTML = `
-                <p style="font-size: 1rem; font-style: italic;">${getFormattedDate()}</p>
-                <p style="font-size: 1.1rem; font-weight: bold; margin-top: 16px;">Người làm văn bản</p>
-                <p style="font-size: 1rem; font-style: italic; margin-top: 60px;">(Đã ký)</p>
-            `;
-            signatureBlock.appendChild(innerSignature);
-            exportWrapper.appendChild(signatureBlock);
-
-            document.body.appendChild(exportWrapper);
-
-            html2canvas(exportWrapper, { scale: 2 }).then(canvas => {
-                const link = document.createElement('a');
-                link.download = `${appData.lists[appData.activeListId].name}.jpg`;
-                link.href = canvas.toDataURL('image/jpeg', 0.9);
-                link.click();
-            }).catch(err => console.error(err)).finally(() => document.body.removeChild(exportWrapper));
-        }
-
-        // --- Other Handlers ---
-         function handleEdit(row) {
-            triggerVibration();
+        function exportExcel(signerName) {
             const activeList = appData.lists[appData.activeListId];
-            row.querySelectorAll('td[data-field]').forEach(cell => {
-                const field = cell.dataset.field;
-                const currentValue = activeList.registrations.find(r => r.id == row.dataset.id)[field];
-                cell.innerHTML = (field === 'content' || field === 'notes') ? `<textarea class="editable-cell">${currentValue}</textarea>` : `<input type="text" class="editable-cell" value="${currentValue}">`;
-                cell.classList.add('editable-cell');
-            });
-            row.querySelector('td:last-child').innerHTML = `<div class="flex items-center justify-center space-x-2"><button class="btn btn-save text-xs">Lưu</button><button class="btn btn-cancel text-xs btn-secondary">Huỷ</button></div>`;
+            if (!activeList?.registrations?.length) { showToast("Không có dữ liệu.", "error"); return; }
+            const { columns, registrations, name } = activeList;
+
+            const headerStyle = { font: { bold: true, sz: 12, name: "Inter", color: { rgb: "000000" } }, fill: { fgColor: { rgb: "FDE047" } }, alignment: { horizontal: "center", vertical: "center", wrapText: true }, border: { top: { style: "thin" }, bottom: { style: "thin" }, left: { style: "thin" }, right: { style: "thin" } } };
+            const cellStyle = { alignment: { horizontal: "center", vertical: "center", wrapText: true }, border: { top: { style: "thin" }, bottom: { style: "thin" }, left: { style: "thin" }, right: { style: "thin" } } };
+
+            const header = ['STT', ...columns.map(c => c.label.toUpperCase())];
+            const data = registrations.map((reg, index) => [index + 1, ...columns.map(c => capitalizeFirst(reg.values[c.id] || ''))]);
+            
+            const today = new Date();
+            const dateString = `Ngày ${String(today.getDate()).padStart(2, '0')} tháng ${String(today.getMonth() + 1).padStart(2, '0')} năm ${today.getFullYear()}`;
+            const emptyRow = Array(header.length).fill(null);
+            
+            data.push(emptyRow, emptyRow);
+            let signatureData = [
+                [...Array(header.length-1).fill(null), dateString],
+                emptyRow,
+                [...Array(header.length-1).fill(null), 'Người làm văn bản'],
+                emptyRow, emptyRow, emptyRow,
+                [...Array(header.length-1).fill(null), (signerName || '').toUpperCase()]
+            ];
+            
+            const finalData = [header, ...data, ...signatureData];
+            const ws = XLSX.utils.aoa_to_sheet(finalData);
+            
+            const range = XLSX.utils.decode_range(ws['!ref']);
+            const signerNameRowIndex = registrations.length + 7;
+            for (let R = range.s.r; R <= range.e.r; ++R) {
+                for (let C = range.s.c; C <= range.e.c; ++C) {
+                    const cell_ref = XLSX.utils.encode_cell({ c: C, r: R });
+                    if (!ws[cell_ref]) continue;
+                    
+                    if (R === 0) ws[cell_ref].s = headerStyle;
+                    else if (R > 0 && R <= registrations.length) ws[cell_ref].s = cellStyle;
+                    else {
+                        let style = { alignment: { horizontal: "center", vertical: "center" } };
+                        if (R === signerNameRowIndex && C === header.length - 1) {
+                            style.font = { bold: true, sz: 12, name: "Inter" };
+                        }
+                        ws[cell_ref].s = style;
+                    }
+                }
+            }
+
+            ws['!cols'] = [{wch:5}, ...columns.map(c => ({ wch: Math.max(c.label.length, 20) }))];
+            
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, ws, "DanhSach");
+            XLSX.writeFile(workbook, `${name}.xlsx`);
+            showToast("Đã xuất file Excel!", "success");
         }
         
-        function handleSave(row) {
-            triggerVibration();
+        function exportJpg(signerName, logoData) {
             const activeList = appData.lists[appData.activeListId];
-            const id = Number(row.dataset.id);
-            const registration = activeList.registrations.find(reg => reg.id === id);
-            if (registration) {
-                 row.querySelectorAll('td[data-field]').forEach(cell => {
-                    const field = cell.dataset.field;
-                    const input = cell.querySelector('input, textarea');
-                    registration[field] = (['name', 'province', 'category'].includes(field)) ? toTitleCase(input.value) : input.value;
-                });
-            }
-            updateUI();
-            showToast('Đã cập nhật thông tin!');
-        }
+            if (!activeList?.registrations?.length) { showToast("Không có dữ liệu.", "error"); return; }
+            const { columns, registrations, name } = activeList;
 
-        // --- Initial Load ---
+            const exportContainer = document.createElement('div');
+            Object.assign(exportContainer.style, {
+                position: 'absolute', left: '-9999px', padding: '24px',
+                backgroundColor: '#1f2937', color: '#f9fafb', width: '1000px',
+                fontFamily: "'Inter', sans-serif"
+            });
+            
+            const today = new Date();
+            const dateString = `Ngày ${String(today.getDate()).padStart(2, '0')} tháng ${String(today.getMonth() + 1).padStart(2, '0')} năm ${today.getFullYear()}`;
+            const logoHtml = logoData ? `<img src="${logoData}" style="max-height: 60px; display: block;">` : '<div></div>';
+
+            const headerHtml = `
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 16px; border-bottom: 2px solid #4B5563; margin-bottom: 24px;">
+                    <div style="flex: 1; text-align: left;">${logoHtml}</div>
+                    <div style="flex: 2; text-align: center;">
+                        <h2 style="font-size: 28px; font-weight: bold; margin: 0; text-transform: uppercase;">${name}</h2>
+                    </div>
+                    <div style="flex: 1; text-align: right;"></div>
+                </div>`;
+            
+            const tableHtml = `<table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr>
+                        <th style="background-color: #FDE047; color: #1F2937; font-weight: bold; text-transform: uppercase;">STT</th>
+                        ${columns.map(c => `<th style="background-color: #FDE047; color: #1F2937; font-weight: bold; text-transform: uppercase;">${c.label}</th>`).join('')}
+                    </tr>
+                </thead>
+                <tbody>
+                    ${registrations.map((reg, index) => `
+                        <tr>
+                            <td>${index + 1}</td>
+                            ${columns.map(c => `<td>${capitalizeFirst(reg.values[c.id] || '')}</td>`).join('')}
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>`;
+            
+            const footerHtml = `
+                <div style="text-align: right; margin-top: 40px; padding-right: 20px;">
+                    <div style="display: inline-block; text-align: center;">
+                         <p style="font-style: italic;">${dateString}</p>
+                         <p style="font-weight: bold; margin-top: 16px;">Người làm văn bản</p>
+                         <div style="height: 60px;"></div>
+                         <p style="font-weight: bold; text-transform: uppercase; margin: 0; min-height: 24px;">${signerName.toUpperCase() || ' '}</p>
+                    </div>
+                </div>`;
+
+            exportContainer.innerHTML = headerHtml + tableHtml + footerHtml;
+            exportContainer.querySelectorAll('th, td').forEach(cell => {
+                Object.assign(cell.style, { border: '1px solid #4B5563', padding: '10px', textAlign: 'center', verticalAlign: 'middle', wordBreak: 'break-word'});
+            });
+            
+            document.body.appendChild(exportContainer);
+
+            html2canvas(exportContainer, { scale: 2 }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `${name}.jpg`;
+                link.href = canvas.toDataURL('image/jpeg', 0.95);
+                link.click();
+                document.body.removeChild(exportContainer);
+                showToast('Đã xuất ảnh JPG!', 'success');
+            }).catch(err => {
+                console.error('Lỗi xuất ảnh:', err);
+                showToast('Có lỗi xảy ra khi xuất ảnh.', 'error');
+                document.body.removeChild(exportContainer);
+            });
+        };
+
+        // --- INITIAL LOAD ---
         document.addEventListener('DOMContentLoaded', () => {
             loadData();
             updateUI();
