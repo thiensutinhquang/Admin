@@ -164,8 +164,8 @@
         <section class="bg-gray-800 p-4 rounded-xl shadow-lg mb-8">
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div class="flex-grow w-full md:w-auto">
-                    <h2 id="eventName" class="text-xl font-semibold text-white"></h2>
-                    <p id="eventStatus" class="text-sm text-gray-400"></p>
+                    <label for="eventSelector" class="block text-sm font-medium text-gray-300 mb-1">Sự kiện Hiện tại:</label>
+                    <select id="eventSelector" class="form-select"></select>
                 </div>
                 <div class="flex flex-wrap gap-2 justify-center">
                     <button id="newListBtn" class="btn btn-primary" data-tooltip="Tạo một sự kiện mới">Tạo sự kiện mới</button>
@@ -297,7 +297,7 @@
     <script type="module">
         // Import Firebase modules
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
-        import { getFirestore, doc, onSnapshot, collection, addDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
+        import { getFirestore, doc, onSnapshot, collection, query, where, addDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-auth.js";
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-analytics.js";
 
@@ -330,13 +330,15 @@
         let currentEventId = null;
         let eventData = null;
         let unsubscribeFromEvent = null;
+        let unsubscribeFromEventList = null;
         let user = null;
 
         // --- DOM Elements ---
         let registrationForm, reportHeaderRow, reportBody, formTitle, submitBtn, editActionsContainer,
             participantCounter, chartTitle, chartColumnSelector, provinceChartCanvas,
             manageColsModal, exportOptionsModal, actionsToggleBtn, actionsContainer,
-            eventNameEl, eventStatusEl, shareModal, shareLinkInput, copyShareLinkBtn, closeShareModalBtn;
+            eventNameEl, eventStatusEl, shareModal, shareLinkInput, copyShareLinkBtn, closeShareModalBtn,
+            eventSelector;
 
         // Local State
         let provinceChart = null;
@@ -389,15 +391,28 @@
 
         // --- DYNAMIC UI RENDERING ---
         const renderUI = () => {
-            if (!eventData || !eventNameEl) return;
-            eventNameEl.textContent = eventData.name;
-            eventStatusEl.textContent = `ID: ${currentEventId}`;
+            if (!eventData || !eventSelector) return;
+            eventSelector.value = currentEventId;
             
             renderForm();
             renderTable(); 
             updateDatalists();
             participantCounter.textContent = (eventData.registrations || []).length;
             updateChart();
+        };
+        const populateEventSelector = (events) => {
+            eventSelector.innerHTML = '';
+            if (events.length === 0) {
+                 eventSelector.add(new Option("Không có sự kiện nào, hãy tạo mới!", ""));
+                 return;
+            }
+            events.sort((a,b) => b.createdAt - a.createdAt).forEach(event => {
+                const option = new Option(event.name, event.id);
+                eventSelector.add(option);
+            });
+            if(currentEventId) {
+                eventSelector.value = currentEventId;
+            }
         };
         const renderForm = () => {
             const columns = eventData?.columns || [];
@@ -530,7 +545,7 @@
             if (eventId) {
                 await loadEvent(eventId);
             } else {
-                await createNewOnlineEvent();
+                listenToUserEvents(user.uid, true);
             }
         }
         
@@ -550,6 +565,26 @@
             }, (error) => {
                  console.error("Error listening to event:", error);
                  showToast("Lỗi khi tải dữ liệu sự kiện.", "error");
+            });
+        }
+
+        function listenToUserEvents(userId, createIfNeeded = false) {
+            if (unsubscribeFromEventList) unsubscribeFromEventList();
+            const q = query(collection(db, "events"), where("owner", "==", userId));
+            
+            unsubscribeFromEventList = onSnapshot(q, (querySnapshot) => {
+                const events = [];
+                querySnapshot.forEach((doc) => {
+                    events.push({ id: doc.id, ...doc.data() });
+                });
+
+                populateEventSelector(events);
+
+                if (events.length === 0 && createIfNeeded) {
+                    createNewOnlineEvent();
+                } else if (!window.location.hash.substring(1) && events.length > 0) {
+                     window.location.hash = events[0].id;
+                }
             });
         }
 
@@ -766,27 +801,6 @@
         
         // --- EVENT LISTENERS INITIALIZATION ---
         function initializeEventListeners() {
-            registrationForm = document.getElementById('registrationForm');
-            reportHeaderRow = document.getElementById('reportHeaderRow');
-            reportBody = document.getElementById('reportBody');
-            formTitle = document.getElementById('form-title');
-            submitBtn = document.getElementById('submitBtn');
-            editActionsContainer = document.getElementById('edit-actions');
-            participantCounter = document.getElementById('participantCounter');
-            chartTitle = document.getElementById('chartTitle');
-            chartColumnSelector = document.getElementById('chartColumnSelector');
-            provinceChartCanvas = document.getElementById('provinceChart');
-            manageColsModal = document.getElementById('manageColsModal');
-            exportOptionsModal = document.getElementById('exportOptionsModal');
-            actionsToggleBtn = document.getElementById('actionsToggleBtn');
-            actionsContainer = document.getElementById('actionsContainer');
-            eventNameEl = document.getElementById('eventName');
-            eventStatusEl = document.getElementById('eventStatus');
-            shareModal = document.getElementById('shareModal');
-            shareLinkInput = document.getElementById('shareLinkInput');
-            copyShareLinkBtn = document.getElementById('copyShareLinkBtn');
-            closeShareModalBtn = document.getElementById('closeShareModalBtn');
-
             document.addEventListener('click', e => {
                 const target = e.target.closest('button');
                 if (!target) return;
@@ -796,7 +810,7 @@
                 if (target.id === 'newListBtn') createNewOnlineEvent();
                 else if (target.id === 'renameListBtn') {
                     if (!currentEventId) return;
-                    showConfirmModal("Đổi tên danh sách", "Nhập tên mới:", { 
+                    showConfirmModal("Đổi tên sự kiện", "Nhập tên mới:", { 
                         showInput: true, 
                         defaultValue: eventData?.name, 
                         action: (newName) => { if(newName) updateEvent({ name: newName }); } 
@@ -906,6 +920,9 @@
                 }
             });
         
+            eventSelector.addEventListener('change', () => {
+                window.location.hash = eventSelector.value;
+            });
             chartColumnSelector.addEventListener('change', (e) => {
                 if(eventData) {
                     updateEvent({ selectedChartColumnId: e.target.value });
@@ -1008,7 +1025,7 @@
             const eventId = window.location.hash.substring(1);
             if (eventId && eventId !== currentEventId) {
                 loadEvent(eventId);
-            } else if (!eventId) {
+            } else if (!eventId && user) {
                  createNewOnlineEvent();
             }
         });
@@ -1035,9 +1052,14 @@
             shareLinkInput = document.getElementById('shareLinkInput');
             copyShareLinkBtn = document.getElementById('copyShareLinkBtn');
             closeShareModalBtn = document.getElementById('closeShareModalBtn');
+            eventSelector = document.getElementById('eventSelector');
 
-            await initializeAppLogic();
             initializeEventListeners();
+            await initializeAppLogic();
+            if(user) {
+                listenToUserEvents(user.uid);
+                await loadEventFromUrl();
+            }
         });
 
     </script>
