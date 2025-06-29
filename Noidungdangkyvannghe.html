@@ -12,6 +12,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <!-- html2canvas library for JPG export -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- SortableJS for drag-and-drop -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -62,10 +64,10 @@
         .toast.error { border-color: #e53e3e; }
         .toast.info { border-color: #3b82f6; }
 
-        /* IMPROVED: Animation for column deletion */
         .manage-cols-item {
             transition: all 0.3s ease-in-out, opacity 0.3s ease-in-out, transform 0.3s ease-in-out, height 0.3s ease-in-out, padding 0.3s ease-in-out, margin 0.3s ease-in-out;
             overflow: hidden;
+            cursor: grab;
         }
         .manage-cols-item.fade-out {
             opacity: 0;
@@ -77,11 +79,65 @@
             margin-bottom: 0 !important;
             border-width: 0;
         }
+        .sortable-ghost { opacity: 0.4; background: #4B5563; }
+        .manage-cols-item.sortable-chosen { background-color: #3b82f6; box-shadow: 0 0 10px rgba(59, 130, 246, 0.5); cursor: grabbing; }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border-width: 0;
+        }
+        
+        [data-tooltip] {
+            position: relative;
+        }
+        [data-tooltip]::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 110%;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #1f2937;
+            color: #f9fafb;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            line-height: 1.4;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s, visibility 0.2s, transform 0.2s;
+            z-index: 10000;
+            border: 1px solid #4B5563;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        [data-tooltip]:hover::after {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(-50%) translateY(-8px);
+        }
+
+        @media (max-width: 640px) {
+          #manageColsModal > div, #exportOptionsModal > div, #confirmModal > div {
+            width: 100vw !important; height: 100vh !important;
+            max-width: 100vw; max-height: 100vh;
+            border-radius: 0 !important; padding: 1.5rem 1rem !important;
+            display: flex; flex-direction: column;
+          }
+          #manageColsModal #manageColsForm { flex-grow: 1; }
+        }
     </style>
 </head>
 <body class="bg-gray-900 text-gray-100 min-h-screen p-4 sm:p-6 md:p-8">
 
     <div id="toast-container"></div>
+    <div id="sr-announcer" class="sr-only" aria-live="polite" aria-atomic="true"></div>
 
     <div class="max-w-screen-2xl mx-auto">
         <header class="mb-6 text-center">
@@ -96,10 +152,10 @@
                     <select id="listSelector" class="form-select"></select>
                 </div>
                 <div class="flex flex-wrap gap-2 justify-center">
-                    <button id="newListBtn" class="btn btn-primary">Tạo mới</button>
-                    <button id="renameListBtn" class="btn btn-secondary">Đổi tên</button>
-                    <button id="copyListBtn" class="btn btn-secondary">Sao chép</button>
-                    <button id="deleteListBtn" class="btn btn-delete">Xoá sự kiện</button>
+                    <button id="newListBtn" class="btn btn-primary" data-tooltip="Tạo một danh sách sự kiện mới">Tạo mới</button>
+                    <button id="renameListBtn" class="btn btn-secondary" data-tooltip="Đổi tên sự kiện hiện tại">Đổi tên</button>
+                    <button id="copyListBtn" class="btn btn-secondary" data-tooltip="Tạo một bản sao của sự kiện này">Sao chép</button>
+                    <button id="deleteListBtn" class="btn btn-delete" data-tooltip="Xoá vĩnh viễn sự kiện hiện tại">Xoá sự kiện</button>
                 </div>
             </div>
         </section>
@@ -111,8 +167,8 @@
                  <div id="form-actions" class="pt-5 space-y-3 border-t border-gray-700 mt-5">
                     <button type="button" id="submitBtn" class="btn btn-lg w-full">Thêm vào Báo cáo</button>
                     <div id="edit-actions" class="hidden grid grid-cols-2 gap-3">
-                         <button type="button" id="deleteFromFormBtn" class="btn btn-delete w-full">Xoá mục</button>
-                         <button type="button" id="cancelEditBtn" class="btn btn-secondary w-full">Huỷ bỏ</button>
+                         <button type="button" id="deleteFromFormBtn" class="btn btn-delete w-full" data-tooltip="Xoá mục đang được chọn">Xoá mục</button>
+                         <button type="button" id="cancelEditBtn" class="btn btn-secondary w-full" data-tooltip="Huỷ chỉnh sửa và quay lại chế độ thêm mới">Huỷ bỏ</button>
                     </div>
                 </div>
             </div>
@@ -121,16 +177,16 @@
                 <div class="flex flex-col xl:flex-row justify-between items-start xl:items-center mb-4 gap-4">
                     <div class="flex items-center gap-4">
                         <h2 class="text-2xl font-semibold">Nội dung Báo cáo chi tiết</h2>
-                        <button id="manageColsBtn" class="btn btn-secondary text-xs p-2" title="Quản lý các cột trong bảng">
+                        <button id="manageColsBtn" class="btn btn-secondary text-xs p-2" data-tooltip="Thêm, xoá, hoặc sắp xếp các cột trong bảng">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
                             Quản lý Cột
                         </button>
                     </div>
                     <div class="flex flex-wrap gap-2">
-                         <button id="exportExcelBtn" class="btn btn-secondary">Xuất Excel</button>
-                         <button id="exportTxtBtn" class="btn btn-secondary">Xuất TXT</button>
-                         <button id="exportJpgBtn" class="btn btn-secondary">Xuất ảnh JPG</button>
-                         <button id="clearAllBtn" class="btn btn-delete">Xoá hết mục</button>
+                         <button id="exportExcelBtn" class="btn btn-secondary" data-tooltip="Xuất báo cáo ra file Excel (.xlsx)">Xuất Excel</button>
+                         <button id="exportTxtBtn" class="btn btn-secondary" data-tooltip="Xuất báo cáo ra file văn bản (.txt)">Xuất TXT</button>
+                         <button id="exportJpgBtn" class="btn btn-secondary" data-tooltip="Xuất báo cáo ra file ảnh (.jpg)">Xuất ảnh JPG</button>
+                         <button id="clearAllBtn" class="btn btn-delete" data-tooltip="Xoá tất cả các mục trong bảng báo cáo">Xoá hết mục</button>
                     </div>
                 </div>
                  <p class="text-gray-400 mt-1 mb-4">Tổng số mục: <span id="participantCounter" class="font-bold text-white">0</span></p>
@@ -227,7 +283,8 @@
         let currentlyEditingId = null;
         let uploadedLogo = null;
         let currentExportType = null;
-        let tempColumns = []; // For editing columns non-destructively
+        let tempColumns = [];
+        let sortableInstance = null;
 
         const DEFAULT_COLUMNS = [
             { id: 'col_name', label: "Tên" }, 
@@ -239,7 +296,7 @@
 
         // --- UTILS ---
         const capitalizeFirst = str => !str ? '' : str.charAt(0).toUpperCase() + str.slice(1);
-        const showToast = (message, type = 'success') => {
+        const showToast = (message, type = 'success', announce = true) => {
             const container = document.getElementById('toast-container');
             const toast = Object.assign(document.createElement('div'), {
                 className: `toast ${type}`, textContent: message
@@ -250,6 +307,10 @@
                 toast.classList.remove('show');
                 toast.addEventListener('transitionend', () => toast.remove());
             }, 3000);
+            if (announce) {
+                const announcer = document.getElementById('sr-announcer');
+                if (announcer) announcer.textContent = message;
+            }
         };
         const showConfirmModal = (title, message, options = {}) => {
             const modal = document.getElementById('confirmModal');
@@ -277,7 +338,7 @@
             if (savedData) {
                 appData = JSON.parse(savedData);
                 Object.values(appData.lists).forEach(list => {
-                    if (!list.columns) { // Migration for older structure
+                    if (!list.columns) {
                         list.columns = JSON.parse(JSON.stringify(DEFAULT_COLUMNS));
                         list.selectedChartColumnId = 'col_province';
                     }
@@ -361,7 +422,7 @@
                     <tr class="hover:bg-gray-700/50 transition-colors duration-150 ${reg.id === currentlyEditingId ? 'editing-in-form' : ''}" data-id="${reg.id}">
                         <td class="font-medium">${index + 1}</td>
                         ${columns.map(c => `<td data-field="${c.id}" style="white-space: pre-wrap;">${reg.values[c.id] || ''}</td>`).join('')}
-                        <td><div class="flex items-center justify-center space-x-2"><button class="btn btn-edit text-xs">Sửa</button><button class="btn btn-delete text-xs">Xoá</button></div></td>
+                        <td><div class="flex items-center justify-center space-x-2"><button class="btn btn-edit text-xs" data-tooltip="Sửa nhanh (đang phát triển)">Sửa</button><button class="btn btn-delete text-xs" data-tooltip="Xoá mục này">Xoá</button></div></td>
                     </tr>
                 `).join('');
         };
@@ -535,20 +596,32 @@
         const renderManageColsForm = () => {
             const formContainer = manageColsModal.querySelector('#manageColsForm');
             formContainer.innerHTML = tempColumns.map(col => `
-                <div class="flex items-center gap-2 manage-cols-item">
+                <div class="flex items-center gap-2 manage-cols-item" data-id="${col.id}">
                     <input type="text" value="${col.label}" data-col-id="${col.id}" class="form-input flex-grow">
-                    <button data-col-id="${col.id}" class="btn btn-delete p-2 delete-col-btn" title="Xoá cột này">
+                    <button data-col-id="${col.id}" class="btn btn-delete p-2 delete-col-btn" data-tooltip="Xoá cột này">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                     </button>
                 </div>
             `).join('');
+
+            if(sortableInstance) sortableInstance.destroy();
+            sortableInstance = new Sortable(formContainer, {
+                animation: 150,
+                ghostClass: 'sortable-ghost',
+                chosenClass: 'sortable-chosen',
+                onEnd: (evt) => {
+                    const itemEl = tempColumns.splice(evt.oldIndex, 1)[0];
+                    tempColumns.splice(evt.newIndex, 0, itemEl);
+                },
+            });
         };
         manageColsModal.addEventListener('click', (e) => {
             const target = e.target.closest('button');
             if (!target) return;
 
             if (target.id === 'addNewColBtn') {
-                tempColumns.push({ id: `col_${Date.now()}`, label: 'Cột Mới' });
+                const nextLabel = `Trường ${tempColumns.length + 1}`;
+                tempColumns.push({ id: `col_${Date.now()}`, label: nextLabel });
                 renderManageColsForm();
             } else if (target.classList.contains('delete-col-btn')) {
                 const colIdToDelete = target.dataset.colId;
@@ -596,7 +669,14 @@
                 updateUI();
                 showToast('Cấu trúc cột đã được cập nhật!');
             } else if (target.id === 'cancelManageColsBtn') {
-                manageColsModal.classList.add('hidden');
+                 const originalColumns = appData.lists[appData.activeListId].columns;
+                 if (JSON.stringify(tempColumns) !== JSON.stringify(originalColumns)) {
+                    showConfirmModal("Bạn chưa lưu thay đổi!", "Bạn có các thay đổi chưa được lưu. Bạn có chắc muốn đóng và hủy bỏ các thay đổi này không?", {
+                        action: () => manageColsModal.classList.add('hidden')
+                    });
+                 } else {
+                    manageColsModal.classList.add('hidden');
+                 }
             }
         });
 
