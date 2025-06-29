@@ -61,6 +61,22 @@
         .toast.success { border-color: #38a169; }
         .toast.error { border-color: #e53e3e; }
         .toast.info { border-color: #3b82f6; }
+
+        /* IMPROVED: Animation for column deletion */
+        .manage-cols-item {
+            transition: all 0.3s ease-in-out, opacity 0.3s ease-in-out, transform 0.3s ease-in-out, height 0.3s ease-in-out, padding 0.3s ease-in-out, margin 0.3s ease-in-out;
+            overflow: hidden;
+        }
+        .manage-cols-item.fade-out {
+            opacity: 0;
+            transform: translateX(-20px);
+            height: 0 !important;
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
+            margin-top: 0 !important;
+            margin-bottom: 0 !important;
+            border-width: 0;
+        }
     </style>
 </head>
 <body class="bg-gray-900 text-gray-100 min-h-screen p-4 sm:p-6 md:p-8">
@@ -142,10 +158,10 @@
     </div>
 
     <!-- Modals -->
-    <div id="confirmModal" class="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50 hidden">
+    <div id="confirmModal" class="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-[60] hidden">
         <div class="bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-sm mx-4">
             <h3 id="modalTitle" class="text-xl font-bold text-white mb-4"></h3>
-            <p id="modalMessage" class="text-gray-300 mb-6"></p>
+            <p id="modalMessage" class="text-gray-300 mb-6 whitespace-pre-wrap"></p>
             <div id="modal-input-wrapper" class="mb-4 hidden"><input type="text" id="modalInput" class="form-input"></div>
             <div class="flex justify-end gap-4">
                 <button id="cancelBtn" class="btn btn-secondary">Huỷ</button>
@@ -211,6 +227,7 @@
         let currentlyEditingId = null;
         let uploadedLogo = null;
         let currentExportType = null;
+        let tempColumns = []; // For editing columns non-destructively
 
         const DEFAULT_COLUMNS = [
             { id: 'col_name', label: "Tên" }, 
@@ -252,11 +269,11 @@
 
         // --- DATA PERSISTENCE ---
         const saveData = () => {
-            try { localStorage.setItem('eventManagerData_v4', JSON.stringify(appData)); } 
+            try { localStorage.setItem('eventManagerData_v5', JSON.stringify(appData)); } 
             catch (e) { console.error("Lỗi lưu dữ liệu:", e); showToast("Lỗi: Không thể lưu dữ liệu.", "error"); }
         };
         const loadData = () => {
-            const savedData = localStorage.getItem('eventManagerData_v4');
+            const savedData = localStorage.getItem('eventManagerData_v5');
             if (savedData) {
                 appData = JSON.parse(savedData);
                 Object.values(appData.lists).forEach(list => {
@@ -480,7 +497,7 @@
 
             if(row) {
                  const id = Number(row.dataset.id);
-                 if (target.closest('button.btn-edit')) { alert('Sửa nhanh tại dòng đang được phát triển.'); }
+                 if (target.closest('button.btn-edit')) { alert('Chức năng sửa nhanh tại dòng đang được phát triển. Vui lòng nhấp vào hàng để sửa trong biểu mẫu bên trái.'); }
                  else if (target.closest('button.btn-delete')) {
                     showConfirmModal('Xoá mục này?', 'Bạn có chắc chắn không?', { action: () => {
                         appData.lists[appData.activeListId].registrations = appData.lists[appData.activeListId].registrations.filter(r => r.id !== id);
@@ -509,14 +526,16 @@
         
         // --- COLUMN MANAGEMENT MODAL ---
         const openManageColsModal = () => {
+            const activeList = appData.lists[appData.activeListId];
+            if (!activeList) return;
+            tempColumns = JSON.parse(JSON.stringify(activeList.columns));
             renderManageColsForm();
             manageColsModal.classList.remove('hidden');
         };
         const renderManageColsForm = () => {
             const formContainer = manageColsModal.querySelector('#manageColsForm');
-            const columns = appData.lists[appData.activeListId]?.columns || [];
-            formContainer.innerHTML = columns.map(col => `
-                <div class="flex items-center gap-2">
+            formContainer.innerHTML = tempColumns.map(col => `
+                <div class="flex items-center gap-2 manage-cols-item">
                     <input type="text" value="${col.label}" data-col-id="${col.id}" class="form-input flex-grow">
                     <button data-col-id="${col.id}" class="btn btn-delete p-2 delete-col-btn" title="Xoá cột này">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
@@ -525,38 +544,58 @@
             `).join('');
         };
         manageColsModal.addEventListener('click', (e) => {
-            const target = e.target;
-            const activeList = appData.lists[appData.activeListId];
+            const target = e.target.closest('button');
+            if (!target) return;
 
-            if (target.closest('#addNewColBtn')) {
-                activeList.columns.push({ id: `col_${Date.now()}`, label: 'Cột Mới' });
+            if (target.id === 'addNewColBtn') {
+                tempColumns.push({ id: `col_${Date.now()}`, label: 'Cột Mới' });
                 renderManageColsForm();
-            } else if (target.closest('.delete-col-btn')) {
-                const colId = target.closest('.delete-col-btn').dataset.colId;
-                if (activeList.columns.length <= 1) {
+            } else if (target.classList.contains('delete-col-btn')) {
+                const colIdToDelete = target.dataset.colId;
+                if (tempColumns.length <= 1) {
                     showToast("Phải có ít nhất một cột.", "error"); return;
                 }
-                showConfirmModal('Xoá Cột?', 'Hành động này sẽ xoá cột và toàn bộ dữ liệu bên trong nó. Bạn có chắc không?', {
+                const colLabel = tempColumns.find(c => c.id === colIdToDelete)?.label || '';
+                const colElement = target.closest('.manage-cols-item');
+
+                showConfirmModal('Xoá Cột?', `Bạn có chắc muốn xoá cột "${colLabel}"?\n\n⚠️ Thay đổi này chỉ là tạm thời và sẽ chỉ áp dụng vĩnh viễn sau khi bạn nhấn "Lưu & Cập nhật".`, {
                     action: () => {
-                        activeList.columns = activeList.columns.filter(c => c.id !== colId);
-                        activeList.registrations.forEach(reg => {
-                            if (reg.values[colId]) delete reg.values[colId];
-                        });
-                        renderManageColsForm();
-                        showToast('Đã xoá cột!', 'info');
+                        if (colElement) {
+                            colElement.classList.add('fade-out');
+                            setTimeout(() => {
+                                tempColumns = tempColumns.filter(c => c.id !== colIdToDelete);
+                                renderManageColsForm();
+                                showToast(`Đã xoá cột "${colLabel}" khỏi danh sách tạm.`, 'info');
+                            }, 300);
+                        }
                     }
                 });
-            } else if (target.closest('#saveManageColsBtn')) {
+            } else if (target.id === 'saveManageColsBtn') {
+                const activeList = appData.lists[appData.activeListId];
+                
                 manageColsModal.querySelectorAll('#manageColsForm input').forEach(input => {
-                    const colId = input.dataset.colId;
-                    const col = activeList.columns.find(c => c.id === colId);
+                    const col = tempColumns.find(c => c.id === input.dataset.colId);
                     if (col) col.label = input.value.trim() || 'Không tên';
                 });
+
+                const originalColumnIds = new Set(activeList.columns.map(c => c.id));
+                const newColumnIds = new Set(tempColumns.map(c => c.id));
+                const deletedColumnIds = [...originalColumnIds].filter(id => !newColumnIds.has(id));
+
+                if(deletedColumnIds.length > 0) {
+                    activeList.registrations.forEach(reg => {
+                        deletedColumnIds.forEach(deletedId => {
+                            if (reg.values[deletedId]) delete reg.values[deletedId];
+                        });
+                    });
+                }
+                
+                activeList.columns = tempColumns;
+                
                 manageColsModal.classList.add('hidden');
                 updateUI();
                 showToast('Cấu trúc cột đã được cập nhật!');
-            } else if (target.closest('#cancelManageColsBtn')) {
-                loadData();
+            } else if (target.id === 'cancelManageColsBtn') {
                 manageColsModal.classList.add('hidden');
             }
         });
@@ -624,6 +663,7 @@
 
             const headerStyle = { font: { bold: true, sz: 12, name: "Inter", color: { rgb: "000000" } }, fill: { fgColor: { rgb: "FDE047" } }, alignment: { horizontal: "center", vertical: "center", wrapText: true }, border: { top: { style: "thin" }, bottom: { style: "thin" }, left: { style: "thin" }, right: { style: "thin" } } };
             const cellStyle = { alignment: { horizontal: "center", vertical: "center", wrapText: true }, border: { top: { style: "thin" }, bottom: { style: "thin" }, left: { style: "thin" }, right: { style: "thin" } } };
+            const signatureStyle = { font: { bold: true, sz: 12, name: "Inter" }, alignment: { horizontal: "center", vertical: "center" } };
 
             const header = ['STT', ...columns.map(c => c.label.toUpperCase())];
             const data = registrations.map((reg, index) => [index + 1, ...columns.map(c => capitalizeFirst(reg.values[c.id] || ''))]);
@@ -645,7 +685,6 @@
             const ws = XLSX.utils.aoa_to_sheet(finalData);
             
             const range = XLSX.utils.decode_range(ws['!ref']);
-            const signerNameRowIndex = registrations.length + 7;
             for (let R = range.s.r; R <= range.e.r; ++R) {
                 for (let C = range.s.c; C <= range.e.c; ++C) {
                     const cell_ref = XLSX.utils.encode_cell({ c: C, r: R });
@@ -653,15 +692,14 @@
                     
                     if (R === 0) ws[cell_ref].s = headerStyle;
                     else if (R > 0 && R <= registrations.length) ws[cell_ref].s = cellStyle;
-                    else {
-                        let style = { alignment: { horizontal: "center", vertical: "center" } };
-                        if (R === signerNameRowIndex && C === header.length - 1) {
-                            style.font = { bold: true, sz: 12, name: "Inter" };
-                        }
-                        ws[cell_ref].s = style;
+                    else if (ws[cell_ref].v) {
+                        ws[cell_ref].s = { alignment: { horizontal: "center", vertical: "center" } };
                     }
                 }
             }
+            const signerNameRowIndex = registrations.length + 7;
+            const signerCellRef = XLSX.utils.encode_cell({ c: header.length - 1, r: signerNameRowIndex });
+            if (ws[signerCellRef] && signerName) ws[signerCellRef].s = signatureStyle;
 
             ws['!cols'] = [{wch:5}, ...columns.map(c => ({ wch: Math.max(c.label.length, 20) }))];
             
@@ -718,7 +756,7 @@
                     <div style="display: inline-block; text-align: center;">
                          <p style="font-style: italic;">${dateString}</p>
                          <p style="font-weight: bold; margin-top: 16px;">Người làm văn bản</p>
-                         <div style="height: 60px;"></div>
+                         <div style="height: 80px;"></div>
                          <p style="font-weight: bold; text-transform: uppercase; margin: 0; min-height: 24px;">${signerName.toUpperCase() || ' '}</p>
                     </div>
                 </div>`;
