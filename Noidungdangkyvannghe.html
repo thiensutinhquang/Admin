@@ -841,241 +841,6 @@
         };
         
         // --- EVENT LISTENERS INITIALIZATION ---
-        function initializeEventListeners() {
-            document.addEventListener('click', e => {
-                const target = e.target.closest('button');
-                if (!target) return;
-
-                const row = target.closest('tr[data-id]');
-
-                if (target.id === 'newListBtn') createNewOnlineEvent();
-                else if (target.id === 'renameListBtn') {
-                    if (!currentEventId) return;
-                    showConfirmModal("Đổi tên sự kiện", "Nhập tên mới:", { 
-                        showInput: true, 
-                        defaultValue: eventData?.name, 
-                        action: (newName) => { if(newName) updateEvent({ name: newName }); } 
-                    });
-                }
-                else if (target.id === 'deleteSelectedEventBtn') {
-                    const selectedId = eventSelector.value;
-                    const selectedName = eventSelector.options[eventSelector.selectedIndex]?.text;
-                    if (!selectedId || selectedName === "Không có sự kiện nào, hãy tạo mới!") {
-                        showToast("⚠️ Bạn chưa chọn sự kiện để xoá.", "error");
-                        return;
-                    }
-                    showConfirmModal(`Xoá sự kiện "${selectedName}"?`, `Hành động này không thể hoàn tác.`, {
-                        action: async () => {
-                            if (unsubscribeFromEvent) unsubscribeFromEvent();
-                            await deleteDoc(doc(db, "events", selectedId));
-                            window.location.hash = '';
-                            showToast("Đã xoá sự kiện.", "info");
-                        }
-                    });
-                }
-                else if (target.id === 'clearAllBtn') {
-                    if (!eventData || !(eventData.registrations || []).length) { showToast("Danh sách đã trống.", "info"); return; }
-                    showConfirmModal('Xoá hết các mục?', 'Hành động này không thể hoàn tác.', {action: () => {
-                        updateEvent({ registrations: [] });
-                        showToast('Đã xoá tất cả các mục!');
-                    }});
-                }
-                else if (target.id === 'cancelEditBtn') { switchToaddMode(); showToast('Đã huỷ chỉnh sửa.', 'info'); }
-                else if (target.id === 'deleteFromFormBtn') {
-                    if (currentlyEditingId === null) return;
-                    showConfirmModal('Xác nhận Xoá', 'Bạn có chắc chắn muốn xoá mục đang chọn?', { action: () => {
-                        const newRegistrations = eventData.registrations.filter(reg => reg.id !== currentlyEditingId);
-                        updateEvent({ registrations: newRegistrations });
-                        showToast('Đã xoá mục!', 'info');
-                    }});
-                }
-                else if (target.id === 'confirmBtn') { if (typeof confirmAction === 'function') confirmAction(document.getElementById('modalInput').value); hideConfirmModal(); }
-                else if (target.id === 'cancelBtn') hideConfirmModal();
-                else if (target.id === 'manageColsBtn') openManageColsModal();
-                else if (target.id === 'exportJpgBtn') openExportOptionsModal('jpg');
-                else if (target.id === 'exportExcelBtn') openExportOptionsModal('excel');
-                else if (target.id === 'exportTxtBtn') exportTxt();
-                else if (target.id === 'shareListBtn') {
-                    if (!currentEventId) return;
-                    shareLinkInput.value = `${window.location.origin}${window.location.pathname}#${currentEventId}`;
-                    shareModal.classList.remove('hidden');
-                }
-                else if (target.id === 'copyShareLinkBtn') {
-                    navigator.clipboard.writeText(shareLinkInput.value)
-                      .then(() => showToast("Đã sao chép liên kết!", "success"))
-                      .catch(() => showToast("Không thể sao chép.", "error"));
-                }
-                else if (target.id === 'closeShareModalBtn') {
-                    shareModal.classList.add('hidden');
-                }
-            });
-
-            submitBtn.addEventListener('click', async () => {
-                if (!eventData) return;
-                
-                const values = {};
-                let firstValue = '';
-
-                eventData.columns.forEach((col, index) => {
-                    const input = registrationForm.querySelector(`input[data-col-id="${col.id}"]`);
-                    const val = input ? input.value : '';
-                    values[col.id] = capitalizeFirst(val);
-                    if(index === 0) firstValue = val.trim();
-                });
-
-                if (!firstValue) {
-                    const firstColLabel = eventData.columns[0]?.label || 'trường đầu tiên';
-                    showToast(`Vui lòng nhập ${firstColLabel}.`, 'error'); return;
-                }
-
-                const newRegistrations = [...(eventData.registrations || [])];
-                if (currentlyEditingId !== null) {
-                    const entryIndex = newRegistrations.findIndex(r => r.id === currentlyEditingId);
-                    if (entryIndex > -1) {
-                        newRegistrations[entryIndex].values = values;
-                        showToast('Cập nhật thành công!', 'success');
-                    }
-                } else {
-                    newRegistrations.push({ id: Date.now(), values });
-                    showToast('Thêm thành công!', 'success');
-                }
-                await updateEvent({ registrations: newRegistrations });
-                switchToaddMode();
-                registrationForm.querySelector('input')?.focus();
-            });
-
-            reportBody.addEventListener('click', e => {
-                const row = e.target.closest('tr[data-id]');
-                if (!row) return;
-
-                const id = Number(row.dataset.id);
-                if (e.target.closest('button.btn-delete')) {
-                    showConfirmModal('Xoá mục này?', 'Bạn có chắc chắn không?', { action: () => {
-                        const newRegistrations = eventData.registrations.filter(r => r.id !== id);
-                        updateEvent({ registrations: newRegistrations });
-                        showToast('Đã xoá mục.');
-                    }});
-                } else { 
-                    const entry = eventData?.registrations.find(r => r.id === id);
-                    if (!entry) return;
-                    registrationForm.querySelectorAll('input[data-col-id]').forEach(input => {
-                        input.value = entry.values[input.dataset.colId] || '';
-                    });
-                    currentlyEditingId = id;
-                    switchToEditMode(entry);
-                }
-            });
-        
-            eventSelector.addEventListener('change', () => {
-                window.location.hash = eventSelector.value;
-            });
-            chartColumnSelector.addEventListener('change', (e) => {
-                if(eventData) {
-                    updateEvent({ selectedChartColumnId: e.target.value });
-                }
-            });
-            actionsToggleBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                actionsContainer.classList.toggle('hidden');
-            });
-            document.addEventListener('click', (e) => {
-                if (actionsContainer && !actionsContainer.contains(e.target) && !actionsToggleBtn.contains(e.target)) {
-                    actionsContainer.classList.add('hidden');
-                }
-            });
-
-            manageColsModal.addEventListener('click', (e) => {
-                const target = e.target.closest('button');
-                if (!target) return;
-
-                if (target.id === 'addNewColBtn') {
-                    const nextLabel = `Trường ${tempColumns.length + 1}`;
-                    tempColumns.push({ id: `col_${Date.now()}`, label: nextLabel });
-                    renderManageColsForm();
-                } else if (target.classList.contains('delete-col-btn')) {
-                    const colIdToDelete = target.dataset.colId;
-                    if (tempColumns.length <= 1) {
-                        showToast("Phải có ít nhất một cột.", "error"); return;
-                    }
-                    const colLabel = tempColumns.find(c => c.id === colIdToDelete)?.label || '';
-                    const colElement = target.closest('.manage-cols-item');
-
-                    showConfirmModal('Xoá Cột?', `Bạn có chắc muốn xoá cột "${colLabel}"?\n\n⚠️ Thay đổi này chỉ là tạm thời và sẽ chỉ áp dụng vĩnh viễn sau khi bạn nhấn "Lưu & Cập nhật".`, {
-                        action: () => {
-                            if (colElement) {
-                                colElement.classList.add('fade-out');
-                                setTimeout(() => {
-                                    tempColumns = tempColumns.filter(c => c.id !== colIdToDelete);
-                                    renderManageColsForm();
-                                    showToast(`Đã xoá cột "${colLabel}" khỏi danh sách tạm.`, 'info');
-                                }, 300);
-                            }
-                        }
-                    });
-                } else if (target.id === 'saveManageColsBtn') {
-                    const activeList = eventData;
-                    
-                    manageColsModal.querySelectorAll('#manageColsForm input').forEach(input => {
-                        const col = tempColumns.find(c => c.id === input.dataset.colId);
-                        if (col) col.label = input.value.trim() || 'Không tên';
-                    });
-
-                    const originalColumnIds = new Set(activeList.columns.map(c => c.id));
-                    const newColumnIds = new Set(tempColumns.map(c => c.id));
-                    const deletedColumnIds = [...originalColumnIds].filter(id => !newColumnIds.has(id));
-
-                    let newRegistrations = activeList.registrations;
-                    if(deletedColumnIds.length > 0) {
-                         newRegistrations = activeList.registrations.map(reg => {
-                            const newValues = { ...reg.values };
-                            deletedColumnIds.forEach(deletedId => {
-                                if (newValues[deletedId]) delete newValues[deletedId];
-                            });
-                            return { ...reg, values: newValues };
-                        });
-                    }
-                    
-                    updateEvent({ columns: tempColumns, registrations: newRegistrations });
-                    
-                    manageColsModal.classList.add('hidden');
-                    showToast('Cấu trúc cột đã được cập nhật!');
-                } else if (target.id === 'cancelManageColsBtn') {
-                    manageColsModal.classList.add('hidden');
-                }
-            });
-            
-            document.getElementById('cancelExportBtn').addEventListener('click', () => exportOptionsModal.classList.add('hidden'));
-            document.getElementById('logoUploader').addEventListener('change', (e) => {
-                const file = e.target.files[0];
-                if (file && file.type.startsWith('image/')) {
-                    const reader = new FileReader();
-                    reader.onload = (event) => {
-                        uploadedLogo = event.target.result;
-                        const preview = document.getElementById('logoPreview');
-                        preview.src = uploadedLogo;
-                        preview.classList.remove('hidden');
-                    };
-                    reader.readAsDataURL(file);
-                } else { uploadedLogo = null; }
-            });
-            document.getElementById('proceedExportBtn').addEventListener('click', () => {
-                const signerName = document.getElementById('signerNameInput').value.trim();
-                exportOptionsModal.classList.add('hidden');
-                
-                if (currentExportType === 'jpg') exportJpg(signerName, uploadedLogo);
-                else if (currentExportType === 'excel') exportExcel(signerName);
-            });
-        }
-        
-        window.addEventListener('hashchange', () => {
-            const eventId = window.location.hash.substring(1);
-            if (eventId && eventId !== currentEventId) {
-                loadEvent(eventId);
-            } else if (!eventId && user) {
-                 listenToUserEvents(true);
-            }
-        });
-        
         document.addEventListener('DOMContentLoaded', async () => {
             // Assign DOM elements once the DOM is ready
             registrationForm = document.getElementById('registrationForm');
@@ -1102,11 +867,248 @@
             reportTitleEl = document.getElementById('reportTitle');
             deleteSelectedEventBtn = document.getElementById('deleteSelectedEventBtn');
 
-            initializeEventListeners();
-            await initializeAppLogic();
-            if(user) {
-                listenToUserEvents();
-                await loadEventFromUrl();
+            try {
+                await initializeAppLogic();
+                if(user) {
+                    listenToUserEvents();
+                    await loadEventFromUrl();
+                }
+
+                // Attach all other event listeners
+                document.addEventListener('click', e => {
+                    const target = e.target.closest('button');
+                    if (!target) return;
+
+                    const row = target.closest('tr[data-id]');
+
+                    if (target.id === 'newListBtn') createNewOnlineEvent();
+                    else if (target.id === 'renameListBtn') {
+                        if (!currentEventId) return;
+                        showConfirmModal("Đổi tên sự kiện", "Nhập tên mới:", { 
+                            showInput: true, 
+                            defaultValue: eventData?.name, 
+                            action: (newName) => { if(newName) updateEvent({ name: newName }); } 
+                        });
+                    }
+                    else if (target.id === 'deleteSelectedEventBtn') {
+                        const selectedId = eventSelector.value;
+                        const selectedName = eventSelector.options[eventSelector.selectedIndex]?.text;
+                        if (!selectedId || selectedName === "Không có sự kiện nào, hãy tạo mới!") {
+                            showToast("⚠️ Bạn chưa chọn sự kiện để xoá.", "error");
+                            return;
+                        }
+                        showConfirmModal(`Xoá sự kiện "${selectedName}"?`, `Hành động này không thể hoàn tác.`, {
+                            action: async () => {
+                                if (unsubscribeFromEvent) unsubscribeFromEvent();
+                                await deleteDoc(doc(db, "events", selectedId));
+                                window.location.hash = '';
+                                showToast("Đã xoá sự kiện.", "info");
+                            }
+                        });
+                    }
+                    else if (target.id === 'clearAllBtn') {
+                        if (!eventData || !(eventData.registrations || []).length) { showToast("Danh sách đã trống.", "info"); return; }
+                        showConfirmModal('Xoá hết các mục?', 'Hành động này không thể hoàn tác.', {action: () => {
+                            updateEvent({ registrations: [] });
+                            showToast('Đã xoá tất cả các mục!');
+                        }});
+                    }
+                    else if (target.id === 'cancelEditBtn') { switchToaddMode(); showToast('Đã huỷ chỉnh sửa.', 'info'); }
+                    else if (target.id === 'deleteFromFormBtn') {
+                        if (currentlyEditingId === null) return;
+                        showConfirmModal('Xác nhận Xoá', 'Bạn có chắc chắn muốn xoá mục đang chọn?', { action: () => {
+                            const newRegistrations = eventData.registrations.filter(reg => reg.id !== currentlyEditingId);
+                            updateEvent({ registrations: newRegistrations });
+                            showToast('Đã xoá mục!', 'info');
+                        }});
+                    }
+                    else if (target.id === 'confirmBtn') { if (typeof confirmAction === 'function') confirmAction(document.getElementById('modalInput').value); hideConfirmModal(); }
+                    else if (target.id === 'cancelBtn') hideConfirmModal();
+                    else if (target.id === 'manageColsBtn') openManageColsModal();
+                    else if (target.id === 'exportJpgBtn') openExportOptionsModal('jpg');
+                    else if (target.id === 'exportExcelBtn') openExportOptionsModal('excel');
+                    else if (target.id === 'exportTxtBtn') exportTxt();
+                    else if (target.id === 'shareListBtn') {
+                        if (!currentEventId) return;
+                        shareLinkInput.value = `${window.location.origin}${window.location.pathname}#${currentEventId}`;
+                        shareModal.classList.remove('hidden');
+                    }
+                    else if (target.id === 'copyShareLinkBtn') {
+                        navigator.clipboard.writeText(shareLinkInput.value)
+                          .then(() => showToast("Đã sao chép liên kết!", "success"))
+                          .catch(() => showToast("Không thể sao chép.", "error"));
+                    }
+                    else if (target.id === 'closeShareModalBtn') {
+                        shareModal.classList.add('hidden');
+                    }
+                });
+
+                submitBtn.addEventListener('click', async () => {
+                    if (!eventData) return;
+                    
+                    const values = {};
+                    let firstValue = '';
+
+                    eventData.columns.forEach((col, index) => {
+                        const input = registrationForm.querySelector(`input[data-col-id="${col.id}"]`);
+                        const val = input ? input.value : '';
+                        values[col.id] = capitalizeFirst(val);
+                        if(index === 0) firstValue = val.trim();
+                    });
+
+                    if (!firstValue) {
+                        const firstColLabel = eventData.columns[0]?.label || 'trường đầu tiên';
+                        showToast(`Vui lòng nhập ${firstColLabel}.`, 'error'); return;
+                    }
+
+                    const newRegistrations = [...(eventData.registrations || [])];
+                    if (currentlyEditingId !== null) {
+                        const entryIndex = newRegistrations.findIndex(r => r.id === currentlyEditingId);
+                        if (entryIndex > -1) {
+                            newRegistrations[entryIndex].values = values;
+                            showToast('Cập nhật thành công!', 'success');
+                        }
+                    } else {
+                        newRegistrations.push({ id: Date.now(), values });
+                        showToast('Thêm thành công!', 'success');
+                    }
+                    await updateEvent({ registrations: newRegistrations });
+                    switchToaddMode();
+                    registrationForm.querySelector('input')?.focus();
+                });
+
+                reportBody.addEventListener('click', e => {
+                    const row = e.target.closest('tr[data-id]');
+                    if (!row) return;
+
+                    const id = Number(row.dataset.id);
+                    if (e.target.closest('button.btn-delete')) {
+                        showConfirmModal('Xoá mục này?', 'Bạn có chắc chắn không?', { action: () => {
+                            const newRegistrations = eventData.registrations.filter(r => r.id !== id);
+                            updateEvent({ registrations: newRegistrations });
+                            showToast('Đã xoá mục.');
+                        }});
+                    } else { 
+                        const entry = eventData?.registrations.find(r => r.id === id);
+                        if (!entry) return;
+                        registrationForm.querySelectorAll('input[data-col-id]').forEach(input => {
+                            input.value = entry.values[input.dataset.colId] || '';
+                        });
+                        currentlyEditingId = id;
+                        switchToEditMode(entry);
+                    }
+                });
+            
+                eventSelector.addEventListener('change', () => {
+                    window.location.hash = eventSelector.value;
+                });
+                chartColumnSelector.addEventListener('change', (e) => {
+                    if(eventData) {
+                        updateEvent({ selectedChartColumnId: e.target.value });
+                    }
+                });
+                actionsToggleBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    actionsContainer.classList.toggle('hidden');
+                });
+                document.addEventListener('click', (e) => {
+                    if (actionsContainer && !actionsContainer.contains(e.target) && !actionsToggleBtn.contains(e.target)) {
+                        actionsContainer.classList.add('hidden');
+                    }
+                });
+
+                manageColsModal.addEventListener('click', (e) => {
+                    const target = e.target.closest('button');
+                    if (!target) return;
+
+                    if (target.id === 'addNewColBtn') {
+                        const nextLabel = `Trường ${tempColumns.length + 1}`;
+                        tempColumns.push({ id: `col_${Date.now()}`, label: nextLabel });
+                        renderManageColsForm();
+                    } else if (target.classList.contains('delete-col-btn')) {
+                        const colIdToDelete = target.dataset.colId;
+                        if (tempColumns.length <= 1) {
+                            showToast("Phải có ít nhất một cột.", "error"); return;
+                        }
+                        const colLabel = tempColumns.find(c => c.id === colIdToDelete)?.label || '';
+                        const colElement = target.closest('.manage-cols-item');
+
+                        showConfirmModal('Xoá Cột?', `Bạn có chắc muốn xoá cột "${colLabel}"?\n\n⚠️ Thay đổi này chỉ là tạm thời và sẽ chỉ áp dụng vĩnh viễn sau khi bạn nhấn "Lưu & Cập nhật".`, {
+                            action: () => {
+                                if (colElement) {
+                                    colElement.classList.add('fade-out');
+                                    setTimeout(() => {
+                                        tempColumns = tempColumns.filter(c => c.id !== colIdToDelete);
+                                        renderManageColsForm();
+                                        showToast(`Đã xoá cột "${colLabel}" khỏi danh sách tạm.`, 'info');
+                                    }, 300);
+                                }
+                            }
+                        });
+                    } else if (target.id === 'saveManageColsBtn') {
+                        const activeList = eventData;
+                        
+                        manageColsModal.querySelectorAll('#manageColsForm input').forEach(input => {
+                            const col = tempColumns.find(c => c.id === input.dataset.colId);
+                            if (col) col.label = input.value.trim() || 'Không tên';
+                        });
+
+                        const originalColumnIds = new Set(activeList.columns.map(c => c.id));
+                        const newColumnIds = new Set(tempColumns.map(c => c.id));
+                        const deletedColumnIds = [...originalColumnIds].filter(id => !newColumnIds.has(id));
+
+                        let newRegistrations = activeList.registrations;
+                        if(deletedColumnIds.length > 0) {
+                             newRegistrations = activeList.registrations.map(reg => {
+                                const newValues = { ...reg.values };
+                                deletedColumnIds.forEach(deletedId => {
+                                    if (newValues[deletedId]) delete newValues[deletedId];
+                                });
+                                return { ...reg, values: newValues };
+                            });
+                        }
+                        
+                        updateEvent({ columns: tempColumns, registrations: newRegistrations });
+                        
+                        manageColsModal.classList.add('hidden');
+                        showToast('Cấu trúc cột đã được cập nhật!');
+                    } else if (target.id === 'cancelManageColsBtn') {
+                        manageColsModal.classList.add('hidden');
+                    }
+                });
+                
+                document.getElementById('cancelExportBtn').addEventListener('click', () => exportOptionsModal.classList.add('hidden'));
+                document.getElementById('logoUploader').addEventListener('change', (e) => {
+                    const file = e.target.files[0];
+                    if (file && file.type.startsWith('image/')) {
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                            uploadedLogo = event.target.result;
+                            const preview = document.getElementById('logoPreview');
+                            preview.src = uploadedLogo;
+                            preview.classList.remove('hidden');
+                        };
+                        reader.readAsDataURL(file);
+                    } else { uploadedLogo = null; }
+                });
+                document.getElementById('proceedExportBtn').addEventListener('click', () => {
+                    const signerName = document.getElementById('signerNameInput').value.trim();
+                    exportOptionsModal.classList.add('hidden');
+                    
+                    if (currentExportType === 'jpg') exportJpg(signerName, uploadedLogo);
+                    else if (currentExportType === 'excel') exportExcel(signerName);
+                });
+            } catch(e) {
+                 console.error("Error initializing app:", e);
+            }
+        });
+        
+        window.addEventListener('hashchange', () => {
+            const eventId = window.location.hash.substring(1);
+            if (eventId && eventId !== currentEventId) {
+                loadEvent(eventId);
+            } else if (!eventId && user) {
+                 listenToUserEvents(true);
             }
         });
 
