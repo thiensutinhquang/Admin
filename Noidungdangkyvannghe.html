@@ -3,7 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Công cụ Quản lý Sự kiện (Tùy chỉnh Cấu trúc)</title>
+    <title>Tool Quản lý Sự kiện Đa năng dành cho Ban Làm Việc MSTQ</title>
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#111827">
+    
     <!-- Tailwind CSS for styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Chart.js for statistics chart -->
@@ -33,6 +38,10 @@
             padding: 0.5rem 1rem; border-radius: 0.5rem; font-weight: 600;
             text-align: center; cursor: pointer; transition: all 0.2s;
             display: inline-flex; align-items: center; justify-content: center;
+        }
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
         .btn:active { transform: scale(0.97); }
         .btn-primary { background-color: #2563EB; color: white; }
@@ -136,12 +145,18 @@
 
         @media (max-width: 768px) {
           #manageColsModal > div, #exportOptionsModal > div, #confirmModal > div, #shareModal > div {
-            width: 100vw !important; height: 100vh !important;
-            max-width: 100vw; max-height: 100vh;
-            border-radius: 0 !important; padding: 1.5rem 1rem !important;
-            display: flex; flex-direction: column;
+            width: 100vw !important;
+            height: 100vh !important;
+            max-height: 90vh; /* IMPROVEMENT: Limit height on small screens */
+            border-radius: 0 !important;
+            padding: 1.5rem 1rem !important;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto; /* IMPROVEMENT: Allow scrolling for content */
           }
-          #manageColsModal #manageColsForm { flex-grow: 1; }
+          #manageColsModal #manageColsForm {
+              flex-grow: 1;
+          }
         }
     </style>
 </head>
@@ -157,12 +172,8 @@
 
     <div class="max-w-screen-2xl mx-auto">
         <header class="mb-6 text-center relative">
-            <h1 class="text-3xl sm:text-4xl font-bold text-white">Công cụ Quản lý Sự kiện Đa năng</h1>
+            <h1 class="text-3xl sm:text-4xl font-bold text-white">Tool Quản lý Sự kiện Đa năng dành cho Ban Làm Việc MSTQ</h1>
             <p class="text-gray-400 mt-2">Tạo, quản lý, và tùy chỉnh hoàn toàn cấu trúc danh sách.</p>
-             <div class="mt-4 text-sm text-gray-300 space-y-1">
-                <div id="eventName" class="font-semibold"></div>
-                <div id="eventStatus"></div>
-            </div>
         </header>
 
         <section class="bg-gray-800 p-4 rounded-xl shadow-lg mb-8">
@@ -176,10 +187,10 @@
                         <button id="deleteSelectedEventBtn" class="btn btn-delete text-sm" data-tooltip="Xoá sự kiện đã chọn">🗑️ Xoá</button>
                       </div>
                 </div>
-                <div class="flex flex-wrap gap-2 justify-center">
-                    <button id="newListBtn" class="btn btn-primary" data-tooltip="Tạo một sự kiện mới">Tạo sự kiện mới</button>
-                    <button id="renameListBtn" class="btn btn-secondary" data-tooltip="Đổi tên sự kiện hiện tại">Đổi tên</button>
-                    <button id="shareListBtn" class="btn btn-save" data-tooltip="Chia sẻ sự kiện này để cộng tác">Chia sẻ</button>
+                <div class="flex flex-col sm:flex-row flex-wrap gap-2 justify-center">
+                    <button id="newListBtn" class="btn btn-primary w-full sm:w-auto" data-tooltip="Tạo một sự kiện mới">Tạo sự kiện mới</button>
+                    <button id="renameListBtn" class="btn btn-secondary w-full sm:w-auto" data-tooltip="Đổi tên sự kiện hiện tại">Đổi tên</button>
+                    <button id="shareListBtn" class="btn btn-save w-full sm:w-auto" data-tooltip="Chia sẻ sự kiện này để cộng tác">Chia sẻ</button>
                 </div>
             </div>
         </section>
@@ -187,7 +198,7 @@
         <main class="grid grid-cols-1 lg:grid-cols-5 gap-8">
             <div id="form-panel" class="bg-gray-800 p-6 rounded-xl shadow-lg lg:col-span-2 self-start sticky top-8">
                 <h2 id="form-title" class="text-xl font-semibold mb-6 border-b border-gray-700 pb-4 text-center"></h2>
-                <form id="registrationForm" class="space-y-5"></form>
+                <form id="registrationForm" class="space-y-6"></form>
                  <div id="form-actions" class="pt-5 space-y-3 border-t border-gray-700 mt-5">
                     <button type="button" id="submitBtn" class="btn btn-lg w-full">Thêm vào Báo cáo</button>
                     <div id="edit-actions" class="hidden grid grid-cols-2 gap-3">
@@ -484,7 +495,12 @@
             });
         };
         const updateChart = () => {
-            if (!eventData) return;
+            if (!eventData || !chartColumnSelector) return;
+            if (!(eventData.registrations || []).length) {
+                if (provinceChart) provinceChart.destroy();
+                return;
+            };
+
             const { registrations, columns, selectedChartColumnId } = eventData;
             
             chartColumnSelector.innerHTML = columns.map(c => `<option value="${c.id}">${c.label}</option>`).join('');
@@ -493,7 +509,7 @@
             const selectedCol = columns.find(c => c.id === selectedColId);
             if (!selectedCol) return;
             
-            chartTitle.textContent = `Thống kê theo ${selectedCol.label}`;
+            if(chartTitle) chartTitle.textContent = `Thống kê theo ${selectedCol.label}`;
             
             const counts = (registrations || []).reduce((acc, reg) => {
                 const value = capitalizeFirst((reg.values[selectedColId] || "Chưa xác định").trim());
@@ -523,7 +539,8 @@
             renderTable();
         }
         function switchToaddMode() {
-            registrationForm.reset();
+            if(!registrationForm || !formTitle || !submitBtn || !editActionsContainer) return;
+            registrationForm.querySelectorAll('input').forEach(i => i.value = '');
             currentlyEditingId = null;
             formTitle.textContent = `Thêm mục cho: ${eventData?.name || '...'}`;
             formTitle.classList.remove('text-yellow-400');
@@ -823,7 +840,242 @@
             });
         };
         
-        // --- MAIN APP LOGIC ---
+        // --- EVENT LISTENERS INITIALIZATION ---
+        function initializeEventListeners() {
+            document.addEventListener('click', e => {
+                const target = e.target.closest('button');
+                if (!target) return;
+
+                const row = target.closest('tr[data-id]');
+
+                if (target.id === 'newListBtn') createNewOnlineEvent();
+                else if (target.id === 'renameListBtn') {
+                    if (!currentEventId) return;
+                    showConfirmModal("Đổi tên sự kiện", "Nhập tên mới:", { 
+                        showInput: true, 
+                        defaultValue: eventData?.name, 
+                        action: (newName) => { if(newName) updateEvent({ name: newName }); } 
+                    });
+                }
+                else if (target.id === 'deleteSelectedEventBtn') {
+                    const selectedId = eventSelector.value;
+                    const selectedName = eventSelector.options[eventSelector.selectedIndex]?.text;
+                    if (!selectedId || selectedName === "Không có sự kiện nào, hãy tạo mới!") {
+                        showToast("⚠️ Bạn chưa chọn sự kiện để xoá.", "error");
+                        return;
+                    }
+                    showConfirmModal(`Xoá sự kiện "${selectedName}"?`, `Hành động này không thể hoàn tác.`, {
+                        action: async () => {
+                            if (unsubscribeFromEvent) unsubscribeFromEvent();
+                            await deleteDoc(doc(db, "events", selectedId));
+                            window.location.hash = '';
+                            showToast("Đã xoá sự kiện.", "info");
+                        }
+                    });
+                }
+                else if (target.id === 'clearAllBtn') {
+                    if (!eventData || !(eventData.registrations || []).length) { showToast("Danh sách đã trống.", "info"); return; }
+                    showConfirmModal('Xoá hết các mục?', 'Hành động này không thể hoàn tác.', {action: () => {
+                        updateEvent({ registrations: [] });
+                        showToast('Đã xoá tất cả các mục!');
+                    }});
+                }
+                else if (target.id === 'cancelEditBtn') { switchToaddMode(); showToast('Đã huỷ chỉnh sửa.', 'info'); }
+                else if (target.id === 'deleteFromFormBtn') {
+                    if (currentlyEditingId === null) return;
+                    showConfirmModal('Xác nhận Xoá', 'Bạn có chắc chắn muốn xoá mục đang chọn?', { action: () => {
+                        const newRegistrations = eventData.registrations.filter(reg => reg.id !== currentlyEditingId);
+                        updateEvent({ registrations: newRegistrations });
+                        showToast('Đã xoá mục!', 'info');
+                    }});
+                }
+                else if (target.id === 'confirmBtn') { if (typeof confirmAction === 'function') confirmAction(document.getElementById('modalInput').value); hideConfirmModal(); }
+                else if (target.id === 'cancelBtn') hideConfirmModal();
+                else if (target.id === 'manageColsBtn') openManageColsModal();
+                else if (target.id === 'exportJpgBtn') openExportOptionsModal('jpg');
+                else if (target.id === 'exportExcelBtn') openExportOptionsModal('excel');
+                else if (target.id === 'exportTxtBtn') exportTxt();
+                else if (target.id === 'shareListBtn') {
+                    if (!currentEventId) return;
+                    shareLinkInput.value = `${window.location.origin}${window.location.pathname}#${currentEventId}`;
+                    shareModal.classList.remove('hidden');
+                }
+                else if (target.id === 'copyShareLinkBtn') {
+                    navigator.clipboard.writeText(shareLinkInput.value)
+                      .then(() => showToast("Đã sao chép liên kết!", "success"))
+                      .catch(() => showToast("Không thể sao chép.", "error"));
+                }
+                else if (target.id === 'closeShareModalBtn') {
+                    shareModal.classList.add('hidden');
+                }
+            });
+
+            submitBtn.addEventListener('click', async () => {
+                if (!eventData) return;
+                
+                const values = {};
+                let firstValue = '';
+
+                eventData.columns.forEach((col, index) => {
+                    const input = registrationForm.querySelector(`input[data-col-id="${col.id}"]`);
+                    const val = input ? input.value : '';
+                    values[col.id] = capitalizeFirst(val);
+                    if(index === 0) firstValue = val.trim();
+                });
+
+                if (!firstValue) {
+                    const firstColLabel = eventData.columns[0]?.label || 'trường đầu tiên';
+                    showToast(`Vui lòng nhập ${firstColLabel}.`, 'error'); return;
+                }
+
+                const newRegistrations = [...(eventData.registrations || [])];
+                if (currentlyEditingId !== null) {
+                    const entryIndex = newRegistrations.findIndex(r => r.id === currentlyEditingId);
+                    if (entryIndex > -1) {
+                        newRegistrations[entryIndex].values = values;
+                        showToast('Cập nhật thành công!', 'success');
+                    }
+                } else {
+                    newRegistrations.push({ id: Date.now(), values });
+                    showToast('Thêm thành công!', 'success');
+                }
+                await updateEvent({ registrations: newRegistrations });
+                switchToaddMode();
+                registrationForm.querySelector('input')?.focus();
+            });
+
+            reportBody.addEventListener('click', e => {
+                const row = e.target.closest('tr[data-id]');
+                if (!row) return;
+
+                const id = Number(row.dataset.id);
+                if (e.target.closest('button.btn-delete')) {
+                    showConfirmModal('Xoá mục này?', 'Bạn có chắc chắn không?', { action: () => {
+                        const newRegistrations = eventData.registrations.filter(r => r.id !== id);
+                        updateEvent({ registrations: newRegistrations });
+                        showToast('Đã xoá mục.');
+                    }});
+                } else { 
+                    const entry = eventData?.registrations.find(r => r.id === id);
+                    if (!entry) return;
+                    registrationForm.querySelectorAll('input[data-col-id]').forEach(input => {
+                        input.value = entry.values[input.dataset.colId] || '';
+                    });
+                    currentlyEditingId = id;
+                    switchToEditMode(entry);
+                }
+            });
+        
+            eventSelector.addEventListener('change', () => {
+                window.location.hash = eventSelector.value;
+            });
+            chartColumnSelector.addEventListener('change', (e) => {
+                if(eventData) {
+                    updateEvent({ selectedChartColumnId: e.target.value });
+                }
+            });
+            actionsToggleBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                actionsContainer.classList.toggle('hidden');
+            });
+            document.addEventListener('click', (e) => {
+                if (actionsContainer && !actionsContainer.contains(e.target) && !actionsToggleBtn.contains(e.target)) {
+                    actionsContainer.classList.add('hidden');
+                }
+            });
+
+            manageColsModal.addEventListener('click', (e) => {
+                const target = e.target.closest('button');
+                if (!target) return;
+
+                if (target.id === 'addNewColBtn') {
+                    const nextLabel = `Trường ${tempColumns.length + 1}`;
+                    tempColumns.push({ id: `col_${Date.now()}`, label: nextLabel });
+                    renderManageColsForm();
+                } else if (target.classList.contains('delete-col-btn')) {
+                    const colIdToDelete = target.dataset.colId;
+                    if (tempColumns.length <= 1) {
+                        showToast("Phải có ít nhất một cột.", "error"); return;
+                    }
+                    const colLabel = tempColumns.find(c => c.id === colIdToDelete)?.label || '';
+                    const colElement = target.closest('.manage-cols-item');
+
+                    showConfirmModal('Xoá Cột?', `Bạn có chắc muốn xoá cột "${colLabel}"?\n\n⚠️ Thay đổi này chỉ là tạm thời và sẽ chỉ áp dụng vĩnh viễn sau khi bạn nhấn "Lưu & Cập nhật".`, {
+                        action: () => {
+                            if (colElement) {
+                                colElement.classList.add('fade-out');
+                                setTimeout(() => {
+                                    tempColumns = tempColumns.filter(c => c.id !== colIdToDelete);
+                                    renderManageColsForm();
+                                    showToast(`Đã xoá cột "${colLabel}" khỏi danh sách tạm.`, 'info');
+                                }, 300);
+                            }
+                        }
+                    });
+                } else if (target.id === 'saveManageColsBtn') {
+                    const activeList = eventData;
+                    
+                    manageColsModal.querySelectorAll('#manageColsForm input').forEach(input => {
+                        const col = tempColumns.find(c => c.id === input.dataset.colId);
+                        if (col) col.label = input.value.trim() || 'Không tên';
+                    });
+
+                    const originalColumnIds = new Set(activeList.columns.map(c => c.id));
+                    const newColumnIds = new Set(tempColumns.map(c => c.id));
+                    const deletedColumnIds = [...originalColumnIds].filter(id => !newColumnIds.has(id));
+
+                    let newRegistrations = activeList.registrations;
+                    if(deletedColumnIds.length > 0) {
+                         newRegistrations = activeList.registrations.map(reg => {
+                            const newValues = { ...reg.values };
+                            deletedColumnIds.forEach(deletedId => {
+                                if (newValues[deletedId]) delete newValues[deletedId];
+                            });
+                            return { ...reg, values: newValues };
+                        });
+                    }
+                    
+                    updateEvent({ columns: tempColumns, registrations: newRegistrations });
+                    
+                    manageColsModal.classList.add('hidden');
+                    showToast('Cấu trúc cột đã được cập nhật!');
+                } else if (target.id === 'cancelManageColsBtn') {
+                    manageColsModal.classList.add('hidden');
+                }
+            });
+            
+            document.getElementById('cancelExportBtn').addEventListener('click', () => exportOptionsModal.classList.add('hidden'));
+            document.getElementById('logoUploader').addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file && file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        uploadedLogo = event.target.result;
+                        const preview = document.getElementById('logoPreview');
+                        preview.src = uploadedLogo;
+                        preview.classList.remove('hidden');
+                    };
+                    reader.readAsDataURL(file);
+                } else { uploadedLogo = null; }
+            });
+            document.getElementById('proceedExportBtn').addEventListener('click', () => {
+                const signerName = document.getElementById('signerNameInput').value.trim();
+                exportOptionsModal.classList.add('hidden');
+                
+                if (currentExportType === 'jpg') exportJpg(signerName, uploadedLogo);
+                else if (currentExportType === 'excel') exportExcel(signerName);
+            });
+        }
+        
+        window.addEventListener('hashchange', () => {
+            const eventId = window.location.hash.substring(1);
+            if (eventId && eventId !== currentEventId) {
+                loadEvent(eventId);
+            } else if (!eventId && user) {
+                 listenToUserEvents(true);
+            }
+        });
+        
         document.addEventListener('DOMContentLoaded', async () => {
             // Assign DOM elements once the DOM is ready
             registrationForm = document.getElementById('registrationForm');
@@ -850,248 +1102,11 @@
             reportTitleEl = document.getElementById('reportTitle');
             deleteSelectedEventBtn = document.getElementById('deleteSelectedEventBtn');
 
-            try {
-                await initializeAppLogic();
-                if(user) {
-                    listenToUserEvents();
-                    await loadEventFromUrl();
-                }
-
-                // Attach all other event listeners
-                document.addEventListener('click', e => {
-                    const target = e.target.closest('button');
-                    if (!target) return;
-
-                    const row = target.closest('tr[data-id]');
-
-                    if (target.id === 'newListBtn') createNewOnlineEvent();
-                    else if (target.id === 'renameListBtn') {
-                        if (!currentEventId) return;
-                        showConfirmModal("Đổi tên sự kiện", "Nhập tên mới:", { 
-                            showInput: true, 
-                            defaultValue: eventData?.name, 
-                            action: (newName) => { if(newName) updateEvent({ name: newName }); } 
-                        });
-                    }
-                    else if (target.id === 'deleteSelectedEventBtn') {
-                        const selectedId = eventSelector.value;
-                        const selectedName = eventSelector.options[eventSelector.selectedIndex]?.text;
-                        if (!selectedId || selectedName === "Không có sự kiện nào, hãy tạo mới!") {
-                            showToast("⚠️ Bạn chưa chọn sự kiện để xoá.", "error");
-                            return;
-                        }
-                        showConfirmModal(`Xoá sự kiện "${selectedName}"?`, `Hành động này không thể hoàn tác.`, {
-                            action: async () => {
-                                if (unsubscribeFromEvent) unsubscribeFromEvent();
-                                await deleteDoc(doc(db, "events", selectedId));
-                                window.location.hash = '';
-                                showToast("Đã xoá sự kiện.", "info");
-                            }
-                        });
-                    }
-                    else if (target.id === 'clearAllBtn') {
-                        if (!eventData || !(eventData.registrations || []).length) { showToast("Danh sách đã trống.", "info"); return; }
-                        showConfirmModal('Xoá hết các mục?', 'Hành động này không thể hoàn tác.', {action: () => {
-                            updateEvent({ registrations: [] });
-                            showToast('Đã xoá tất cả các mục!');
-                        }});
-                    }
-                    else if (target.id === 'cancelEditBtn') { switchToaddMode(); showToast('Đã huỷ chỉnh sửa.', 'info'); }
-                    else if (target.id === 'deleteFromFormBtn') {
-                        if (currentlyEditingId === null) return;
-                        showConfirmModal('Xác nhận Xoá', 'Bạn có chắc chắn muốn xoá mục đang chọn?', { action: () => {
-                            const newRegistrations = eventData.registrations.filter(reg => reg.id !== currentlyEditingId);
-                            updateEvent({ registrations: newRegistrations });
-                            showToast('Đã xoá mục!', 'info');
-                        }});
-                    }
-                    else if (target.id === 'confirmBtn') { if (typeof confirmAction === 'function') confirmAction(document.getElementById('modalInput').value); hideConfirmModal(); }
-                    else if (target.id === 'cancelBtn') hideConfirmModal();
-                    else if (target.id === 'manageColsBtn') openManageColsModal();
-                    else if (target.id === 'exportJpgBtn') openExportOptionsModal('jpg');
-                    else if (target.id === 'exportExcelBtn') openExportOptionsModal('excel');
-                    else if (target.id === 'exportTxtBtn') exportTxt();
-                    else if (target.id === 'shareListBtn') {
-                        if (!currentEventId) return;
-                        shareLinkInput.value = `${window.location.origin}${window.location.pathname}#${currentEventId}`;
-                        shareModal.classList.remove('hidden');
-                    }
-                    else if (target.id === 'copyShareLinkBtn') {
-                        navigator.clipboard.writeText(shareLinkInput.value)
-                          .then(() => showToast("Đã sao chép liên kết!", "success"))
-                          .catch(() => showToast("Không thể sao chép.", "error"));
-                    }
-                    else if (target.id === 'closeShareModalBtn') {
-                        shareModal.classList.add('hidden');
-                    }
-                });
-
-                submitBtn.addEventListener('click', async () => {
-                    if (!eventData) return;
-                    
-                    const values = {};
-                    let firstValue = '';
-
-                    eventData.columns.forEach((col, index) => {
-                        const input = registrationForm.querySelector(`input[data-col-id="${col.id}"]`);
-                        const val = input ? input.value : '';
-                        values[col.id] = capitalizeFirst(val);
-                        if(index === 0) firstValue = val.trim();
-                    });
-
-                    if (!firstValue) {
-                        const firstColLabel = eventData.columns[0]?.label || 'trường đầu tiên';
-                        showToast(`Vui lòng nhập ${firstColLabel}.`, 'error'); return;
-                    }
-
-                    const newRegistrations = [...(eventData.registrations || [])];
-                    if (currentlyEditingId !== null) {
-                        const entryIndex = newRegistrations.findIndex(r => r.id === currentlyEditingId);
-                        if (entryIndex > -1) {
-                            newRegistrations[entryIndex].values = values;
-                            showToast('Cập nhật thành công!', 'success');
-                        }
-                    } else {
-                        newRegistrations.push({ id: Date.now(), values });
-                        showToast('Thêm thành công!', 'success');
-                    }
-                    await updateEvent({ registrations: newRegistrations });
-                    switchToaddMode();
-                    registrationForm.querySelector('input')?.focus();
-                });
-
-                reportBody.addEventListener('click', e => {
-                    const row = e.target.closest('tr[data-id]');
-                    if (!row) return;
-
-                    const id = Number(row.dataset.id);
-                    if (e.target.closest('button.btn-delete')) {
-                        showConfirmModal('Xoá mục này?', 'Bạn có chắc chắn không?', { action: () => {
-                            const newRegistrations = eventData.registrations.filter(r => r.id !== id);
-                            updateEvent({ registrations: newRegistrations });
-                            showToast('Đã xoá mục.');
-                        }});
-                    } else { 
-                        const entry = eventData?.registrations.find(r => r.id === id);
-                        if (!entry) return;
-                        registrationForm.querySelectorAll('input[data-col-id]').forEach(input => {
-                            input.value = entry.values[input.dataset.colId] || '';
-                        });
-                        currentlyEditingId = id;
-                        switchToEditMode(entry);
-                    }
-                });
-            
-                eventSelector.addEventListener('change', () => {
-                    window.location.hash = eventSelector.value;
-                });
-                chartColumnSelector.addEventListener('change', (e) => {
-                    if(eventData) {
-                        updateEvent({ selectedChartColumnId: e.target.value });
-                    }
-                });
-                actionsToggleBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    actionsContainer.classList.toggle('hidden');
-                });
-                document.addEventListener('click', (e) => {
-                    if (actionsContainer && !actionsContainer.contains(e.target) && !actionsToggleBtn.contains(e.target)) {
-                        actionsContainer.classList.add('hidden');
-                    }
-                });
-
-                manageColsModal.addEventListener('click', (e) => {
-                    const target = e.target.closest('button');
-                    if (!target) return;
-
-                    if (target.id === 'addNewColBtn') {
-                        const nextLabel = `Trường ${tempColumns.length + 1}`;
-                        tempColumns.push({ id: `col_${Date.now()}`, label: nextLabel });
-                        renderManageColsForm();
-                    } else if (target.classList.contains('delete-col-btn')) {
-                        const colIdToDelete = target.dataset.colId;
-                        if (tempColumns.length <= 1) {
-                            showToast("Phải có ít nhất một cột.", "error"); return;
-                        }
-                        const colLabel = tempColumns.find(c => c.id === colIdToDelete)?.label || '';
-                        const colElement = target.closest('.manage-cols-item');
-
-                        showConfirmModal('Xoá Cột?', `Bạn có chắc muốn xoá cột "${colLabel}"?\n\n⚠️ Thay đổi này chỉ là tạm thời và sẽ chỉ áp dụng vĩnh viễn sau khi bạn nhấn "Lưu & Cập nhật".`, {
-                            action: () => {
-                                if (colElement) {
-                                    colElement.classList.add('fade-out');
-                                    setTimeout(() => {
-                                        tempColumns = tempColumns.filter(c => c.id !== colIdToDelete);
-                                        renderManageColsForm();
-                                        showToast(`Đã xoá cột "${colLabel}" khỏi danh sách tạm.`, 'info');
-                                    }, 300);
-                                }
-                            }
-                        });
-                    } else if (target.id === 'saveManageColsBtn') {
-                        const activeList = eventData;
-                        
-                        manageColsModal.querySelectorAll('#manageColsForm input').forEach(input => {
-                            const col = tempColumns.find(c => c.id === input.dataset.colId);
-                            if (col) col.label = input.value.trim() || 'Không tên';
-                        });
-
-                        const originalColumnIds = new Set(activeList.columns.map(c => c.id));
-                        const newColumnIds = new Set(tempColumns.map(c => c.id));
-                        const deletedColumnIds = [...originalColumnIds].filter(id => !newColumnIds.has(id));
-
-                        let newRegistrations = activeList.registrations;
-                        if(deletedColumnIds.length > 0) {
-                             newRegistrations = activeList.registrations.map(reg => {
-                                const newValues = { ...reg.values };
-                                deletedColumnIds.forEach(deletedId => {
-                                    if (newValues[deletedId]) delete newValues[deletedId];
-                                });
-                                return { ...reg, values: newValues };
-                            });
-                        }
-                        
-                        updateEvent({ columns: tempColumns, registrations: newRegistrations });
-                        
-                        manageColsModal.classList.add('hidden');
-                        showToast('Cấu trúc cột đã được cập nhật!');
-                    } else if (target.id === 'cancelManageColsBtn') {
-                        manageColsModal.classList.add('hidden');
-                    }
-                });
-                
-                document.getElementById('cancelExportBtn').addEventListener('click', () => exportOptionsModal.classList.add('hidden'));
-                document.getElementById('logoUploader').addEventListener('change', (e) => {
-                    const file = e.target.files[0];
-                    if (file && file.type.startsWith('image/')) {
-                        const reader = new FileReader();
-                        reader.onload = (event) => {
-                            uploadedLogo = event.target.result;
-                            const preview = document.getElementById('logoPreview');
-                            preview.src = uploadedLogo;
-                            preview.classList.remove('hidden');
-                        };
-                        reader.readAsDataURL(file);
-                    } else { uploadedLogo = null; }
-                });
-                document.getElementById('proceedExportBtn').addEventListener('click', () => {
-                    const signerName = document.getElementById('signerNameInput').value.trim();
-                    exportOptionsModal.classList.add('hidden');
-                    
-                    if (currentExportType === 'jpg') exportJpg(signerName, uploadedLogo);
-                    else if (currentExportType === 'excel') exportExcel(signerName);
-                });
-            } catch (error) {
-                console.error("Initialization failed:", error);
-            }
-        });
-        
-        window.addEventListener('hashchange', () => {
-            const eventId = window.location.hash.substring(1);
-            if (eventId && eventId !== currentEventId) {
-                loadEvent(eventId);
-            } else if (!eventId && user) {
-                 listenToUserEvents(true);
+            initializeEventListeners();
+            await initializeAppLogic();
+            if(user) {
+                listenToUserEvents();
+                await loadEventFromUrl();
             }
         });
 
