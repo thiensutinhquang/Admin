@@ -1,15 +1,15 @@
 {
-  "name": "Sự kiện",
-  "short_name": "Sự kiện",
-  "description": "Ứng dụng quản lý sự kiện",
+  "id": "./",
+  "name": "Ứng dụng Sự kiện Minh Sư Tịnh Quang",
+  "short_name": "Sự kiện MSTQ",
+  "description": "Ứng dụng độc lập quản lý và trình bày các hoạt động, nghi lễ, và sự kiện tâm linh của Minh Sư Tịnh Quang.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "display_override": ["window-controls-overlay", "standalone", "tabbed"],
+  // "display_override": ["window-controls-overlay", "standalone", "tabbed"], // Đã comment/xóa do lỗi "property 'display_override' is not allowed" trong console
   "orientation": "portrait",
   "background_color": "#1e293b",
   "theme_color": "#1e293b",
-  "id": "./",
   "icons": [
     {
       "src": "icon-192.png",
@@ -24,59 +24,98 @@
       "purpose": "any maskable"
     },
     {
-      "src": "icon-192-any.png",
+      "src": "icon-192-any.png", // Thêm icon purpose "any" để đáp ứng yêu cầu PWA Builder
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     }
+    // Bạn nên cung cấp các kích thước icon khác nếu cần cho sự đa dạng.
   ],
   "screenshots": [
     {
       "src": "images/screenshot1.png",
       "type": "image/png",
-      "sizes": "1280x720",
-      "form_factor": "wide",
+      "sizes": "1280x720", // Kích thước lớn hơn, phù hợp cho Play Store
+      "form_factor": "wide", // Cho máy tính bảng/desktop
       "label": "Giao diện chính trên máy tính bảng"
     },
     {
       "src": "images/screenshot2.png",
       "type": "image/png",
-      "sizes": "720x1280",
-      "form_factor": "narrow",
+      "sizes": "720x1280", // Kích thước lớn hơn, phù hợp cho điện thoại
+      "form_factor": "narrow", // Cho điện thoại
       "label": "Giao diện chính trên điện thoại"
     },
     {
-      "src": "images/screenshot3.png",
+      "src": "images/screenshot3.png", // Thêm một ảnh chụp màn hình bổ sung (bạn cần tạo tệp này)
       "type": "image/png",
       "sizes": "1280x720",
       "form_factor": "wide",
-      "label": "Tính năng thêm sự kiện"
+      "label": "Tính năng quản lý cột"
     }
+    // Cân nhắc thêm các ảnh chụp màn hình khác (ví dụ: 2 ảnh ngang, 2 ảnh dọc là lý tưởng cho Play Store)
   ],
   "launch_handler": {
     "client_mode": "focus-existing"
   },
   "file_handlers": [
     {
-      "action": "/handle-file",
+      "action": "./handle-file", // Đã sửa đường dẫn thành tương đối với ./
       "accept": {
         "text/csv": [".csv"],
-        "application/json": [".json"]
+        "application/json": [".json"],
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"]
       },
       "icons": [
         {
-          "src": "icon-48.png",
+          "src": "icon-48.png", // Bạn cần tạo tệp icon này
           "sizes": "48x48",
           "type": "image/png"
         }
       ]
     }
   ],
-  "handle_links": "preferred",
+  "handle_links": "preferred", // Đã thêm để kiểm soát cách liên kết được mở
   "protocol_handlers": [
     {
       "protocol": "web+sukien",
-      "url": "/handle-protocol?url=%s"
+      "url": "./handle-protocol?url=%s" // Đã sửa đường dẫn thành tương đối với ./
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Tạo Sự Kiện Mới",
+      "short_name": "Tạo Mới",
+      "description": "Nhanh chóng tạo một sự kiện tâm linh mới",
+      "url": "./index.html?action=new-event",
+      "icons": [
+        { "src": "icon-96.png", "sizes": "96x96", "type": "image/png" } // Bạn cần tạo tệp icon này
+      ]
+    },
+    {
+      "name": "Xem Báo Cáo",
+      "short_name": "Báo Cáo",
+      "description": "Truy cập nhanh vào bảng báo cáo sự kiện",
+      "url": "./index.html?action=view-report",
+      "icons": [
+        { "src": "icon-96.png", "sizes": "96x96", "type": "image/png" }
+      ]
+    }
+  ],
+  "widgets": [
+    {
+      "name": "Lịch sự kiện",
+      "description": "Hiển thị các sự kiện sắp tới",
+      "url": "./widgets/calendar.html", // Bạn cần tạo tệp này
+      "type": "widget",
+      "sizes": ["50x50", "100x50"], // Kích thước ví dụ
+      "screenshots": [
+        {
+          "src": "images/widget-screenshot-calendar.png", // Bạn cần tạo tệp này
+          "sizes": "400x200",
+          "type": "image/png"
+        }
+      ]
     }
   ]
 }
