@@ -1,0 +1,23 @@
+{
+  "name": "Tool Quản lý Sự kiện Đa năng dành cho Ban Làm Việc MSTQ",
+  "short_name": "Tool Qly Đa năng",
+  "start_url": "./Noidungdangkyvannghe.html",
+  "display": "standalone",
+  "background_color": "#111827",
+  "theme_color": "#111827",
+  "description": "Công cụ quản lý sự kiện đa năng, cho phép cộng tác thời gian thực.",
+  "icons": [
+    {
+      "src": "https://placehold.co/192x192/000000/FFFFFF/png?text=MS%0ATQ",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://placehold.co/512x512/000000/FFFFFF/png?text=MS%0ATQ",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
