@@ -1,80 +1,64 @@
-// Tên của bộ nhớ cache, thay đổi phiên bản khi có cập nhật lớn
-const CACHE_NAME = 'event-manager-pwa-v3';
+// Tên của bộ nhớ cache — phiên bản dành riêng cho sự kiện
+const CACHE_NAME = 'mstq-sukien-pwa-v1';
 
-// Danh sách các tệp cần được cache để ứng dụng hoạt động offline
+// Danh sách các tệp cần cache để app sự kiện hoạt động offline
 const urlsToCache = [
-  './', // Cache trang chính (index)
-  './Noidungdangkyvannghe.html', // Cache file HTML cụ thể
-  './manifest.json', // Cache file manifest
+  './',                 // Cache index.html (ứng dụng chính)
+  './index.html',
+  './manifest.json',   // manifest riêng cho sukien
+  './style.css',       // nếu có file CSS riêng
+  './script.js',       // nếu có JavaScript riêng
+  './images/logo.png', // nếu có logo
   'https://cdn.tailwindcss.com',
   'https://cdn.jsdelivr.net/npm/chart.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js',
-  'https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js',
   'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap'
 ];
 
-// Sự kiện 'install': được kích hoạt khi service worker được cài đặt lần đầu
+// Sự kiện 'install': cache tài nguyên
 self.addEventListener('install', event => {
-  // Chờ cho đến khi các tệp đã được cache thành công
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => {
-        console.log('Service Worker: Đã mở cache và đang tải tài nguyên...');
-        // Thêm tất cả các URL vào cache
-        return cache.addAll(urlsToCache);
-      })
+    caches.open(CACHE_NAME).then(cache => {
+      console.log('Service Worker (sukien): Đang cài đặt và cache...');
+      return cache.addAll(urlsToCache);
+    })
   );
 });
 
-// Sự kiện 'fetch': được kích hoạt mỗi khi có một yêu cầu mạng từ ứng dụng
+// Sự kiện 'fetch': ưu tiên lấy từ cache trước
 self.addEventListener('fetch', event => {
-  // Bỏ qua các yêu cầu không phải là GET hoặc các yêu cầu tới Firestore
-  if (event.request.method !== 'GET' || event.request.url.includes('firestore.googleapis.com')) {
-    return;
-  }
-  
-  // Chiến lược: Cache First (Ưu tiên Cache)
+  if (event.request.method !== 'GET') return;
+
   event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        // Nếu tìm thấy trong cache, trả về ngay lập tức
-        if (response) {
-          return response;
+    caches.match(event.request).then(response => {
+      if (response) return response;
+
+      return fetch(event.request).then(networkResponse => {
+        if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
+          return networkResponse;
         }
-        
-        // Nếu không, thực hiện yêu cầu mạng
-        return fetch(event.request).then(
-          (response) => {
-            // Kiểm tra xem response có hợp lệ không
-            if(!response || response.status !== 200 || response.type !== 'basic') {
-              return response;
-            }
 
-            // Sao chép response để có thể đưa vào cache và trả về cho trình duyệt
-            var responseToCache = response.clone();
+        const responseToCache = networkResponse.clone();
+        caches.open(CACHE_NAME).then(cache => {
+          cache.put(event.request, responseToCache);
+        });
 
-            caches.open(CACHE_NAME)
-              .then((cache) => {
-                cache.put(event.request, responseToCache);
-              });
-
-            return response;
-          }
-        );
-      })
+        return networkResponse;
+      }).catch(err => {
+        console.warn('Không thể lấy được và không có trong cache:', event.request.url);
+      });
+    })
   );
 });
 
-// Sự kiện 'activate': dọn dẹp các cache cũ không còn được sử dụng
+// Sự kiện 'activate': xóa cache cũ nếu cần
 self.addEventListener('activate', event => {
   const cacheWhitelist = [CACHE_NAME];
   event.waitUntil(
     caches.keys().then(cacheNames => {
       return Promise.all(
         cacheNames.map(cacheName => {
-          if (cacheWhitelist.indexOf(cacheName) === -1) {
-            console.log('Service Worker: Đang xoá cache cũ:', cacheName);
+          if (!cacheWhitelist.includes(cacheName)) {
+            console.log('Service Worker (sukien): Đang xoá cache cũ:', cacheName);
             return caches.delete(cacheName);
           }
         })
