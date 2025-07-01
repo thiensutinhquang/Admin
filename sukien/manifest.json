@@ -1,13 +1,15 @@
 {
+  "id": "/sukien/",
   "name": "Ứng dụng Sự kiện Minh Sư Tịnh Quang",
   "short_name": "Sự kiện MSTQ",
+  "description": "Ứng dụng độc lập quản lý và trình bày các hoạt động, nghi lễ, và sự kiện tâm linh của Minh Sư Tịnh Quang.",
   "start_url": "index.html",
   "scope": "./",
   "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
   "orientation": "portrait",
   "background_color": "#1e293b",
   "theme_color": "#1e293b",
-  "description": "Ứng dụng độc lập quản lý và trình bày các hoạt động, nghi lễ, và sự kiện tâm linh của Minh Sư Tịnh Quang.",
   "icons": [
     {
       "src": "icons/icon-192.png",
@@ -21,5 +23,20 @@
       "type": "image/png",
       "purpose": "any maskable"
     }
-  ]
+  ],
+  "screenshots": [
+    {
+      "src": "images/screenshot1.png",
+      "type": "image/png",
+      "sizes": "540x720"
+    },
+    {
+      "src": "images/screenshot2.png",
+      "type": "image/png",
+      "sizes": "540x720"
+    }
+  ],
+  "launch_handler": {
+    "client_mode": "focus-existing"
+  }
 }
