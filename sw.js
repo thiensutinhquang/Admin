@@ -1,5 +1,5 @@
 // Tên của bộ nhớ cache, thay đổi phiên bản khi có cập nhật lớn
-const CACHE_NAME = 'event-manager-pwa-v2';
+const CACHE_NAME = 'event-manager-pwa-v3';
 
 // Danh sách các tệp cần được cache để ứng dụng hoạt động offline
 const urlsToCache = [
