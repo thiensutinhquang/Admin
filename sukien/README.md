@@ -63,4 +63,4 @@ Tại đây lưu trữ nội dung, kế hoạch, và tài liệu liên quan đ�
 
 **📌 Ghi chú:**  
 Mỗi sự kiện sẽ có một thư mục riêng bên trong `sukien/`, chứa toàn bộ thông tin chi tiết.
-✨ Ứng dụng được phát triển với tâm huyết phục vụ công tác tổ chức sự kiện nghiêm túc, hiệu quả & dễ sử dụng.
+✨ Ứng dụng được Tịnh Hải phát triển với tâm huyết phục vụ công tác tổ chức sự kiện nghiêm túc, hiệu quả & dễ sử dụng.
