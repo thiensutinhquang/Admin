@@ -412,7 +412,6 @@
         const renderUI = () => {
             if (!eventData || !eventSelector) return;
             if (eventNameEl) eventNameEl.textContent = eventData.name;
-            if (eventStatusEl) eventStatusEl.textContent = `ID: ${currentEventId}`;
             if (reportTitleEl) reportTitleEl.textContent = `Nội dung báo cáo chi tiết`;
             if (eventSelector) eventSelector.value = currentEventId;
             
