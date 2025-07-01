@@ -24,43 +24,51 @@
       "purpose": "any maskable"
     },
     {
-      "src": "icon-192-any.png", // Thêm icon purpose "any" để đáp ứng yêu cầu PWA Builder
+      "src": "icon-192-any.png", // Icon bổ sung cho purpose "any"
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
+    },
+    {
+      "src": "icon-48.png", // Icon cho file handlers
+      "sizes": "48x48",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-96.png", // Icon cho shortcuts
+      "sizes": "96x96",
+      "type": "image/png"
     }
-    // Bạn nên cung cấp các kích thước icon khác nếu cần cho sự đa dạng.
   ],
   "screenshots": [
     {
       "src": "images/screenshot1.png",
       "type": "image/png",
-      "sizes": "1280x720", // Kích thước lớn hơn, phù hợp cho Play Store
-      "form_factor": "wide", // Cho máy tính bảng/desktop
+      "sizes": "1280x720",
+      "form_factor": "wide",
       "label": "Giao diện chính trên máy tính bảng"
     },
     {
       "src": "images/screenshot2.png",
       "type": "image/png",
-      "sizes": "720x1280", // Kích thước lớn hơn, phù hợp cho điện thoại
-      "form_factor": "narrow", // Cho điện thoại
+      "sizes": "720x1280",
+      "form_factor": "narrow",
       "label": "Giao diện chính trên điện thoại"
     },
     {
-      "src": "images/screenshot3.png", // Thêm một ảnh chụp màn hình bổ sung (bạn cần tạo tệp này)
+      "src": "images/screenshot3.png", // Ảnh chụp màn hình bổ sung
       "type": "image/png",
       "sizes": "1280x720",
       "form_factor": "wide",
       "label": "Tính năng quản lý cột"
     }
-    // Cân nhắc thêm các ảnh chụp màn hình khác (ví dụ: 2 ảnh ngang, 2 ảnh dọc là lý tưởng cho Play Store)
   ],
   "launch_handler": {
     "client_mode": "focus-existing"
   },
   "file_handlers": [
     {
-      "action": "./handle-file", // Đã sửa đường dẫn thành tương đối với ./
+      "action": "./handle-file",
       "accept": {
         "text/csv": [".csv"],
         "application/json": [".json"],
@@ -68,18 +76,18 @@
       },
       "icons": [
         {
-          "src": "icon-48.png", // Bạn cần tạo tệp icon này
+          "src": "icon-48.png",
           "sizes": "48x48",
           "type": "image/png"
         }
       ]
     }
   ],
-  "handle_links": "preferred", // Đã thêm để kiểm soát cách liên kết được mở
+  "handle_links": "preferred",
   "protocol_handlers": [
     {
       "protocol": "web+sukien",
-      "url": "./handle-protocol?url=%s" // Đã sửa đường dẫn thành tương đối với ./
+      "url": "./handle-protocol?url=%s"
     }
   ],
   "shortcuts": [
@@ -89,7 +97,7 @@
       "description": "Nhanh chóng tạo một sự kiện tâm linh mới",
       "url": "./index.html?action=new-event",
       "icons": [
-        { "src": "icon-96.png", "sizes": "96x96", "type": "image/png" } // Bạn cần tạo tệp icon này
+        { "src": "icon-96.png", "sizes": "96x96", "type": "image/png" }
       ]
     },
     {
@@ -106,12 +114,12 @@
     {
       "name": "Lịch sự kiện",
       "description": "Hiển thị các sự kiện sắp tới",
-      "url": "./widgets/calendar.html", // Bạn cần tạo tệp này
+      "url": "./widgets/calendar.html",
       "type": "widget",
-      "sizes": ["50x50", "100x50"], // Kích thước ví dụ
+      "sizes": ["50x50", "100x50"],
       "screenshots": [
         {
-          "src": "images/widget-screenshot-calendar.png", // Bạn cần tạo tệp này
+          "src": "images/widget-screenshot-calendar.png",
           "sizes": "400x200",
           "type": "image/png"
         }
