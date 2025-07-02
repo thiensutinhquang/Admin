@@ -6,7 +6,6 @@
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  // "display_override": ["window-controls-overlay", "standalone", "tabbed"], // Đã comment/xóa do lỗi "property 'display_override' is not allowed" trong console
   "orientation": "portrait",
   "background_color": "#1e293b",
   "theme_color": "#1e293b",
@@ -22,41 +21,25 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
-    },
-    {
-      "src": "icon-192-any.png", // Icon bổ sung cho purpose "any"
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "icon-48.png", // Icon cho file handlers
-      "sizes": "48x48",
-      "type": "image/png"
-    },
-    {
-      "src": "icon-96.png", // Icon cho shortcuts
-      "sizes": "96x96",
-      "type": "image/png"
     }
   ],
   "screenshots": [
     {
       "src": "images/screenshot1.png",
       "type": "image/png",
-      "sizes": "1280x720", // Kích thước lớn hơn, phù hợp cho Play Store
-      "form_factor": "wide", // Cho máy tính bảng/desktop
+      "sizes": "1280x720",
+      "form_factor": "wide",
       "label": "Giao diện chính trên máy tính bảng"
     },
     {
       "src": "images/screenshot2.png",
       "type": "image/png",
       "sizes": "720x1280",
-      "form_factor": "narrow", // Cho điện thoại
+      "form_factor": "narrow",
       "label": "Giao diện chính trên điện thoại"
     },
     {
-      "src": "images/screenshot3.png", // Ảnh chụp màn hình bổ sung (bạn cần tạo tệp này)
+      "src": "images/screenshot3.png",
       "type": "image/png",
       "sizes": "1280x720",
       "form_factor": "wide",
@@ -107,22 +90,6 @@
       "url": "./index.html?action=view-report",
       "icons": [
         { "src": "icon-96.png", "sizes": "96x96", "type": "image/png" }
-      ]
-    }
-  ],
-  "widgets": [
-    {
-      "name": "Lịch sự kiện",
-      "description": "Hiển thị các sự kiện sắp tới",
-      "url": "./widgets/calendar.html",
-      "type": "widget",
-      "sizes": ["50x50", "100x50"],
-      "screenshots": [
-        {
-          "src": "images/widget-screenshot-calendar.png",
-          "sizes": "400x200",
-          "type": "image/png"
-        }
       ]
     }
   ]
