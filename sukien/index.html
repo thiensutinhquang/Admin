@@ -5,19 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tool Quản lý Sự kiện Đa năng dành cho Ban Làm Việc MSTQ</title>
     
-    <!-- PWA Manifest & Theme Color -->
     <link rel="manifest" href="./manifest.json">
     <meta name="theme-color" content="#1e293b">
-    <link rel="apple-touch-icon" href="./icons/icon-192.png">
+    
+    <link rel="apple-touch-icon" href="./icon-192.png">
     <link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180.png">
     <link rel="apple-touch-icon" sizes="152x152" href="./icons/icon-152.png">
     <link rel="apple-touch-icon" sizes="120x120" href="./icons/icon-120.png">
     
-    <!-- Local Stylesheets -->
     <link rel="stylesheet" href="./lib/tailwindcss.min.css">
     <link rel="stylesheet" href="./style.css">
     
-    <!-- Local Libraries -->
     <script src="./lib/chart.min.js"></script>
     <script src="./lib/xlsx.full.min.js"></script>
     <script src="./lib/html2canvas.min.js"></script>
@@ -45,10 +43,10 @@
                     <label for="eventSelector" class="block mb-2 text-sm text-white font-medium">🎯 Chọn sự kiện đã tạo:</label>
                     <div class="flex gap-2 items-center">
                         <select id="eventSelector" class="form-select w-full max-w-md">
-                          <option disabled selected>Đang tải danh sách sự kiện...</option>
+                            <option disabled selected>Đang tải danh sách sự kiện...</option>
                         </select>
                         <button id="deleteSelectedEventBtn" class="btn btn-delete text-sm" data-tooltip="Xoá sự kiện đã chọn">🗑️ Xoá</button>
-                      </div>
+                    </div>
                 </div>
                 <div class="flex flex-col sm:flex-row flex-wrap gap-2 justify-center">
                     <button id="newListBtn" class="btn btn-primary w-full sm:w-auto" data-tooltip="Tạo một sự kiện mới">Tạo sự kiện mới</button>
@@ -62,11 +60,11 @@
             <div id="form-panel" class="bg-gray-800 p-6 rounded-xl shadow-lg lg:col-span-2 self-start sticky top-8">
                 <h2 id="form-title" class="text-xl font-semibold mb-6 border-b border-gray-700 pb-4 text-center"></h2>
                 <form id="registrationForm" class="space-y-6"></form>
-                 <div id="form-actions" class="pt-5 space-y-3 border-t border-gray-700 mt-5">
+                <div id="form-actions" class="pt-5 space-y-3 border-t border-gray-700 mt-5">
                     <button type="button" id="submitBtn" class="btn btn-lg w-full">Thêm vào Báo cáo</button>
                     <div id="edit-actions" class="hidden grid grid-cols-2 gap-3">
-                         <button type="button" id="deleteFromFormBtn" class="btn btn-delete w-full" data-tooltip="Xoá mục đang được chọn">Xoá mục</button>
-                         <button type="button" id="cancelEditBtn" class="btn btn-secondary w-full" data-tooltip="Huỷ chỉnh sửa và quay lại chế độ thêm mới">Huỷ bỏ</button>
+                        <button type="button" id="deleteFromFormBtn" class="btn btn-delete w-full" data-tooltip="Xoá mục đang được chọn">Xoá mục</button>
+                        <button type="button" id="cancelEditBtn" class="btn btn-secondary w-full" data-tooltip="Huỷ chỉnh sửa và quay lại chế độ thêm mới">Huỷ bỏ</button>
                     </div>
                 </div>
             </div>
@@ -90,7 +88,7 @@
                         </div>
                     </div>
                 </div>
-                 <p class="text-gray-400 mt-1 mb-4">Tổng số mục: <span id="participantCounter" class="font-bold text-white">0</span></p>
+                <p class="text-gray-400 mt-1 mb-4">Tổng số mục: <span id="participantCounter" class="font-bold text-white">0</span></p>
 
                 <div id="reportContainer" class="bg-gray-800 overflow-x-auto flex-grow">
                     <table class="w-full text-sm text-gray-300 border-collapse">
@@ -100,21 +98,20 @@
                         <tbody id="reportBody"></tbody>
                     </table>
                 </div>
-                 <div class="mt-8">
+                <div class="mt-8">
                     <div class="flex justify-between items-center mb-4">
-                      <h3 id="chartTitle" class="text-xl font-semibold"></h3>
-                      <div class="flex items-center gap-2">
-                        <label for="chartColumnSelector" class="text-sm">Thống kê theo:</label>
-                        <select id="chartColumnSelector" class="form-select text-sm py-1 px-2 w-40"></select>
-                      </div>
+                        <h3 id="chartTitle" class="text-xl font-semibold"></h3>
+                        <div class="flex items-center gap-2">
+                            <label for="chartColumnSelector" class="text-sm">Thống kê theo:</label>
+                            <select id="chartColumnSelector" class="form-select text-sm py-1 px-2 w-40"></select>
+                        </div>
                     </div>
                     <div class="bg-gray-700 p-4 rounded-lg h-80"><canvas id="provinceChart"></canvas></div>
-                 </div>
+                </div>
             </div>
         </main>
     </div>
 
-    <!-- Modals -->
     <div id="confirmModal" class="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-[60] hidden">
         <div class="bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-sm mx-4">
             <h3 id="modalTitle" class="text-xl font-bold text-white mb-4"></h3>
@@ -170,16 +167,14 @@
                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                 </button>
             </div>
-             <div class="flex justify-end gap-4 mt-6">
+            <div class="flex justify-end gap-4 mt-6">
                 <button id="closeShareModalBtn" type="button" class="btn btn-secondary">Đóng</button>
             </div>
         </div>
     </div>
 
-    <!-- Main App Logic -->
     <script type="module" src="./script.js"></script>
 
-    <!-- Service Worker Registration -->
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
