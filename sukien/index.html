@@ -5,38 +5,222 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tool Quản lý Sự kiện Đa năng dành cho Ban Làm Việc MSTQ</title>
     
+    <!-- Manifest for PWA capabilities -->
     <link rel="manifest" href="./manifest.json">
     <meta name="theme-color" content="#1e293b">
     
+    <!-- Apple Touch Icons for PWA -->
     <link rel="apple-touch-icon" href="./icon-192.png">
     <link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180.png">
     <link rel="apple-touch-icon" sizes="152x152" href="./icons/icon-152.png">
     <link rel="apple-touch-icon" sizes="120x120" href="./icons/icon-120.png">
     
-    <link rel="stylesheet" href="./lib/tailwindcss.min.css">
-    <link rel="stylesheet" href="./style.css">
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Custom CSS for additional styling -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* General button styles */
+        .btn {
+            @apply px-4 py-2 rounded-full font-semibold transition-all duration-200 ease-in-out flex items-center justify-center text-center;
+        }
+
+        /* Primary button */
+        .btn-primary {
+            @apply bg-blue-600 text-white hover:bg-blue-700 focus:ring-4 focus:ring-blue-500 focus:ring-opacity-50;
+        }
+
+        /* Secondary button */
+        .btn-secondary {
+            @apply bg-gray-600 text-white hover:bg-gray-700 focus:ring-4 focus:ring-gray-500 focus:ring-opacity-50;
+        }
+
+        /* Save button */
+        .btn-save {
+            @apply bg-green-600 text-white hover:bg-green-700 focus:ring-4 focus:ring-green-500 focus:ring-opacity-50;
+        }
+
+        /* Delete button */
+        .btn-delete {
+            @apply bg-red-600 text-white hover:bg-red-700 focus:ring-4 focus:ring-red-500 focus:ring-opacity-50;
+        }
+
+        /* Large button */
+        .btn-lg {
+            @apply text-lg py-3;
+        }
+
+        /* Form input styles */
+        .form-input, .form-select {
+            @apply w-full p-2.5 rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:ring-blue-500 focus:border-blue-500;
+        }
+
+        /* Checkbox/Radio styles */
+        .form-checkbox, .form-radio {
+            @apply h-4 w-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500;
+        }
+
+        /* Loading overlay */
+        #loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            flex-direction: column;
+        }
+
+        #loading-text {
+            animation: pulse 1.5s infinite ease-in-out;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.5; }
+            50% { opacity: 1; }
+            100% { opacity: 0.5; }
+        }
+
+        /* Toast notifications */
+        #toast-container {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 70;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .toast {
+            @apply p-3 rounded-lg shadow-md text-white flex items-center gap-2;
+            min-width: 200px;
+            max-width: 300px;
+            animation: slideIn 0.3s forwards, fadeOut 0.5s forwards 2.5s;
+        }
+
+        .toast.success { @apply bg-green-500; }
+        .toast.error { @apply bg-red-500; }
+        .toast.info { @apply bg-blue-500; }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+
+        /* Tooltip styles */
+        [data-tooltip] {
+            position: relative;
+        }
+
+        [data-tooltip]:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%) translateY(-8px);
+            background-color: rgba(0, 0, 0, 0.75);
+            color: white;
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            white-space: nowrap;
+            z-index: 50;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
+        }
+
+        [data-tooltip]:hover::after {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* Table specific styles */
+        #reportContainer table th, #reportContainer table td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #4a5568; /* gray-700 */
+            text-align: left;
+        }
+
+        #reportContainer table th {
+            font-weight: 600;
+        }
+
+        #reportContainer table tbody tr:hover {
+            background-color: #2d3748; /* gray-700 */
+            cursor: pointer;
+        }
+
+        /* Sticky form panel on large screens */
+        @media (min-width: 1024px) {
+            #form-panel {
+                position: sticky;
+                top: 1rem; /* Adjust as needed */
+                max-height: calc(100vh - 2rem); /* Adjust as needed */
+                overflow-y: auto;
+            }
+        }
+
+        /* Accessibility: Screen reader only class */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border-width: 0;
+        }
+    </style>
     
-    <script src="./lib/chart.min.js"></script>
-    <script src="./lib/xlsx.full.min.js"></script>
-    <script src="./lib/html2canvas.min.js"></script>
-    <script src="./lib/Sortable.min.js"></script>
+    <!-- Chart.js for data visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js"></script>
+    <!-- SheetJS for Excel export -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/xlsx.full.min.js"></script>
+    <!-- html2canvas for image export -->
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <!-- Sortable.js for drag-and-drop -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 </head>
 <body class="bg-gray-900 text-gray-100 min-h-screen p-4 sm:p-6 md:p-8">
 
-    <div id="loading-overlay">
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="hidden">
         <div id="loading-text" class="text-white text-lg">Đang kết nối...</div>
     </div>
 
+    <!-- Toast Notification Container -->
     <div id="toast-container"></div>
+    <!-- Screen Reader Announcer -->
     <div id="sr-announcer" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+    <!-- Datalists Container (for dynamic datalists) -->
     <div id="datalists-container"></div>
 
     <div class="max-w-screen-2xl mx-auto">
+        <!-- Header Section -->
         <header class="mb-6 text-center relative">
             <h1 class="text-3xl sm:text-4xl font-bold text-white">Tool Quản lý Sự kiện Đa năng dành cho Ban Làm Việc MSTQ</h1>
             <p class="text-gray-400 mt-2">Tạo, quản lý, và tùy chỉnh hoàn toàn cấu trúc danh sách.</p>
         </header>
 
+        <!-- Event Selection and Management Section -->
         <section class="bg-gray-800 p-4 rounded-xl shadow-lg mb-8">
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div class="flex-grow w-full md:w-auto">
@@ -56,7 +240,9 @@
             </div>
         </section>
 
+        <!-- Main Content Area: Form and Report -->
         <main class="grid grid-cols-1 lg:grid-cols-5 gap-8">
+            <!-- Form Panel -->
             <div id="form-panel" class="bg-gray-800 p-6 rounded-xl shadow-lg lg:col-span-2 self-start sticky top-8">
                 <h2 id="form-title" class="text-xl font-semibold mb-6 border-b border-gray-700 pb-4 text-center"></h2>
                 <form id="registrationForm" class="space-y-6"></form>
@@ -69,6 +255,7 @@
                 </div>
             </div>
 
+            <!-- Report and Chart Panel -->
             <div class="bg-gray-800 p-6 rounded-xl shadow-lg flex flex-col lg:col-span-3">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
                     <div class="flex items-center gap-4">
@@ -112,6 +299,7 @@
         </main>
     </div>
 
+    <!-- Confirmation Modal -->
     <div id="confirmModal" class="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-[60] hidden">
         <div class="bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-sm mx-4">
             <h3 id="modalTitle" class="text-xl font-bold text-white mb-4"></h3>
@@ -124,6 +312,7 @@
         </div>
     </div>
     
+    <!-- Manage Columns Modal -->
     <div id="manageColsModal" class="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50 hidden">
         <div class="bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-lg mx-4">
             <h3 class="text-xl font-bold text-white mb-6">Quản lý Cột</h3>
@@ -136,6 +325,7 @@
         </div>
     </div>
     
+    <!-- Export Options Modal -->
     <div id="exportOptionsModal" class="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50 hidden">
         <div class="bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md mx-4">
             <h3 id="exportModalTitle" class="text-xl font-bold text-white mb-6">Tuỳ chọn Xuất File</h3>
@@ -157,6 +347,7 @@
         </div>
     </div>
     
+    <!-- Share Modal -->
     <div id="shareModal" class="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50 hidden">
         <div class="bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-lg mx-4">
             <h3 class="text-xl font-bold text-white mb-4">Chia sẻ Sự kiện</h3>
@@ -173,16 +364,1688 @@
         </div>
     </div>
 
-    <script type="module" src="./script.js"></script>
+    <!-- Firebase SDK Imports -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, addDoc, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-    <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js')
-            .then(reg => console.log('✅ Service Worker đã đăng ký:', reg.scope))
-            .catch(err => console.error('❌ Lỗi khi đăng ký Service Worker:', err));
+        // Global variables for Firebase instances
+        let app;
+        let db;
+        let auth;
+        let userId; // Will store the authenticated user ID or a random ID
+
+        // Function to show toast notifications
+        function showToast(message, type = 'info') {
+            const toastContainer = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `<span>${message}</span>`;
+            toastContainer.appendChild(toast);
+
+            // Announce to screen readers
+            const srAnnouncer = document.getElementById('sr-announcer');
+            srAnnouncer.textContent = message;
+
+            setTimeout(() => {
+                toast.remove();
+                srAnnouncer.textContent = ''; // Clear announcer after toast disappears
+            }, 3000);
+        }
+
+        // Function to show a custom confirmation modal
+        function showConfirmModal(title, message, showInput = false, inputPlaceholder = '') {
+            return new Promise(resolve => {
+                const modal = document.getElementById('confirmModal');
+                const modalTitle = document.getElementById('modalTitle');
+                const modalMessage = document.getElementById('modalMessage');
+                const modalInputWrapper = document.getElementById('modal-input-wrapper');
+                const modalInput = document.getElementById('modalInput');
+                const confirmBtn = document.getElementById('confirmBtn');
+                const cancelBtn = document.getElementById('cancelBtn');
+
+                modalTitle.textContent = title;
+                modalMessage.textContent = message;
+                modalInput.value = ''; // Clear previous input
+
+                if (showInput) {
+                    modalInputWrapper.classList.remove('hidden');
+                    modalInput.placeholder = inputPlaceholder;
+                    modalInput.focus();
+                } else {
+                    modalInputWrapper.classList.add('hidden');
+                }
+
+                modal.classList.remove('hidden');
+
+                const onConfirm = () => {
+                    modal.classList.add('hidden');
+                    confirmBtn.removeEventListener('click', onConfirm);
+                    cancelBtn.removeEventListener('click', onCancel);
+                    resolve(showInput ? modalInput.value : true);
+                };
+
+                const onCancel = () => {
+                    modal.classList.add('hidden');
+                    confirmBtn.removeEventListener('click', onConfirm);
+                    cancelBtn.removeEventListener('click', onCancel);
+                    resolve(false);
+                };
+
+                confirmBtn.addEventListener('click', onConfirm);
+                cancelBtn.addEventListener('click', onCancel);
+            });
+        }
+
+        // --- Core Application Logic ---
+        let currentEventId = null;
+        let currentEventData = null; // Stores the entire event document
+        let currentReportData = []; // Stores the items in the report
+        let chartInstance = null; // Chart.js instance
+
+        // Default columns for a new event
+        const defaultColumns = [
+            { id: 'stt', label: 'STT', type: 'number', required: false, editable: false, show: true },
+            { id: 'ten', label: 'Tên', type: 'text', required: true, editable: true, show: true },
+            { id: 'sdt', label: 'Số Điện Thoại', type: 'tel', required: false, editable: true, show: true },
+            { id: 'diachi', label: 'Địa Chỉ', type: 'text', required: false, editable: true, show: true },
+            { id: 'ghichu', label: 'Ghi Chú', type: 'textarea', required: false, editable: true, show: true }
+        ];
+
+        // DOM Elements
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const eventSelector = document.getElementById('eventSelector');
+        const deleteSelectedEventBtn = document.getElementById('deleteSelectedEventBtn');
+        const newListBtn = document.getElementById('newListBtn');
+        const renameListBtn = document.getElementById('renameListBtn');
+        const shareListBtn = document.getElementById('shareListBtn');
+
+        const formTitle = document.getElementById('form-title');
+        const registrationForm = document.getElementById('registrationForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const editActions = document.getElementById('edit-actions');
+        const deleteFromFormBtn = document.getElementById('deleteFromFormBtn');
+        const cancelEditBtn = document.getElementById('cancelEditBtn');
+
+        const reportTitle = document.getElementById('reportTitle');
+        const participantCounter = document.getElementById('participantCounter');
+        const manageColsBtn = document.getElementById('manageColsBtn');
+        const actionsToggleBtn = document.getElementById('actionsToggleBtn');
+        const actionsContainer = document.getElementById('actionsContainer');
+        const exportExcelBtn = document.getElementById('exportExcelBtn');
+        const exportTxtBtn = document.getElementById('exportTxtBtn');
+        const exportJpgBtn = document.getElementById('exportJpgBtn');
+        const clearAllBtn = document.getElementById('clearAllBtn');
+        const reportHeaderRow = document.getElementById('reportHeaderRow');
+        const reportBody = document.getElementById('reportBody');
+        const chartTitle = document.getElementById('chartTitle');
+        const chartColumnSelector = document.getElementById('chartColumnSelector');
+        const provinceChartCanvas = document.getElementById('provinceChart');
+
+        // Modals and their elements
+        const manageColsModal = document.getElementById('manageColsModal');
+        const manageColsForm = document.getElementById('manageColsForm');
+        const addNewColBtn = document.getElementById('addNewColBtn');
+        const cancelManageColsBtn = document.getElementById('cancelManageColsBtn');
+        const saveManageColsBtn = document.getElementById('saveManageColsBtn');
+
+        const exportOptionsModal = document.getElementById('exportOptionsModal');
+        const exportModalTitle = document.getElementById('exportModalTitle');
+        const signerNameInput = document.getElementById('signerNameInput');
+        const logoUploader = document.getElementById('logoUploader');
+        const logoPreview = document.getElementById('logoPreview');
+        const cancelExportBtn = document.getElementById('cancelExportBtn');
+        const proceedExportBtn = document.getElementById('proceedExportBtn');
+
+        const shareModal = document.getElementById('shareModal');
+        const shareLinkInput = document.getElementById('shareLinkInput');
+        const copyShareLinkBtn = document.getElementById('copyShareLinkBtn');
+        const closeShareModalBtn = document.getElementById('closeShareModalBtn');
+
+
+        // --- Firebase Initialization and Authentication ---
+        window.addEventListener('load', async () => {
+            loadingOverlay.classList.remove('hidden');
+            try {
+                // Initialize Firebase app
+                const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+
+                // Sign in with custom token or anonymously
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                    showToast('Đăng nhập thành công!', 'success');
+                } else {
+                    await signInAnonymously(auth);
+                    showToast('Đăng nhập ẩn danh thành công!', 'success');
+                }
+
+                // Listen for auth state changes and set userId
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        console.log("User ID:", userId);
+                        // Now that we have a user ID, load events
+                        loadEvents();
+                    } else {
+                        // User is signed out, handle accordingly (e.g., clear data)
+                        userId = null;
+                        console.log("User is signed out.");
+                        eventSelector.innerHTML = '<option disabled selected>Vui lòng đăng nhập để xem sự kiện</option>';
+                        showToast('Bạn đã đăng xuất. Vui lòng đăng nhập lại.', 'info');
+                    }
+                    loadingOverlay.classList.add('hidden');
+                });
+
+            } catch (error) {
+                console.error("Lỗi khởi tạo Firebase hoặc đăng nhập:", error);
+                showToast(`Lỗi: ${error.message}`, 'error');
+                loadingOverlay.classList.add('hidden');
+            }
         });
-      }
+
+        // --- Event Management Functions ---
+
+        /**
+         * Generates a unique ID for new events/documents.
+         * @returns {string} A unique ID.
+         */
+        function generateUniqueId() {
+            return Date.now().toString(36) + Math.random().toString(36).substring(2, 9);
+        }
+
+        /**
+         * Gets the Firestore collection reference for events.
+         * Uses public collection for shared events, private for user-specific.
+         * @param {string} [eventId=null] - If provided, checks if it's a public event.
+         * @returns {firebase.firestore.CollectionReference}
+         */
+        function getEventsCollectionRef(eventId = null) {
+            const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+            if (eventId && eventId.startsWith('public_')) {
+                return collection(db, `artifacts/${appId}/public/data/events`);
+            }
+            return collection(db, `artifacts/${appId}/users/${userId}/events`);
+        }
+
+        /**
+         * Loads existing events from Firestore and populates the event selector.
+         */
+        async function loadEvents() {
+            if (!userId) {
+                showToast('Chưa có ID người dùng. Không thể tải sự kiện.', 'error');
+                return;
+            }
+
+            eventSelector.innerHTML = '<option disabled selected>Đang tải danh sách sự kiện...</option>';
+            try {
+                const privateEventsRef = getEventsCollectionRef();
+                const privateQuery = query(privateEventsRef);
+                const privateSnapshot = await getDocs(privateQuery);
+
+                const publicEventsRef = getEventsCollectionRef('public_'); // Check public collection
+                const publicQuery = query(publicEventsRef, where('sharedWith', 'array-contains', userId)); // Only show shared with current user
+                const publicSnapshot = await getDocs(publicQuery);
+
+                let events = [];
+                privateSnapshot.forEach(doc => {
+                    events.push({ id: doc.id, ...doc.data(), type: 'private' });
+                });
+                publicSnapshot.forEach(doc => {
+                    // Ensure public events are not duplicated if already private
+                    if (!events.some(e => e.id === doc.id)) {
+                        events.push({ id: doc.id, ...doc.data(), type: 'public' });
+                    }
+                });
+
+                if (events.length === 0) {
+                    eventSelector.innerHTML = '<option disabled selected>Chưa có sự kiện nào. Tạo mới!</option>';
+                    currentEventId = null;
+                    currentEventData = null;
+                    clearReportAndForm();
+                    return;
+                }
+
+                eventSelector.innerHTML = '';
+                events.sort((a, b) => (b.lastModified || 0) - (a.lastModified || 0)); // Sort by last modified
+
+                events.forEach(event => {
+                    const option = document.createElement('option');
+                    option.value = event.id;
+                    option.textContent = event.name + (event.type === 'public' ? ' (Chia sẻ)' : '');
+                    eventSelector.appendChild(option);
+                });
+
+                // Select the first event or a previously selected one
+                const storedEventId = localStorage.getItem(`selectedEventId_${userId}`);
+                if (storedEventId && events.some(e => e.id === storedEventId)) {
+                    eventSelector.value = storedEventId;
+                    currentEventId = storedEventId;
+                } else {
+                    eventSelector.value = events[0].id;
+                    currentEventId = events[0].id;
+                }
+                await loadSelectedEventData(currentEventId);
+                showToast('Đã tải danh sách sự kiện.', 'info');
+
+            } catch (error) {
+                console.error("Lỗi khi tải sự kiện:", error);
+                showToast(`Lỗi khi tải sự kiện: ${error.message}`, 'error');
+            }
+        }
+
+        /**
+         * Loads data for the currently selected event.
+         * @param {string} eventId - The ID of the event to load.
+         */
+        async function loadSelectedEventData(eventId) {
+            loadingOverlay.classList.remove('hidden');
+            try {
+                currentEventId = eventId;
+                localStorage.setItem(`selectedEventId_${userId}`, eventId); // Store selected event
+
+                const eventType = eventId.startsWith('public_') ? 'public' : 'private';
+                const eventDocRef = doc(getEventsCollectionRef(eventId), eventId);
+                const eventDocSnap = await getDoc(eventDocRef);
+
+                if (eventDocSnap.exists()) {
+                    currentEventData = eventDocSnap.data();
+                    currentEventData.id = eventDocSnap.id; // Add ID to data
+                    currentEventData.type = eventType; // Add type (private/public)
+
+                    formTitle.textContent = `Thêm mục vào sự kiện "${currentEventData.name}"`;
+                    reportTitle.textContent = `Báo cáo sự kiện "${currentEventData.name}"`;
+
+                    // Initialize columns if not present (for old events or new ones)
+                    if (!currentEventData.columns || currentEventData.columns.length === 0) {
+                        currentEventData.columns = defaultColumns;
+                    }
+
+                    // Set up real-time listener for report data
+                    setupReportListener(eventId);
+                    renderForm();
+                    renderReportHeader();
+                    updateChartColumnSelector();
+                    showToast(`Đã tải sự kiện "${currentEventData.name}".`, 'success');
+                } else {
+                    showToast('Không tìm thấy sự kiện này!', 'error');
+                    currentEventId = null;
+                    currentEventData = null;
+                    clearReportAndForm();
+                    loadEvents(); // Reload event list
+                }
+            } catch (error) {
+                console.error("Lỗi khi tải dữ liệu sự kiện:", error);
+                showToast(`Lỗi khi tải dữ liệu sự kiện: ${error.message}`, 'error');
+            } finally {
+                loadingOverlay.classList.add('hidden');
+            }
+        }
+
+        /**
+         * Sets up a real-time listener for the report data of the current event.
+         * @param {string} eventId - The ID of the event whose report data to listen to.
+         */
+        let unsubscribeReport = null; // To store the unsubscribe function
+
+        function setupReportListener(eventId) {
+            // Unsubscribe from previous listener if exists
+            if (unsubscribeReport) {
+                unsubscribeReport();
+                console.log("Unsubscribed from previous report listener.");
+            }
+
+            if (!userId) {
+                console.error("User ID is not available for setting up report listener.");
+                return;
+            }
+
+            const reportItemsRef = collection(doc(getEventsCollectionRef(eventId), eventId), 'items');
+            unsubscribeReport = onSnapshot(reportItemsRef, (snapshot) => {
+                const items = [];
+                snapshot.forEach(doc => {
+                    items.push({ id: doc.id, ...doc.data() });
+                });
+                currentReportData = items.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0)); // Sort by timestamp
+                renderReportTable();
+                updateParticipantCounter();
+                updateChart();
+                console.log("Report data updated in real-time.");
+            }, (error) => {
+                console.error("Lỗi khi lắng nghe dữ liệu báo cáo:", error);
+                showToast(`Lỗi cập nhật báo cáo: ${error.message}`, 'error');
+            });
+        }
+
+
+        /**
+         * Creates a new event.
+         */
+        async function createNewEvent() {
+            const eventName = await showConfirmModal('Tạo Sự kiện Mới', 'Nhập tên cho sự kiện mới của bạn:', true, 'Tên sự kiện');
+            if (eventName && eventName.trim()) {
+                loadingOverlay.classList.remove('hidden');
+                try {
+                    const newEventId = generateUniqueId();
+                    const newEventData = {
+                        name: eventName.trim(),
+                        columns: defaultColumns,
+                        lastModified: Date.now(),
+                        owner: userId, // Store the owner's ID
+                        sharedWith: [userId] // Initially shared only with the owner
+                    };
+                    const eventsCollectionRef = getEventsCollectionRef();
+                    await setDoc(doc(eventsCollectionRef, newEventId), newEventData);
+                    showToast(`Sự kiện "${eventName.trim()}" đã được tạo!`, 'success');
+                    await loadEvents(); // Reload events to show the new one
+                    eventSelector.value = newEventId; // Select the newly created event
+                    await loadSelectedEventData(newEventId);
+                } catch (error) {
+                    console.error("Lỗi khi tạo sự kiện mới:", error);
+                    showToast(`Lỗi khi tạo sự kiện: ${error.message}`, 'error');
+                } finally {
+                    loadingOverlay.classList.add('hidden');
+                }
+            } else if (eventName !== false) { // If not cancelled explicitly
+                showToast('Tên sự kiện không được để trống.', 'info');
+            }
+        }
+
+        /**
+         * Renames the current event.
+         */
+        async function renameCurrentEvent() {
+            if (!currentEventId) {
+                showToast('Vui lòng chọn một sự kiện để đổi tên.', 'info');
+                return;
+            }
+            if (currentEventData.owner !== userId) {
+                showToast('Bạn không có quyền đổi tên sự kiện này. Chỉ chủ sở hữu mới có thể đổi tên.', 'error');
+                return;
+            }
+
+            const newName = await showConfirmModal('Đổi Tên Sự kiện', `Đổi tên sự kiện "${currentEventData.name}" thành:`, true, 'Tên mới');
+            if (newName && newName.trim()) {
+                loadingOverlay.classList.remove('hidden');
+                try {
+                    const eventDocRef = doc(getEventsCollectionRef(currentEventId), currentEventId);
+                    await updateDoc(eventDocRef, { name: newName.trim(), lastModified: Date.now() });
+                    showToast(`Sự kiện đã được đổi tên thành "${newName.trim()}".`, 'success');
+                    await loadEvents(); // Reload events to update name in selector
+                    eventSelector.value = currentEventId; // Keep current event selected
+                    await loadSelectedEventData(currentEventId);
+                } catch (error) {
+                    console.error("Lỗi khi đổi tên sự kiện:", error);
+                    showToast(`Lỗi khi đổi tên sự kiện: ${error.message}`, 'error');
+                } finally {
+                    loadingOverlay.classList.add('hidden');
+                }
+            } else if (newName !== false) {
+                showToast('Tên không được để trống.', 'info');
+            }
+        }
+
+        /**
+         * Deletes the currently selected event.
+         */
+        async function deleteSelectedEvent() {
+            if (!currentEventId) {
+                showToast('Vui lòng chọn một sự kiện để xoá.', 'info');
+                return;
+            }
+            if (currentEventData.owner !== userId) {
+                showToast('Bạn không có quyền xoá sự kiện này. Chỉ chủ sở hữu mới có thể xoá.', 'error');
+                return;
+            }
+
+            const confirm = await showConfirmModal('Xác nhận Xoá', `Bạn có chắc chắn muốn xoá sự kiện "${currentEventData.name}" và tất cả dữ liệu của nó? Hành động này không thể hoàn tác.`);
+            if (confirm) {
+                loadingOverlay.classList.remove('hidden');
+                try {
+                    const eventDocRef = doc(getEventsCollectionRef(currentEventId), currentEventId);
+                    await deleteDoc(eventDocRef);
+                    showToast(`Sự kiện "${currentEventData.name}" đã bị xoá.`, 'success');
+                    currentEventId = null;
+                    currentEventData = null;
+                    clearReportAndForm();
+                    await loadEvents(); // Reload events to remove the deleted one
+                } catch (error) {
+                    console.error("Lỗi khi xoá sự kiện:", error);
+                    showToast(`Lỗi khi xoá sự kiện: ${error.message}`, 'error');
+                } finally {
+                    loadingOverlay.classList.add('hidden');
+                }
+            }
+        }
+
+        /**
+         * Shares the current event with another user by adding their userId to the sharedWith array.
+         */
+        async function shareCurrentEvent() {
+            if (!currentEventId) {
+                showToast('Vui lòng chọn một sự kiện để chia sẻ.', 'info');
+                return;
+            }
+            if (currentEventData.owner !== userId) {
+                showToast('Bạn không có quyền chia sẻ sự kiện này. Chỉ chủ sở hữu mới có thể chia sẻ.', 'error');
+                return;
+            }
+
+            // Generate a public ID for the event if it's currently private
+            let publicEventId = currentEventId;
+            let isPublic = currentEventId.startsWith('public_');
+
+            if (!isPublic) {
+                const confirmConvert = await showConfirmModal(
+                    'Chuyển sang Sự kiện Chia sẻ?',
+                    'Để chia sẻ sự kiện này, nó cần được chuyển thành "Sự kiện Chia sẻ". Điều này sẽ cho phép bất kỳ ai có liên kết đều có thể truy cập và chỉnh sửa. Bạn có muốn tiếp tục không?',
+                    false
+                );
+                if (!confirmConvert) {
+                    return;
+                }
+
+                publicEventId = `public_${currentEventId}`; // Prefix for public events
+                loadingOverlay.classList.remove('hidden');
+                try {
+                    // Copy data to public collection
+                    const privateEventDocRef = doc(getEventsCollectionRef(currentEventId), currentEventId);
+                    const privateEventDocSnap = await getDoc(privateEventDocRef);
+                    if (!privateEventDocSnap.exists()) {
+                        showToast('Không tìm thấy sự kiện riêng tư để chuyển đổi.', 'error');
+                        loadingOverlay.classList.add('hidden');
+                        return;
+                    }
+                    const privateData = privateEventDocSnap.data();
+
+                    const publicEventsCollectionRef = getEventsCollectionRef(publicEventId);
+                    const publicEventDocRef = doc(publicEventsCollectionRef, publicEventId);
+
+                    // Add current user to sharedWith if not already there
+                    if (!privateData.sharedWith.includes(userId)) {
+                        privateData.sharedWith.push(userId);
+                    }
+
+                    await setDoc(publicEventDocRef, {
+                        ...privateData,
+                        owner: userId, // Ensure owner is set to current user
+                        sharedWith: privateData.sharedWith // Keep existing shared users
+                    });
+
+                    // Copy items from private to public
+                    const privateItemsRef = collection(privateEventDocRef, 'items');
+                    const publicItemsRef = collection(publicEventDocRef, 'items');
+                    const privateItemsSnapshot = await getDocs(privateItemsRef);
+                    const batch = writeBatch(db); // Use batch for efficiency
+
+                    privateItemsSnapshot.forEach(itemDoc => {
+                        const newItemDocRef = doc(publicItemsRef, itemDoc.id);
+                        batch.set(newItemDocRef, itemDoc.data());
+                    });
+                    await batch.commit();
+
+                    // Delete original private event
+                    await deleteDoc(privateEventDocRef);
+
+                    showToast('Sự kiện đã được chuyển đổi thành công sang "Sự kiện Chia sẻ"!', 'success');
+                    await loadEvents(); // Reload events to show the public version
+                    eventSelector.value = publicEventId; // Select the new public event
+                    await loadSelectedEventData(publicEventId);
+                    isPublic = true; // Update flag
+                    currentEventId = publicEventId; // Update current event ID
+                } catch (error) {
+                    console.error("Lỗi khi chuyển đổi sự kiện sang công khai:", error);
+                    showToast(`Lỗi khi chuyển đổi sự kiện: ${error.message}`, 'error');
+                    loadingOverlay.classList.add('hidden');
+                    return; // Stop execution if conversion failed
+                } finally {
+                    loadingOverlay.classList.add('hidden');
+                }
+            }
+
+            // Now, show the share link
+            shareModal.classList.remove('hidden');
+            const shareLink = `${window.location.origin}${window.location.pathname}?eventId=${currentEventId}`;
+            shareLinkInput.value = shareLink;
+        }
+
+
+        /**
+         * Copies text to clipboard.
+         * @param {string} text - The text to copy.
+         */
+        function copyToClipboard(text) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                showToast('Đã sao chép liên kết!', 'success');
+            } catch (err) {
+                console.error('Không thể sao chép: ', err);
+                showToast('Không thể sao chép liên kết.', 'error');
+            } finally {
+                document.body.removeChild(textarea);
+            }
+        }
+
+        /**
+         * Clears the report table and form.
+         */
+        function clearReportAndForm() {
+            registrationForm.innerHTML = '';
+            reportHeaderRow.innerHTML = '';
+            reportBody.innerHTML = '';
+            participantCounter.textContent = '0';
+            formTitle.textContent = 'Chọn hoặc tạo sự kiện mới';
+            reportTitle.textContent = 'Báo cáo sự kiện';
+            currentReportData = [];
+            if (chartInstance) {
+                chartInstance.destroy();
+                chartInstance = null;
+            }
+            editActions.classList.add('hidden');
+            submitBtn.classList.remove('hidden');
+        }
+
+        /**
+         * Handles event selection change.
+         */
+        eventSelector.addEventListener('change', (e) => {
+            loadSelectedEventData(e.target.value);
+        });
+
+        // Event Listeners for Event Management Buttons
+        newListBtn.addEventListener('click', createNewEvent);
+        renameListBtn.addEventListener('click', renameCurrentEvent);
+        deleteSelectedEventBtn.addEventListener('click', deleteSelectedEvent);
+        shareListBtn.addEventListener('click', shareCurrentEvent);
+        copyShareLinkBtn.addEventListener('click', () => copyToClipboard(shareLinkInput.value));
+        closeShareModalBtn.addEventListener('click', () => shareModal.classList.add('hidden'));
+
+        // --- Form and Report Rendering ---
+
+        /**
+         * Renders the dynamic form based on currentEventData.columns.
+         * @param {Object} [itemToEdit=null] - Optional item data to pre-fill the form for editing.
+         */
+        function renderForm(itemToEdit = null) {
+            if (!currentEventData || !currentEventData.columns) {
+                registrationForm.innerHTML = '<p class="text-gray-400 text-center">Vui lòng chọn hoặc tạo một sự kiện để bắt đầu.</p>';
+                submitBtn.classList.add('hidden');
+                editActions.classList.add('hidden');
+                return;
+            }
+
+            registrationForm.innerHTML = '';
+            submitBtn.classList.remove('hidden');
+            editActions.classList.add('hidden');
+
+            currentEventData.columns.filter(col => col.editable).forEach(col => {
+                const div = document.createElement('div');
+                div.className = 'form-group';
+
+                const label = document.createElement('label');
+                label.htmlFor = col.id;
+                label.className = 'block mb-2 text-sm text-white font-medium';
+                label.textContent = col.label + (col.required ? ' *' : '');
+                div.appendChild(label);
+
+                let inputElement;
+                if (col.type === 'textarea') {
+                    inputElement = document.createElement('textarea');
+                    inputElement.rows = 3;
+                } else if (col.type === 'select') {
+                    inputElement = document.createElement('select');
+                    if (col.options && col.options.length > 0) {
+                        col.options.forEach(optionText => {
+                            const option = document.createElement('option');
+                            option.value = optionText;
+                            option.textContent = optionText;
+                            inputElement.appendChild(option);
+                        });
+                    }
+                } else if (col.type === 'radio') {
+                    // Handle radio buttons
+                    div.classList.add('flex', 'flex-wrap', 'gap-4', 'items-center');
+                    label.classList.remove('mb-2');
+                    div.appendChild(label); // Move label inside the flex container
+
+                    if (col.options && col.options.length > 0) {
+                        col.options.forEach(optionText => {
+                            const radioWrapper = document.createElement('div');
+                            radioWrapper.className = 'flex items-center gap-2';
+                            const radioInput = document.createElement('input');
+                            radioInput.type = 'radio';
+                            radioInput.id = `${col.id}-${optionText.replace(/\s/g, '-')}`;
+                            radioInput.name = col.id;
+                            radioInput.value = optionText;
+                            radioInput.className = 'form-radio';
+                            
+                            const radioLabel = document.createElement('label');
+                            radioLabel.htmlFor = radioInput.id;
+                            radioLabel.className = 'text-gray-300 text-sm';
+                            radioLabel.textContent = optionText;
+
+                            radioWrapper.appendChild(radioInput);
+                            radioWrapper.appendChild(radioLabel);
+                            div.appendChild(radioWrapper);
+                        });
+                    }
+                    registrationForm.appendChild(div);
+                    return; // Skip common input element handling
+                } else if (col.type === 'checkbox') {
+                    // Handle checkbox (single checkbox for boolean)
+                    div.classList.add('flex', 'items-center', 'gap-2');
+                    label.classList.remove('mb-2');
+                    div.appendChild(label); // Move label inside the flex container
+
+                    inputElement = document.createElement('input');
+                    inputElement.type = 'checkbox';
+                    inputElement.id = col.id;
+                    inputElement.name = col.id;
+                    inputElement.className = 'form-checkbox';
+                    div.appendChild(inputElement);
+                    registrationForm.appendChild(div);
+                    return; // Skip common input element handling
+                } else if (col.type === 'datalist') {
+                    inputElement = document.createElement('input');
+                    inputElement.setAttribute('list', `${col.id}-datalist`);
+                    const datalist = document.createElement('datalist');
+                    datalist.id = `${col.id}-datalist`;
+                    if (col.options && col.options.length > 0) {
+                        col.options.forEach(optionText => {
+                            const option = document.createElement('option');
+                            option.value = optionText;
+                            datalist.appendChild(option);
+                        });
+                    }
+                    document.getElementById('datalists-container').appendChild(datalist);
+                } else {
+                    inputElement = document.createElement('input');
+                    inputElement.type = col.type;
+                }
+
+                inputElement.id = col.id;
+                inputElement.name = col.id;
+                inputElement.className = 'form-input';
+                if (col.required) {
+                    inputElement.setAttribute('required', 'true');
+                }
+                div.appendChild(inputElement);
+                registrationForm.appendChild(div);
+            });
+
+            // If editing an item, pre-fill the form
+            if (itemToEdit) {
+                formTitle.textContent = `Chỉnh sửa mục STT ${itemToEdit.stt}`;
+                submitBtn.classList.add('hidden');
+                editActions.classList.remove('hidden');
+                deleteFromFormBtn.dataset.itemId = itemToEdit.id; // Store ID for deletion
+
+                currentEventData.columns.filter(col => col.editable).forEach(col => {
+                    const input = registrationForm.querySelector(`[name="${col.id}"]`);
+                    if (input) {
+                        if (col.type === 'checkbox') {
+                            input.checked = itemToEdit[col.id] || false;
+                        } else if (col.type === 'radio') {
+                            const radioBtn = registrationForm.querySelector(`input[name="${col.id}"][value="${itemToEdit[col.id]}"]`);
+                            if (radioBtn) {
+                                radioBtn.checked = true;
+                            }
+                        } else {
+                            input.value = itemToEdit[col.id] || '';
+                        }
+                    }
+                });
+            }
+        }
+
+        /**
+         * Renders the table header based on currentEventData.columns.
+         */
+        function renderReportHeader() {
+            if (!currentEventData || !currentEventData.columns) {
+                reportHeaderRow.innerHTML = '';
+                return;
+            }
+            reportHeaderRow.innerHTML = '';
+            currentEventData.columns.filter(col => col.show).forEach(col => {
+                const th = document.createElement('th');
+                th.scope = 'col';
+                th.textContent = col.label;
+                reportHeaderRow.appendChild(th);
+            });
+        }
+
+        /**
+         * Renders the report table body with currentReportData.
+         */
+        function renderReportTable() {
+            reportBody.innerHTML = '';
+            if (currentReportData.length === 0) {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td colspan="${currentEventData.columns.filter(col => col.show).length}" class="text-center py-4 text-gray-400">Chưa có mục nào trong báo cáo.</td>`;
+                reportBody.appendChild(tr);
+                return;
+            }
+
+            currentReportData.forEach((item, index) => {
+                const tr = document.createElement('tr');
+                tr.className = 'border-b border-gray-700';
+                tr.dataset.itemId = item.id; // Store item ID for editing/deleting
+
+                currentEventData.columns.filter(col => col.show).forEach(col => {
+                    const td = document.createElement('td');
+                    if (col.id === 'stt') {
+                        td.textContent = index + 1; // Auto-increment STT
+                    } else {
+                        td.textContent = item[col.id] || '';
+                    }
+                    tr.appendChild(td);
+                });
+
+                // Add click listener to each row for editing
+                tr.addEventListener('click', () => editReportItem(item.id));
+                reportBody.appendChild(tr);
+            });
+        }
+
+        /**
+         * Updates the participant counter.
+         */
+        function updateParticipantCounter() {
+            participantCounter.textContent = currentReportData.length;
+        }
+
+        /**
+         * Updates the chart column selector with appropriate column options.
+         */
+        function updateChartColumnSelector() {
+            chartColumnSelector.innerHTML = '';
+            if (!currentEventData || !currentEventData.columns) return;
+
+            // Only allow columns with type 'text', 'select', 'radio', or 'datalist' for charting
+            const chartableColumns = currentEventData.columns.filter(col =>
+                col.type === 'text' || col.type === 'select' || col.type === 'radio' || col.type === 'datalist'
+            );
+
+            if (chartableColumns.length === 0) {
+                chartColumnSelector.innerHTML = '<option value="" disabled selected>Không có cột để thống kê</option>';
+                chartTitle.textContent = 'Thống kê';
+                if (chartInstance) {
+                    chartInstance.destroy();
+                    chartInstance = null;
+                }
+                return;
+            }
+
+            chartableColumns.forEach(col => {
+                const option = document.createElement('option');
+                option.value = col.id;
+                option.textContent = col.label;
+                chartColumnSelector.appendChild(option);
+            });
+
+            // Set default selected chart column to the first chartable column
+            if (chartableColumns.length > 0) {
+                chartColumnSelector.value = chartableColumns[0].id;
+                updateChart();
+            }
+        }
+
+        /**
+         * Updates the chart based on the selected column.
+         */
+        function updateChart() {
+            if (!currentEventData || !currentReportData || currentReportData.length === 0) {
+                if (chartInstance) {
+                    chartInstance.destroy();
+                    chartInstance = null;
+                }
+                chartTitle.textContent = 'Thống kê';
+                return;
+            }
+
+            const selectedColumnId = chartColumnSelector.value;
+            if (!selectedColumnId) {
+                if (chartInstance) {
+                    chartInstance.destroy();
+                    chartInstance = null;
+                }
+                chartTitle.textContent = 'Thống kê';
+                return;
+            }
+
+            const counts = {};
+            currentReportData.forEach(item => {
+                const value = item[selectedColumnId] || 'Không xác định';
+                counts[value] = (counts[value] || 0) + 1;
+            });
+
+            const labels = Object.keys(counts);
+            const data = Object.values(counts);
+
+            const selectedColumnLabel = currentEventData.columns.find(col => col.id === selectedColumnId)?.label || selectedColumnId;
+            chartTitle.textContent = `Thống kê theo "${selectedColumnLabel}"`;
+
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
+
+            chartInstance = new Chart(provinceChartCanvas, {
+                type: 'bar', // Can be 'pie', 'doughnut', 'line', etc.
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: `Số lượng theo ${selectedColumnLabel}`,
+                        data: data,
+                        backgroundColor: [
+                            'rgba(255, 99, 132, 0.6)',
+                            'rgba(54, 162, 235, 0.6)',
+                            'rgba(255, 206, 86, 0.6)',
+                            'rgba(75, 192, 192, 0.6)',
+                            'rgba(153, 102, 255, 0.6)',
+                            'rgba(255, 159, 64, 0.6)',
+                            'rgba(199, 199, 199, 0.6)'
+                        ],
+                        borderColor: [
+                            'rgba(255, 99, 132, 1)',
+                            'rgba(54, 162, 235, 1)',
+                            'rgba(255, 206, 86, 1)',
+                            'rgba(75, 192, 192, 1)',
+                            'rgba(153, 102, 255, 1)',
+                            'rgba(255, 159, 64, 1)',
+                            'rgba(199, 199, 199, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#E2E8F0' // gray-200
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: `Thống kê theo ${selectedColumnLabel}`,
+                            color: '#E2E8F0' // gray-200
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: {
+                                color: '#A0AEC0' // gray-400
+                            },
+                            grid: {
+                                color: '#4A5568' // gray-700
+                            }
+                        },
+                        y: {
+                            ticks: {
+                                color: '#A0AEC0' // gray-400
+                            },
+                            grid: {
+                                color: '#4A5568' // gray-700
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Event listener for chart column selector
+        chartColumnSelector.addEventListener('change', updateChart);
+
+        // --- Report Item Management (Add, Edit, Delete) ---
+
+        let editingItemId = null; // Stores the ID of the item being edited
+
+        /**
+         * Handles form submission to add or update a report item.
+         */
+        submitBtn.addEventListener('click', async () => {
+            if (!currentEventId) {
+                showToast('Vui lòng chọn hoặc tạo một sự kiện trước.', 'info');
+                return;
+            }
+
+            const formData = {};
+            let isValid = true;
+            currentEventData.columns.filter(col => col.editable).forEach(col => {
+                const input = registrationForm.querySelector(`[name="${col.id}"]`);
+                if (input) {
+                    if (col.type === 'checkbox') {
+                        formData[col.id] = input.checked;
+                    } else if (col.type === 'radio') {
+                        const selectedRadio = registrationForm.querySelector(`input[name="${col.id}"]:checked`);
+                        formData[col.id] = selectedRadio ? selectedRadio.value : '';
+                    } else {
+                        formData[col.id] = input.value.trim();
+                    }
+
+                    if (col.required && !formData[col.id] && col.type !== 'checkbox') { // Checkbox required handled differently
+                        isValid = false;
+                        input.classList.add('border-red-500'); // Highlight invalid input
+                    } else {
+                        input.classList.remove('border-red-500');
+                    }
+                }
+            });
+
+            if (!isValid) {
+                showToast('Vui lòng điền đầy đủ các trường bắt buộc.', 'error');
+                return;
+            }
+
+            loadingOverlay.classList.remove('hidden');
+            try {
+                const reportItemsRef = collection(doc(getEventsCollectionRef(currentEventId), currentEventId), 'items');
+
+                if (editingItemId) {
+                    // Update existing item
+                    const itemDocRef = doc(reportItemsRef, editingItemId);
+                    await updateDoc(itemDocRef, { ...formData, lastModified: Date.now() });
+                    showToast('Đã cập nhật mục báo cáo!', 'success');
+                } else {
+                    // Add new item
+                    await addDoc(reportItemsRef, { ...formData, timestamp: Date.now() });
+                    showToast('Đã thêm mục mới vào báo cáo!', 'success');
+                }
+
+                // Clear form and reset to add mode
+                registrationForm.reset();
+                renderForm(); // Re-render to clear form and reset state
+                editingItemId = null;
+            } catch (error) {
+                console.error("Lỗi khi thêm/cập nhật mục báo cáo:", error);
+                showToast(`Lỗi: ${error.message}`, 'error');
+            } finally {
+                loadingOverlay.classList.add('hidden');
+            }
+        });
+
+        /**
+         * Sets the form to edit an existing report item.
+         * @param {string} itemId - The ID of the item to edit.
+         */
+        async function editReportItem(itemId) {
+            if (!currentEventId) {
+                showToast('Vui lòng chọn một sự kiện trước.', 'info');
+                return;
+            }
+
+            const itemToEdit = currentReportData.find(item => item.id === itemId);
+            if (itemToEdit) {
+                editingItemId = itemId;
+                renderForm(itemToEdit);
+                submitBtn.classList.add('hidden');
+                editActions.classList.remove('hidden');
+                deleteFromFormBtn.dataset.itemId = itemToEdit.id; // Set item ID for delete button
+                window.scrollTo({ top: 0, behavior: 'smooth' }); // Scroll to form
+            } else {
+                showToast('Không tìm thấy mục để chỉnh sửa.', 'error');
+            }
+        }
+
+        /**
+         * Deletes a report item from the form (when in edit mode).
+         */
+        deleteFromFormBtn.addEventListener('click', async () => {
+            if (!editingItemId) return;
+
+            const confirm = await showConfirmModal('Xác nhận Xoá', 'Bạn có chắc chắn muốn xoá mục này khỏi báo cáo?');
+            if (confirm) {
+                loadingOverlay.classList.remove('hidden');
+                try {
+                    const itemDocRef = doc(collection(doc(getEventsCollectionRef(currentEventId), currentEventId), 'items'), editingItemId);
+                    await deleteDoc(itemDocRef);
+                    showToast('Đã xoá mục khỏi báo cáo.', 'success');
+                    registrationForm.reset();
+                    renderForm(); // Re-render to clear form and reset state
+                    editingItemId = null;
+                } catch (error) {
+                    console.error("Lỗi khi xoá mục báo cáo:", error);
+                    showToast(`Lỗi: ${error.message}`, 'error');
+                } finally {
+                    loadingOverlay.classList.add('hidden');
+                }
+            }
+        });
+
+        /**
+         * Cancels editing and reverts the form to add new item mode.
+         */
+        cancelEditBtn.addEventListener('click', () => {
+            registrationForm.reset();
+            renderForm(); // Re-render to clear form and reset state
+            editingItemId = null;
+            showToast('Đã huỷ chỉnh sửa.', 'info');
+        });
+
+        /**
+         * Clears all items from the current report.
+         */
+        clearAllBtn.addEventListener('click', async () => {
+            if (!currentEventId) {
+                showToast('Vui lòng chọn một sự kiện trước.', 'info');
+                return;
+            }
+            if (currentReportData.length === 0) {
+                showToast('Báo cáo đã trống.', 'info');
+                return;
+            }
+
+            const confirm = await showConfirmModal('Xác nhận Xoá Tất cả', `Bạn có chắc chắn muốn xoá tất cả ${currentReportData.length} mục khỏi báo cáo "${currentEventData.name}"? Hành động này không thể hoàn tác.`);
+            if (confirm) {
+                loadingOverlay.classList.remove('hidden');
+                try {
+                    const reportItemsRef = collection(doc(getEventsCollectionRef(currentEventId), currentEventId), 'items');
+                    const snapshot = await getDocs(reportItemsRef);
+                    const batch = writeBatch(db);
+                    snapshot.forEach((doc) => {
+                        batch.delete(doc.ref);
+                    });
+                    await batch.commit();
+                    showToast('Đã xoá tất cả mục khỏi báo cáo.', 'success');
+                    // Data will be updated via onSnapshot listener
+                } catch (error) {
+                    console.error("Lỗi khi xoá tất cả mục báo cáo:", error);
+                    showToast(`Lỗi: ${error.message}`, 'error');
+                } finally {
+                    loadingOverlay.classList.add('hidden');
+                }
+            }
+        });
+
+        // --- Column Management Modal ---
+
+        /**
+         * Opens the column management modal and populates it.
+         */
+        manageColsBtn.addEventListener('click', () => {
+            if (!currentEventData) {
+                showToast('Vui lòng chọn một sự kiện để quản lý cột.', 'info');
+                return;
+            }
+            if (currentEventData.owner !== userId) {
+                showToast('Bạn không có quyền quản lý cột sự kiện này. Chỉ chủ sở hữu mới có thể quản lý.', 'error');
+                return;
+            }
+
+            manageColsForm.innerHTML = '';
+            // Create a temporary array to work with, allowing reordering
+            const tempColumns = JSON.parse(JSON.stringify(currentEventData.columns));
+
+            tempColumns.forEach((col, index) => {
+                const colDiv = document.createElement('div');
+                colDiv.className = 'bg-gray-700 p-3 rounded-lg flex items-center gap-3 mb-2 cursor-grab';
+                colDiv.dataset.colId = col.id; // Store original ID for reordering
+
+                const handle = document.createElement('span');
+                handle.className = 'text-gray-400 cursor-grab';
+                handle.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>';
+                colDiv.appendChild(handle);
+
+                const nameInput = document.createElement('input');
+                nameInput.type = 'text';
+                nameInput.value = col.label;
+                nameInput.placeholder = 'Tên cột';
+                nameInput.className = 'form-input flex-grow';
+                nameInput.dataset.colIndex = index;
+                nameInput.dataset.colProperty = 'label';
+                colDiv.appendChild(nameInput);
+
+                const typeSelect = document.createElement('select');
+                typeSelect.className = 'form-select w-32';
+                typeSelect.dataset.colIndex = index;
+                typeSelect.dataset.colProperty = 'type';
+                const types = ['text', 'number', 'tel', 'email', 'date', 'textarea', 'select', 'radio', 'checkbox', 'datalist'];
+                types.forEach(type => {
+                    const option = document.createElement('option');
+                    option.value = type;
+                    option.textContent = type.charAt(0).toUpperCase() + type.slice(1);
+                    typeSelect.appendChild(option);
+                });
+                typeSelect.value = col.type;
+                colDiv.appendChild(typeSelect);
+
+                // Options input for select/radio/datalist
+                const optionsInput = document.createElement('input');
+                optionsInput.type = 'text';
+                optionsInput.placeholder = 'Options (comma-separated)';
+                optionsInput.className = 'form-input flex-grow';
+                optionsInput.dataset.colIndex = index;
+                optionsInput.dataset.colProperty = 'options';
+                if (col.options && Array.isArray(col.options)) {
+                    optionsInput.value = col.options.join(', ');
+                }
+                if (col.type === 'select' || col.type === 'radio' || col.type === 'datalist') {
+                    optionsInput.classList.remove('hidden');
+                } else {
+                    optionsInput.classList.add('hidden');
+                }
+                colDiv.appendChild(optionsInput);
+
+                // Event listener to toggle options input visibility
+                typeSelect.addEventListener('change', () => {
+                    if (typeSelect.value === 'select' || typeSelect.value === 'radio' || typeSelect.value === 'datalist') {
+                        optionsInput.classList.remove('hidden');
+                    } else {
+                        optionsInput.classList.add('hidden');
+                        optionsInput.value = ''; // Clear options if type changes
+                    }
+                });
+
+                const requiredCheckbox = document.createElement('input');
+                requiredCheckbox.type = 'checkbox';
+                requiredCheckbox.checked = col.required;
+                requiredCheckbox.className = 'form-checkbox';
+                requiredCheckbox.dataset.colIndex = index;
+                requiredCheckbox.dataset.colProperty = 'required';
+                const requiredLabel = document.createElement('label');
+                requiredLabel.className = 'text-gray-300 text-sm flex items-center gap-1';
+                requiredLabel.innerHTML = `<input type="checkbox" ${col.required ? 'checked' : ''} class="form-checkbox" data-col-index="${index}" data-col-property="required"> Bắt buộc`;
+                colDiv.appendChild(requiredLabel);
+
+                const showCheckbox = document.createElement('input');
+                showCheckbox.type = 'checkbox';
+                showCheckbox.checked = col.show;
+                showCheckbox.className = 'form-checkbox';
+                showCheckbox.dataset.colIndex = index;
+                showCheckbox.dataset.colProperty = 'show';
+                const showLabel = document.createElement('label');
+                showLabel.className = 'text-gray-300 text-sm flex items-center gap-1';
+                showLabel.innerHTML = `<input type="checkbox" ${col.show ? 'checked' : ''} class="form-checkbox" data-col-index="${index}" data-col-property="show"> Hiển thị`;
+                colDiv.appendChild(showLabel);
+
+                // Disable editing for STT column
+                if (col.id === 'stt') {
+                    nameInput.disabled = true;
+                    typeSelect.disabled = true;
+                    requiredCheckbox.disabled = true;
+                    showCheckbox.disabled = true;
+                    requiredLabel.classList.add('opacity-50', 'cursor-not-allowed');
+                    showLabel.classList.add('opacity-50', 'cursor-not-allowed');
+                } else {
+                    // Delete button for non-STT columns
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.className = 'btn btn-delete text-xs p-1 rounded-full';
+                    deleteBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6l-12 12M6 6l12 12"></path></svg>';
+                    deleteBtn.addEventListener('click', () => {
+                        colDiv.remove();
+                        // Mark for deletion or handle immediately if needed
+                        tempColumns[index] = null; // Mark as deleted
+                    });
+                    colDiv.appendChild(deleteBtn);
+                }
+
+                manageColsForm.appendChild(colDiv);
+            });
+
+            // Initialize Sortable.js
+            Sortable.create(manageColsForm, {
+                animation: 150,
+                handle: '.cursor-grab',
+                ghostClass: 'bg-gray-600',
+                onEnd: (evt) => {
+                    // Update tempColumns order based on new DOM order
+                    const newOrder = Array.from(manageColsForm.children).map(el => el.dataset.colId);
+                    const reorderedColumns = [];
+                    newOrder.forEach(id => {
+                        const originalCol = tempColumns.find(col => col && col.id === id);
+                        if (originalCol) {
+                            reorderedColumns.push(originalCol);
+                        }
+                    });
+                    // Replace tempColumns with the reordered array
+                    tempColumns.length = 0;
+                    tempColumns.push(...reorderedColumns);
+                }
+            });
+
+            manageColsModal.classList.remove('hidden');
+        });
+
+        /**
+         * Adds a new column entry to the manage columns modal.
+         */
+        addNewColBtn.addEventListener('click', () => {
+            const newIndex = manageColsForm.children.length;
+            const newColId = `col_${generateUniqueId()}`;
+            const colDiv = document.createElement('div');
+            colDiv.className = 'bg-gray-700 p-3 rounded-lg flex items-center gap-3 mb-2 cursor-grab';
+            colDiv.dataset.colId = newColId;
+
+            const handle = document.createElement('span');
+            handle.className = 'text-gray-400 cursor-grab';
+            handle.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>';
+            colDiv.appendChild(handle);
+
+            const nameInput = document.createElement('input');
+            nameInput.type = 'text';
+            nameInput.value = '';
+            nameInput.placeholder = 'Tên cột mới';
+            nameInput.className = 'form-input flex-grow';
+            nameInput.dataset.colIndex = newIndex;
+            nameInput.dataset.colProperty = 'label';
+            colDiv.appendChild(nameInput);
+
+            const typeSelect = document.createElement('select');
+            typeSelect.className = 'form-select w-32';
+            typeSelect.dataset.colIndex = newIndex;
+            typeSelect.dataset.colProperty = 'type';
+            const types = ['text', 'number', 'tel', 'email', 'date', 'textarea', 'select', 'radio', 'checkbox', 'datalist'];
+            types.forEach(type => {
+                const option = document.createElement('option');
+                option.value = type;
+                option.textContent = type.charAt(0).toUpperCase() + type.slice(1);
+                typeSelect.appendChild(option);
+            });
+            typeSelect.value = 'text'; // Default type
+            colDiv.appendChild(typeSelect);
+
+            const optionsInput = document.createElement('input');
+            optionsInput.type = 'text';
+            optionsInput.placeholder = 'Options (comma-separated)';
+            optionsInput.className = 'form-input flex-grow hidden'; // Hidden by default
+            optionsInput.dataset.colIndex = newIndex;
+            optionsInput.dataset.colProperty = 'options';
+            colDiv.appendChild(optionsInput);
+
+            typeSelect.addEventListener('change', () => {
+                if (typeSelect.value === 'select' || typeSelect.value === 'radio' || typeSelect.value === 'datalist') {
+                    optionsInput.classList.remove('hidden');
+                } else {
+                    optionsInput.classList.add('hidden');
+                    optionsInput.value = '';
+                }
+            });
+
+            const requiredLabel = document.createElement('label');
+            requiredLabel.className = 'text-gray-300 text-sm flex items-center gap-1';
+            requiredLabel.innerHTML = `<input type="checkbox" class="form-checkbox" data-col-index="${newIndex}" data-col-property="required"> Bắt buộc`;
+            colDiv.appendChild(requiredLabel);
+
+            const showLabel = document.createElement('label');
+            showLabel.className = 'text-gray-300 text-sm flex items-center gap-1';
+            showLabel.innerHTML = `<input type="checkbox" checked class="form-checkbox" data-col-index="${newIndex}" data-col-property="show"> Hiển thị`;
+            colDiv.appendChild(showLabel);
+
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'btn btn-delete text-xs p-1 rounded-full';
+            deleteBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6l-12 12M6 6l12 12"></path></svg>';
+            deleteBtn.addEventListener('click', () => colDiv.remove());
+            colDiv.appendChild(deleteBtn);
+
+            manageColsForm.appendChild(colDiv);
+        });
+
+        /**
+         * Saves the updated column configuration.
+         */
+        saveManageColsBtn.addEventListener('click', async () => {
+            if (!currentEventId) return;
+
+            const updatedColumns = [];
+            let isValid = true;
+
+            Array.from(manageColsForm.children).forEach(colDiv => {
+                const labelInput = colDiv.querySelector('[data-col-property="label"]');
+                const typeSelect = colDiv.querySelector('[data-col-property="type"]');
+                const requiredCheckbox = colDiv.querySelector('[data-col-property="required"]');
+                const showCheckbox = colDiv.querySelector('[data-col-property="show"]');
+                const optionsInput = colDiv.querySelector('[data-col-property="options"]');
+
+                if (!labelInput || !typeSelect || !requiredCheckbox || !showCheckbox) {
+                    isValid = false;
+                    showToast('Lỗi: Một số trường cột bị thiếu.', 'error');
+                    return;
+                }
+
+                const label = labelInput.value.trim();
+                const type = typeSelect.value;
+                const required = requiredCheckbox.checked;
+                const show = showCheckbox.checked;
+                const options = optionsInput && optionsInput.value ? optionsInput.value.split(',').map(opt => opt.trim()).filter(opt => opt) : [];
+
+                if (!label) {
+                    isValid = false;
+                    labelInput.classList.add('border-red-500');
+                    showToast('Tên cột không được để trống.', 'error');
+                    return;
+                } else {
+                    labelInput.classList.remove('border-red-500');
+                }
+
+                updatedColumns.push({
+                    id: colDiv.dataset.colId, // Keep original ID or new ID
+                    label: label,
+                    type: type,
+                    required: required,
+                    editable: true, // All custom columns are editable
+                    show: show,
+                    options: options.length > 0 ? options : undefined // Only add options if present
+                });
+            });
+
+            if (!isValid) return;
+
+            // Ensure 'STT' column is always present and first, and not editable/deletable
+            const sttCol = defaultColumns.find(col => col.id === 'stt');
+            if (sttCol && !updatedColumns.some(col => col.id === 'stt')) {
+                updatedColumns.unshift(sttCol); // Add STT back if somehow removed
+            } else if (sttCol) {
+                // Ensure STT is first and properties are fixed
+                const currentSttIndex = updatedColumns.findIndex(col => col.id === 'stt');
+                if (currentSttIndex !== -1) {
+                    const currentStt = updatedColumns.splice(currentSttIndex, 1)[0];
+                    updatedColumns.unshift({ ...currentStt, editable: false, show: true, required: false });
+                }
+            }
+
+
+            loadingOverlay.classList.remove('hidden');
+            try {
+                const eventDocRef = doc(getEventsCollectionRef(currentEventId), currentEventId);
+                await updateDoc(eventDocRef, { columns: updatedColumns, lastModified: Date.now() });
+                showToast('Đã cập nhật cấu hình cột!', 'success');
+                manageColsModal.classList.add('hidden');
+                await loadSelectedEventData(currentEventId); // Reload to apply new columns
+            } catch (error) {
+                console.error("Lỗi khi lưu cấu hình cột:", error);
+                showToast(`Lỗi khi lưu cột: ${error.message}`, 'error');
+            } finally {
+                loadingOverlay.classList.add('hidden');
+            }
+        });
+
+        cancelManageColsBtn.addEventListener('click', () => {
+            manageColsModal.classList.add('hidden');
+        });
+
+        // --- Export Functions ---
+
+        let currentExportType = ''; // To store which export button was clicked
+
+        // Show export options modal
+        exportExcelBtn.addEventListener('click', () => { currentExportType = 'excel'; exportModalTitle.textContent = 'Tuỳ chọn Xuất Excel'; exportOptionsModal.classList.remove('hidden'); });
+        exportTxtBtn.addEventListener('click', () => { currentExportType = 'txt'; exportModalTitle.textContent = 'Tuỳ chọn Xuất TXT'; exportOptionsModal.classList.remove('hidden'); });
+        exportJpgBtn.addEventListener('click', () => { currentExportType = 'jpg'; exportModalTitle.textContent = 'Tuỳ chọn Xuất ảnh JPG'; exportOptionsModal.classList.remove('hidden'); });
+
+        // Handle logo preview
+        logoUploader.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    logoPreview.src = e.target.result;
+                    logoPreview.classList.remove('hidden');
+                };
+                reader.readAsDataURL(file);
+            } else {
+                logoPreview.src = '';
+                logoPreview.classList.add('hidden');
+            }
+        });
+
+        // Cancel export options
+        cancelExportBtn.addEventListener('click', () => {
+            exportOptionsModal.classList.add('hidden');
+            signerNameInput.value = '';
+            logoUploader.value = '';
+            logoPreview.src = '';
+            logoPreview.classList.add('hidden');
+        });
+
+        // Proceed with export based on selected type
+        proceedExportBtn.addEventListener('click', () => {
+            exportOptionsModal.classList.add('hidden');
+            const signerName = signerNameInput.value.trim();
+            const logoBase64 = logoPreview.src;
+
+            if (currentExportType === 'excel') {
+                exportToExcel(signerName, logoBase64);
+            } else if (currentExportType === 'txt') {
+                exportToTxt(signerName, logoBase64);
+            } else if (currentExportType === 'jpg') {
+                exportToJpg(signerName, logoBase64);
+            }
+
+            // Reset options after export
+            signerNameInput.value = '';
+            logoUploader.value = '';
+            logoPreview.src = '';
+            logoPreview.classList.add('hidden');
+        });
+
+
+        /**
+         * Exports the report data to an Excel file.
+         * @param {string} signerName - Optional name of the signer.
+         * @param {string} logoBase64 - Optional base64 encoded logo image.
+         */
+        function exportToExcel(signerName = '', logoBase64 = '') {
+            if (!currentReportData || currentReportData.length === 0) {
+                showToast('Không có dữ liệu để xuất Excel.', 'info');
+                return;
+            }
+
+            const ws_data = [];
+
+            // Add title row
+            ws_data.push([currentEventData.name]);
+            ws_data.push([]); // Empty row for spacing
+
+            // Add header row
+            const header = currentEventData.columns.filter(col => col.show).map(col => col.label);
+            ws_data.push(header);
+
+            // Add data rows
+            currentReportData.forEach((item, index) => {
+                const row = [];
+                currentEventData.columns.filter(col => col.show).forEach(col => {
+                    if (col.id === 'stt') {
+                        row.push(index + 1);
+                    } else {
+                        row.push(item[col.id] || '');
+                    }
+                });
+                ws_data.push(row);
+            });
+
+            // Add signer name and logo if provided
+            if (signerName || logoBase64) {
+                ws_data.push([]); // Spacer
+                ws_data.push([]); // Spacer
+                if (logoBase64) {
+                    // This is a simplified approach. For actual image embedding in XLSX,
+                    // it's more complex and usually requires a server-side library or
+                    // a more advanced client-side library than basic SheetJS.
+                    // For now, we'll just add a placeholder text.
+                    ws_data.push(['[Logo Image]']);
+                }
+                if (signerName) {
+                    ws_data.push(['Người ký: ' + signerName]);
+                }
+            }
+
+            const ws = XLSX.utils.aoa_to_sheet(ws_data);
+
+            // Merge title cell
+            if (ws_data.length > 0) {
+                ws['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: header.length - 1 } }];
+            }
+
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, currentEventData.name);
+            XLSX.writeFile(wb, `${currentEventData.name}_BaoCao.xlsx`);
+            showToast('Đã xuất báo cáo ra Excel!', 'success');
+        }
+
+        /**
+         * Exports the report data to a plain text file.
+         * @param {string} signerName - Optional name of the signer.
+         * @param {string} logoBase64 - Optional base64 encoded logo image (not directly embedded in TXT).
+         */
+        function exportToTxt(signerName = '', logoBase64 = '') {
+            if (!currentReportData || currentReportData.length === 0) {
+                showToast('Không có dữ liệu để xuất TXT.', 'info');
+                return;
+            }
+
+            let textContent = `${currentEventData.name}\n\n`;
+
+            const header = currentEventData.columns.filter(col => col.show).map(col => col.label);
+            textContent += header.join('\t') + '\n'; // Tab-separated header
+
+            currentReportData.forEach((item, index) => {
+                const row = [];
+                currentEventData.columns.filter(col => col.show).forEach(col => {
+                    if (col.id === 'stt') {
+                        row.push(index + 1);
+                    } else {
+                        row.push(item[col.id] || '');
+                    }
+                });
+                textContent += row.join('\t') + '\n'; // Tab-separated data
+            });
+
+            if (signerName || logoBase64) {
+                textContent += '\n\n';
+                if (logoBase64) {
+                    textContent += '[Logo Image Placeholder]\n'; // Placeholder for logo
+                }
+                if (signerName) {
+                    textContent += `Người ký: ${signerName}\n`;
+                }
+            }
+
+            const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${currentEventData.name}_BaoCao.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('Đã xuất báo cáo ra TXT!', 'success');
+        }
+
+        /**
+         * Exports the report table and chart as a JPG image.
+         * @param {string} signerName - Optional name of the signer.
+         * @param {string} logoBase64 - Optional base64 encoded logo image.
+         */
+        async function exportToJpg(signerName = '', logoBase64 = '') {
+            if (!currentEventData) {
+                showToast('Vui lòng chọn một sự kiện để xuất ảnh.', 'info');
+                return;
+            }
+
+            loadingOverlay.classList.remove('hidden');
+            loadingOverlay.querySelector('#loading-text').textContent = 'Đang tạo ảnh...';
+
+            try {
+                // Create a temporary div to render the content for screenshot
+                const tempDiv = document.createElement('div');
+                tempDiv.style.backgroundColor = '#1a202c'; // bg-gray-900
+                tempDiv.style.padding = '2rem';
+                tempDiv.style.color = '#e2e8f0'; // text-gray-100
+                tempDiv.style.width = '1200px'; // Fixed width for consistent image output
+                tempDiv.style.fontFamily = 'Inter, sans-serif';
+                tempDiv.style.position = 'absolute';
+                tempDiv.style.left = '-9999px'; // Hide off-screen
+
+                // Title
+                tempDiv.innerHTML += `<h1 style="font-size: 2.25rem; font-weight: 700; text-align: center; margin-bottom: 1.5rem;">Tool Quản lý Sự kiện Đa năng dành cho Ban Làm Việc MSTQ</h1>`;
+                tempDiv.innerHTML += `<p style="text-align: center; color: #a0aec0; margin-bottom: 2rem;">Báo cáo sự kiện: "${currentEventData.name}"</p>`;
+
+                // Logo
+                if (logoBase64) {
+                    tempDiv.innerHTML += `<div style="text-align: center; margin-bottom: 1.5rem;"><img src="${logoBase64}" alt="Logo" style="max-height: 80px; display: inline-block; border-radius: 8px;"></div>`;
+                }
+
+                // Table content
+                const tableHtml = document.getElementById('reportContainer').outerHTML;
+                tempDiv.innerHTML += `<div style="background-color: #2d3748; padding: 1.5rem; border-radius: 0.75rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); overflow-x: auto; margin-bottom: 2rem;">${tableHtml}</div>`;
+
+                // Chart content
+                if (chartInstance) {
+                    const chartCanvas = document.getElementById('provinceChart');
+                    const chartImage = chartCanvas.toDataURL('image/png'); // Get chart as image
+                    tempDiv.innerHTML += `<div style="background-color: #4a5568; padding: 1rem; border-radius: 0.5rem; height: 320px; display: flex; justify-content: center; align-items: center;"><img src="${chartImage}" alt="Chart" style="max-width: 100%; max-height: 100%; object-fit: contain;"></div>`;
+                }
+
+                // Signer name
+                if (signerName) {
+                    tempDiv.innerHTML += `<p style="text-align: right; margin-top: 2rem; font-weight: 600;">Người ký: ${signerName}</p>`;
+                }
+
+                document.body.appendChild(tempDiv);
+
+                // Use html2canvas to capture the content
+                const canvas = await html2canvas(tempDiv, {
+                    scale: 2, // Increase scale for better quality
+                    useCORS: true, // Enable CORS if images are from external sources
+                    backgroundColor: null // Transparent background, so the body color shows through
+                });
+
+                // Remove the temporary div
+                document.body.removeChild(tempDiv);
+
+                // Convert canvas to image and download
+                const image = canvas.toDataURL('image/jpeg', 0.9); // 0.9 quality for JPG
+                const a = document.createElement('a');
+                a.href = image;
+                a.download = `${currentEventData.name}_BaoCao.jpg`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                showToast('Đã xuất báo cáo ra ảnh JPG!', 'success');
+
+            } catch (error) {
+                console.error("Lỗi khi xuất ảnh JPG:", error);
+                showToast(`Lỗi khi xuất ảnh: ${error.message}`, 'error');
+            } finally {
+                loadingOverlay.classList.add('hidden');
+                loadingOverlay.querySelector('#loading-text').textContent = 'Đang kết nối...';
+            }
+        }
+
+        // --- Responsive Actions Toggle for Mobile ---
+        actionsToggleBtn.addEventListener('click', () => {
+            actionsContainer.classList.toggle('hidden');
+            actionsContainer.classList.toggle('flex');
+        });
+
+        // Close actions container when clicking outside on mobile
+        document.addEventListener('click', (event) => {
+            if (!actionsContainer.contains(event.target) && !actionsToggleBtn.contains(event.target) && window.innerWidth < 768) {
+                actionsContainer.classList.add('hidden');
+                actionsContainer.classList.remove('flex');
+            }
+        });
+
+        // Initial load check for eventId from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const eventIdFromUrl = urlParams.get('eventId');
+        if (eventIdFromUrl) {
+            // If an eventId is in the URL, try to load it directly
+            // This will be handled after Firebase auth is ready in onAuthStateChanged
+            // We store it in localStorage so loadEvents can pick it up
+            localStorage.setItem(`selectedEventId_${userId}`, eventIdFromUrl);
+        }
     </script>
+    <script src="./register-sw.js"></script>
 </body>
 </html>
