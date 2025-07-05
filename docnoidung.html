@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Trình Đọc Thông Minh với Lưu trữ & Đăng nhập</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .highlight-sentence { background-color: #fef9c3; color: #374151; transition: all 0.3s ease-in-out; border-left: 4px solid #f59e0b; padding-left: 12px !important; }
+        #toc-container a.active { background-color: #eef2ff; color: #4338ca; font-weight: 600; transform: translateX(4px); }
+        #library-view::-webkit-scrollbar, #modal-content::-webkit-scrollbar { width: 6px; }
+        #library-view::-webkit-scrollbar-track, #modal-content::-webkit-scrollbar-track { background: #f1f5f9; }
+        #library-view::-webkit-scrollbar-thumb, #modal-content::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800">
+
+    <div class="flex flex-col md:flex-row w-full min-h-screen">
+        <!-- CỘT BÊN TRÁI -->
+        <aside class="w-full md:w-80 lg:w-96 bg-white p-6 border-r border-slate-200 flex flex-col space-y-6">
+            <header class="text-center md:text-left">
+                <h1 class="text-2xl font-bold text-indigo-600">Trình Đọc Thông Minh</h1>
+            </header>
+
+            <div id="auth-section" class="p-4 border rounded-lg bg-slate-50 space-y-3">
+                <div id="logged-out-view">
+                    <h3 class="font-semibold text-center text-slate-700">Đăng nhập để lưu bài viết</h3>
+                    <div class="space-y-2">
+                        <input type="email" id="auth-email" placeholder="Email" class="w-full p-2 border rounded-md text-sm">
+                        <input type="password" id="auth-password" placeholder="Mật khẩu" class="w-full p-2 border rounded-md text-sm">
+                    </div>
+                    <div class="flex space-x-2 mt-2">
+                        <button id="login-btn" class="flex-1 py-2 bg-indigo-600 text-white rounded-md text-sm font-semibold hover:bg-indigo-700">Đăng nhập</button>
+                        <button id="register-btn" class="flex-1 py-2 bg-slate-600 text-white rounded-md text-sm font-semibold hover:bg-slate-700">Đăng ký</button>
+                    </div>
+                </div>
+                <div id="logged-in-view" class="hidden space-y-3">
+                     <p class="text-sm text-center">Xin chào, <strong id="user-email" class="truncate"></strong></p>
+                     <div class="flex space-x-2">
+                        <button id="new-article-btn" class="flex-1 py-2 bg-indigo-600 text-white rounded-md font-semibold hover:bg-indigo-700"><i class="fas fa-plus mr-2"></i>Bài mới</button>
+                        <button id="my-library-btn" class="flex-1 py-2 bg-green-600 text-white rounded-md font-semibold hover:bg-green-700"><i class="fas fa-book-open mr-2"></i>Thư viện</button>
+                     </div>
+                     <button id="logout-btn" class="w-full py-2 bg-red-500 text-white rounded-md font-semibold hover:bg-red-600">Đăng xuất</button>
+                </div>
+            </div>
+
+            <div id="features-panel" class="space-y-6 pt-4 border-t hidden">
+                 <div class="space-y-3">
+                    <h3 class="text-md font-semibold text-slate-700 text-center">Điều khiển đọc</h3>
+                    <div class="space-y-2">
+                        <label for="voice-select" class="block text-sm font-medium text-slate-700">🔊 Giọng đọc</label>
+                        <select id="voice-select" class="w-full p-2 border border-slate-300 rounded-md bg-white focus:ring-2 focus:ring-indigo-500 transition"></select>
+                    </div>
+                     <div class="space-y-2">
+                        <label for="rate-slider" class="block text-sm font-medium text-slate-700">🏃 Tốc độ: <span id="rate-value" class="font-semibold">1.0</span>x</label>
+                        <input id="rate-slider" type="range" min="0.5" max="2" step="0.1" value="1" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer">
+                    </div>
+                    <div class="flex items-center justify-center space-x-3">
+                        <button id="read-playBtn" class="flex-1 flex items-center justify-center py-2.5 bg-indigo-600 text-white rounded-lg shadow-sm hover:bg-indigo-700 active:scale-95 transition-all duration-200 font-semibold disabled:bg-indigo-300">
+                            <i class="fas fa-play mr-2"></i> <span id="read-play-text">Đọc</span>
+                        </button>
+                        <button id="read-stopBtn" class="flex-1 flex items-center justify-center py-2.5 bg-red-500 text-white rounded-lg shadow-sm hover:bg-red-600 active:scale-95 transition-all duration-200 font-semibold disabled:bg-red-300" disabled>
+                            <i class="fas fa-stop mr-2"></i> Dừng
+                        </button>
+                    </div>
+                 </div>
+                 <div class="space-y-3 pt-4 border-t">
+                    <h3 class="text-md font-semibold text-slate-700 text-center">Công cụ AI</h3>
+                    <button id="summarize-btn" class="w-full flex items-center justify-center py-2.5 bg-sky-500 text-white rounded-lg shadow-sm hover:bg-sky-600 active:scale-95 transition-all font-semibold">
+                        <i class="fas fa-wand-magic-sparkles mr-2"></i> Tóm tắt
+                    </button>
+                    <button id="questions-btn" class="w-full flex items-center justify-center py-2.5 bg-teal-500 text-white rounded-lg shadow-sm hover:bg-teal-600 active:scale-95 transition-all font-semibold">
+                        <i class="fas fa-circle-question mr-2"></i> Tạo câu hỏi
+                    </button>
+                 </div>
+            </div>
+            
+            <div id="toc-panel" class="flex-grow flex-col min-h-0 hidden">
+                <h2 class="text-lg font-semibold text-slate-800 border-b pb-2 mb-3">📖 Mục lục</h2>
+                <nav id="toc-container" class="flex-grow overflow-y-auto space-y-1 pr-2"></nav>
+            </div>
+            <div id="notification" class="hidden text-center text-sm text-amber-700 p-2 bg-amber-100 rounded-lg"></div>
+        </aside>
+
+        <!-- CỘT BÊN PHẢI -->
+        <main class="flex-grow p-6 md:p-8 lg:p-10 flex flex-col">
+            <div id="editor-view" class="hidden flex-grow flex-col">
+                <div class="mb-4">
+                    <div class="flex justify-between items-center">
+                        <label for="text-input" class="block text-lg font-semibold text-slate-700">Nội dung</label>
+                        <button id="save-article-btn" class="px-4 py-2 bg-blue-600 text-white rounded-md font-semibold hover:bg-blue-700 disabled:bg-blue-300 disabled:cursor-not-allowed min-w-[160px]">
+                        </button>
+                    </div>
+                    <textarea id="text-input" class="mt-2 w-full h-48 p-4 border-2 border-slate-200 rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition resize-y" placeholder="Dán văn bản của bạn vào đây..."></textarea>
+                </div>
+                <div class="relative flex-grow flex flex-col min-h-0 bg-white rounded-lg shadow-inner border border-slate-200">
+                    <div id="content-wrapper" class="hidden flex-grow flex-col min-h-0">
+                        <div class="p-4 border-b">
+                            <h2 id="article-title" class="text-xl font-semibold text-slate-800">Nội dung đọc</h2>
+                        </div>
+                        <article id="content-display" class="text-lg leading-relaxed p-6 flex-grow overflow-y-auto"></article>
+                    </div>
+                </div>
+            </div>
+            <div id="library-view" class="hidden flex-grow flex-col bg-white rounded-lg shadow-inner border border-slate-200">
+                 <div class="p-4 border-b">
+                    <h2 class="text-xl font-semibold text-slate-800"><i class="fas fa-book-open mr-2"></i>Thư viện của tôi</h2>
+                 </div>
+                 <div id="library-list" class="overflow-y-auto p-2">
+                 </div>
+            </div>
+            <div id="welcome-screen" class="p-10 text-center flex-col justify-center items-center h-full hidden">
+                 <h2 class="text-2xl font-bold text-slate-700">Chào mừng bạn!</h2>
+                 <p class="mt-2 text-slate-500">Bắt đầu bằng cách tạo một <strong class="text-indigo-600">Bài viết mới</strong> hoặc mở <strong class="text-green-600">Thư viện</strong>.</p>
+            </div>
+        </main>
+    </div>
+    
+    <div id="gemini-modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center p-4 z-50">
+         <div class="bg-white rounded-lg shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col">
+            <header class="flex items-center justify-between p-4 border-b">
+                <h3 id="modal-title" class="text-xl font-bold text-slate-800"></h3>
+                <button id="modal-close-btn" class="w-8 h-8 rounded-full hover:bg-slate-200 transition"><i class="fas fa-times"></i></button>
+            </header>
+            <main id="modal-content" class="p-6 overflow-y-auto prose max-w-none"></main>
+        </div>
+    </div>
+
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.19.1/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.19.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, query, where, getDocs, doc, deleteDoc, orderBy, updateDoc } from "https://www.gstatic.com/firebasejs/9.19.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyD2ZrOy5ag98LPGPw_Y2JOX52hzWoa8RqE",
+            authDomain: "luutru-baiviet.firebaseapp.com",
+            projectId: "luutru-baiviet",
+            storageBucket: "luutru-baiviet.appspot.com",
+            messagingSenderId: "475363283491",
+            appId: "1:475363283491:web:0615c8bfb62adec6c21796",
+            measurementId: "G-MLLP8GGCZ4"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const synth = window.speechSynthesis;
+
+        // DOM Elements
+        const loggedOutView = document.getElementById('logged-out-view');
+        const loggedInView = document.getElementById('logged-in-view');
+        const authEmailInput = document.getElementById('auth-email');
+        const authPasswordInput = document.getElementById('auth-password');
+        const loginBtn = document.getElementById('login-btn');
+        const registerBtn = document.getElementById('register-btn');
+        const logoutBtn = document.getElementById('logout-btn');
+        const userEmailDisplay = document.getElementById('user-email');
+        const saveArticleBtn = document.getElementById('save-article-btn');
+        const myLibraryBtn = document.getElementById('my-library-btn');
+        const newArticleBtn = document.getElementById('new-article-btn');
+        const textInput = document.getElementById('text-input');
+        const notification = document.getElementById('notification');
+        const articleTitle = document.getElementById('article-title');
+        const welcomeScreen = document.getElementById('welcome-screen');
+        const editorView = document.getElementById('editor-view');
+        const libraryView = document.getElementById('library-view');
+        const libraryList = document.getElementById('library-list');
+        const featuresPanel = document.getElementById('features-panel');
+        const geminiModal = document.getElementById('gemini-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalContent = document.getElementById('modal-content');
+        const modalCloseBtn = document.getElementById('modal-close-btn');
+        const summarizeBtn = document.getElementById('summarize-btn');
+        const questionsBtn = document.getElementById('questions-btn');
+        const tocPanel = document.getElementById('toc-panel');
+        const contentWrapper = document.getElementById('content-wrapper');
+        const contentDisplay = document.getElementById('content-display');
+        const readPlayBtn = document.getElementById('read-playBtn');
+        const readPlayText = document.getElementById('read-play-text');
+        const readStopBtn = document.getElementById('read-stopBtn');
+        const voiceSelect = document.getElementById('voice-select');
+        const rateSlider = document.getElementById('rate-slider');
+        const rateValue = document.getElementById('rate-value');
+        
+        // State
+        let currentArticleId = null;
+        let sentences = [];
+        let currentSentenceIndex = 0;
+        let isReading = false;
+        let voices = [];
+
+        // =======================================================
+        // UI Logic
+        // =======================================================
+        function switchView(viewName) {
+            editorView.classList.add('hidden');
+            libraryView.classList.add('hidden');
+            welcomeScreen.classList.add('hidden');
+            welcomeScreen.classList.remove('flex');
+
+            if (viewName === 'editor') {
+                editorView.classList.remove('hidden');
+                editorView.classList.add('flex');
+                if (textInput.value.trim()){
+                    featuresPanel.classList.remove('hidden');
+                    contentWrapper.classList.remove('hidden');
+                    contentWrapper.classList.add('flex');
+                } else {
+                    featuresPanel.classList.add('hidden');
+                    contentWrapper.classList.add('hidden');
+                    contentWrapper.classList.remove('flex');
+                }
+            } else if (viewName === 'library') {
+                libraryView.classList.remove('hidden');
+                libraryView.classList.add('flex');
+                featuresPanel.classList.add('hidden');
+            } else { // welcome
+                welcomeScreen.classList.remove('hidden');
+                welcomeScreen.classList.add('flex');
+                featuresPanel.classList.add('hidden');
+            }
+        }
+
+        function updateSaveButtonState() {
+            if (currentArticleId) {
+                saveArticleBtn.innerHTML = '<i class="fas fa-sync-alt mr-2"></i>Cập nhật';
+                saveArticleBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+                saveArticleBtn.classList.add('bg-purple-600', 'hover:bg-purple-700');
+            } else {
+                saveArticleBtn.innerHTML = '<i class="fas fa-save mr-2"></i>Lưu bài viết';
+                saveArticleBtn.classList.remove('bg-purple-600', 'hover:bg-purple-700');
+                saveArticleBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+            }
+        }
+        
+        // =======================================================
+        // Speech Synthesis Logic
+        // =======================================================
+        function processAndDisplayContent() {
+            handleStopReading();
+            const rawText = textInput.value;
+            contentDisplay.innerHTML = '';
+            sentences = [];
+            
+            if (!rawText.trim()) {
+                articleTitle.textContent = 'Bài viết mới';
+                featuresPanel.classList.add('hidden');
+                return;
+            }
+            featuresPanel.classList.remove('hidden');
+            articleTitle.textContent = rawText.split('\n')[0].trim().slice(0, 50) || "Bài viết không có tiêu đề";
+            
+            const sentenceRegex = /[^.?!]+(?:[.?!]|$)(?=\s|$)/g;
+            const foundSentences = rawText.match(sentenceRegex);
+            
+            if (foundSentences) {
+                foundSentences.forEach(sentenceText => {
+                    const trimmedText = sentenceText.trim();
+                    if(trimmedText.length > 0) {
+                        const p = document.createElement('p');
+                        p.textContent = trimmedText;
+                        p.className = 'mb-3 p-2 rounded-md';
+                        contentDisplay.appendChild(p);
+                        sentences.push({ element: p, text: trimmedText });
+                    }
+                });
+            }
+        }
+
+        async function populateVoiceList() {
+            return new Promise(resolve => {
+                const checkVoices = () => {
+                    voices = synth.getVoices();
+                    voiceSelect.innerHTML = '';
+                    
+                    const vietnameseVoices = voices.filter(v => v.lang.startsWith('vi'));
+                    const otherVoices = voices.filter(v => !v.lang.startsWith('vi'));
+                    const sortedVoices = [...vietnameseVoices, ...otherVoices];
+                    
+                    let firstVietnameseVoiceFound = false;
+
+                    sortedVoices.forEach(voice => {
+                        const option = document.createElement('option');
+                        option.textContent = `${voice.name} (${voice.lang})`;
+                        option.setAttribute('data-lang', voice.lang);
+                        option.setAttribute('data-name', voice.name);
+                        
+                        // Sửa đổi: Tự động chọn giọng đọc tiếng Việt đầu tiên
+                        if (voice.lang.startsWith('vi') && !firstVietnameseVoiceFound) {
+                            option.selected = true;
+                            firstVietnameseVoiceFound = true;
+                        }
+                        
+                        voiceSelect.appendChild(option);
+                    });
+                    resolve();
+                };
+                if (synth.getVoices().length) {
+                    checkVoices();
+                } else {
+                    synth.onvoiceschanged = () => { 
+                        checkVoices(); 
+                        synth.onvoiceschanged = null;
+                    };
+                }
+            });
+        }
+
+        function handlePlayReading() {
+            if (isReading && synth.paused) {
+                synth.resume();
+            } else {
+                isReading = true;
+                speakSentence(currentSentenceIndex);
+            }
+            readPlayBtn.disabled = true;
+            readPlayText.textContent = "Đang đọc";
+            readStopBtn.disabled = false;
+        }
+
+        function handleStopReading() {
+            isReading = false;
+            synth.cancel();
+            currentSentenceIndex = 0;
+            readPlayBtn.disabled = false;
+            readStopBtn.disabled = true;
+            readPlayText.textContent = "Đọc";
+            highlightSentence(-1);
+        }
+        
+        function speakSentence(index) {
+            if (index >= sentences.length || !isReading) {
+                handleStopReading();
+                return;
+            }
+            currentSentenceIndex = index;
+            highlightSentence(index);
+            
+            const { text } = sentences[index];
+            const utterance = new SpeechSynthesisUtterance(text);
+            const selectedVoiceName = voiceSelect.selectedOptions[0]?.getAttribute('data-name');
+            utterance.voice = voices.find(v => v.name === selectedVoiceName);
+            utterance.rate = parseFloat(rateSlider.value);
+            
+            utterance.onend = () => {
+                if (isReading) {
+                    speakSentence(index + 1);
+                }
+            };
+            synth.speak(utterance);
+        }
+        
+        function highlightSentence(index) {
+            sentences.forEach(s => s.element.classList.remove('highlight-sentence'));
+            const sentenceData = sentences[index];
+            if (sentenceData) {
+                sentenceData.element.classList.add('highlight-sentence');
+                sentenceData.element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+        
+        // =======================================================
+        // Authentication Logic
+        // =======================================================
+        
+        onAuthStateChanged(auth, user => {
+            if (user) {
+                loggedOutView.classList.add('hidden');
+                loggedInView.classList.remove('hidden');
+                userEmailDisplay.textContent = user.email;
+                saveArticleBtn.disabled = false;
+                newArticleBtn.click();
+            } else {
+                loggedOutView.classList.remove('hidden');
+                loggedInView.classList.add('hidden');
+                userEmailDisplay.textContent = '';
+                saveArticleBtn.disabled = true;
+                saveArticleBtn.innerHTML = 'Chờ đăng nhập';
+                switchView('editor');
+                textInput.value = '';
+                processAndDisplayContent();
+            }
+        });
+
+        registerBtn.addEventListener('click', async () => {
+            const email = authEmailInput.value;
+            const password = authPasswordInput.value;
+            if (!email || !password) {
+                showNotification('Vui lòng nhập email và mật khẩu.', 'error');
+                return;
+            }
+            try {
+                await createUserWithEmailAndPassword(auth, email, password);
+                showNotification('Đăng ký thành công! Chào mừng bạn.', 'success');
+            } catch (error) {
+                showNotification(`Lỗi đăng ký: ${error.message}`, 'error');
+            }
+        });
+
+        loginBtn.addEventListener('click', async () => {
+            const email = authEmailInput.value;
+            const password = authPasswordInput.value;
+            if (!email || !password) {
+                showNotification('Vui lòng nhập email và mật khẩu.', 'error');
+                return;
+            }
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+                showNotification('Đăng nhập thành công!', 'success');
+            } catch (error) {
+                showNotification(`Lỗi đăng nhập: Email hoặc mật khẩu không đúng.`, 'error');
+            }
+        });
+
+        logoutBtn.addEventListener('click', async () => {
+            try {
+                await signOut(auth);
+                showNotification('Đã đăng xuất.', 'success');
+            } catch (error) {
+                showNotification(`Lỗi đăng xuất: ${error.message}`, 'error');
+            }
+        });
+
+        // =======================================================
+        // Firestore Logic (Library)
+        // =======================================================
+        
+        saveArticleBtn.addEventListener('click', async () => {
+            const user = auth.currentUser;
+            if (!user) { showNotification('Bạn cần đăng nhập.', 'error'); return; }
+            const content = textInput.value;
+            if (content.trim().length < 20) { showNotification('Nội dung quá ngắn.', 'error'); return; }
+
+            const title = content.split('\n')[0].trim().slice(0, 50) || "Bài viết không có tiêu đề";
+            
+            saveArticleBtn.disabled = true;
+            saveArticleBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Đang xử lý...';
+
+            try {
+                if (currentArticleId) {
+                    const articleRef = doc(db, "articles", currentArticleId);
+                    await updateDoc(articleRef, { title, content });
+                    showNotification('Đã cập nhật bài viết!', 'success');
+                } else {
+                    const docRef = await addDoc(collection(db, "articles"), {
+                        title, content, ownerId: user.uid, createdAt: new Date()
+                    });
+                    currentArticleId = docRef.id;
+                    showNotification('Đã lưu bài viết thành công!', 'success');
+                }
+            } catch (error) {
+                showNotification(`Lỗi: ${error.message}`, 'error');
+            } finally {
+                saveArticleBtn.disabled = false;
+                updateSaveButtonState();
+            }
+        });
+
+        myLibraryBtn.addEventListener('click', async () => {
+            const user = auth.currentUser;
+            if (!user) return;
+
+            switchView('library');
+            libraryList.innerHTML = '<p class="text-center p-4"><i class="fas fa-spinner fa-spin"></i> Đang tải thư viện...</p>';
+
+            const q = query(collection(db, "articles"), where("ownerId", "==", user.uid));
+            const querySnapshot = await getDocs(q);
+
+            const articles = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            articles.sort((a, b) => b.createdAt.toDate() - a.createdAt.toDate());
+            
+            if (articles.length === 0) {
+                libraryList.innerHTML = '<p class="p-4 text-center text-slate-500">Thư viện của bạn trống.</p>';
+                return;
+            }
+
+            libraryList.innerHTML = '';
+            articles.forEach((articleData) => {
+                const articleEl = document.createElement('div');
+                articleEl.className = 'p-4 border-b hover:bg-slate-100 cursor-pointer flex justify-between items-center group';
+                
+                const titleEl = document.createElement('span');
+                titleEl.textContent = articleData.title;
+                titleEl.className = "font-semibold text-slate-700";
+                articleEl.appendChild(titleEl);
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.innerHTML = '<i class="fas fa-trash text-slate-400 group-hover:text-red-500 transition-colors"></i>';
+                deleteBtn.className = 'p-2 rounded-full hover:bg-red-100';
+                deleteBtn.onclick = async (e) => {
+                    e.stopPropagation();
+                    if (window.confirm(`Bạn có chắc muốn xóa bài viết "${articleData.title}"?`)) {
+                        await deleteDoc(doc(db, "articles", articleData.id));
+                        articleEl.remove();
+                        showNotification('Đã xóa bài viết.', 'success');
+                        if (currentArticleId === articleData.id) {
+                            newArticleBtn.click();
+                        }
+                    }
+                };
+                articleEl.appendChild(deleteBtn);
+
+                articleEl.onclick = () => {
+                    textInput.value = articleData.content;
+                    currentArticleId = articleData.id;
+                    updateSaveButtonState();
+                    switchView('editor');
+                    processAndDisplayContent();
+                };
+
+                libraryList.appendChild(articleEl);
+            });
+        });
+
+        newArticleBtn.addEventListener('click', () => {
+            textInput.value = '';
+            currentArticleId = null;
+            updateSaveButtonState();
+            switchView('editor');
+            processAndDisplayContent();
+        });
+
+        // =======================================================
+        // Gemini AI Logic
+        // =======================================================
+        async function callGemini(prompt, title) {
+            modalTitle.textContent = title;
+            modalContent.innerHTML = '<div class="flex justify-center items-center h-40"><i class="fas fa-spinner fa-spin fa-3x text-indigo-500"></i><p class="ml-4 text-slate-600">Gemini đang suy nghĩ...</p></div>';
+            geminiModal.classList.remove('hidden');
+            geminiModal.classList.add('flex');
+
+            const apiKey = "";
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                });
+                if (!response.ok) throw new Error(`Lỗi API: ${response.statusText}`);
+                const result = await response.json();
+                if (result.candidates && result.candidates.length > 0) {
+                    const text = result.candidates[0].content.parts[0].text;
+                    let htmlContent = text
+                        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                        .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                        .replace(/^(#+)\s*(.*)/gm, (match, p1, p2) => `<h${p1.length}>${p2}</h${p1.length}>`)
+                        .replace(/\n/g, '<br>');
+                    modalContent.innerHTML = htmlContent;
+                } else {
+                    throw new Error('Không nhận được phản hồi hợp lệ.');
+                }
+            } catch (error) {
+                modalContent.textContent = `Đã xảy ra lỗi: ${error.message}`;
+            }
+        }
+
+        summarizeBtn.addEventListener('click', () => {
+            const text = textInput.value;
+            if (text.trim().length < 50) { showNotification("Văn bản quá ngắn để tóm tắt."); return; }
+            const prompt = `Tóm tắt văn bản sau đây thành các gạch đầu dòng súc tích bằng tiếng Việt:\n\n---\n\n${text}`;
+            callGemini(prompt, "✨ Tóm tắt từ Gemini");
+        });
+
+        questionsBtn.addEventListener('click', () => {
+            const text = textInput.value;
+            if (text.trim().length < 50) { showNotification("Văn bản quá ngắn để tạo câu hỏi."); return; }
+            const prompt = `Dựa vào văn bản sau, hãy tạo 3-5 câu hỏi trắc nghiệm bằng tiếng Việt để kiểm tra mức độ hiểu bài:\n\n---\n\n${text}`;
+            callGemini(prompt, "✨ Câu hỏi từ Gemini");
+        });
+
+        modalCloseBtn.addEventListener('click', () => geminiModal.classList.add('hidden'));
+
+        // =======================================================
+        // Helper Functions & Event Listeners
+        // =======================================================
+        function showNotification(message, type = 'info') {
+            notification.textContent = message;
+            notification.classList.remove('hidden', 'bg-amber-100', 'text-amber-700', 'bg-green-100', 'text-green-700', 'bg-red-100', 'text-red-700');
+            if (type === 'success') {
+                notification.classList.add('bg-green-100', 'text-green-700');
+            } else if (type === 'error') {
+                notification.classList.add('bg-red-100', 'text-red-700');
+            } else {
+                 notification.classList.add('bg-amber-100', 'text-amber-700');
+            }
+            setTimeout(() => notification.classList.add('hidden'), 4000);
+        }
+        
+        textInput.addEventListener('input', () => {
+            if (textInput.value.trim()) {
+                switchView('editor');
+            } else {
+                if(auth.currentUser) {
+                    featuresPanel.classList.add('hidden');
+                    contentWrapper.classList.add('hidden');
+                    contentWrapper.classList.remove('flex');
+                }
+            }
+            processAndDisplayContent();
+        });
+        
+        readPlayBtn.addEventListener('click', handlePlayReading);
+        readStopBtn.addEventListener('click', handleStopReading);
+        rateSlider.addEventListener('input', () => {
+            rateValue.textContent = parseFloat(rateSlider.value).toFixed(1);
+        });
+
+        // Initialize
+        (async () => {
+            await populateVoiceList();
+            switchView('editor');
+        })();
+
+    </script>
+</body>
+</html>
