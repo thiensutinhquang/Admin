@@ -1,6 +1,6 @@
 {
   "name": "Tool Quản lý Sự kiện Đa năng dành cho Ban Làm Việc MSTQ",
-  "short_name": "Tool Qly Đa năng",
+  "short_name": "ToolQly",
   "start_url": "./Noidungdangkyvannghe.html",
   "scope": "./",
   "display": "standalone",
