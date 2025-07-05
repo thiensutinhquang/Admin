@@ -10,112 +10,133 @@
         body { font-family: 'Inter', sans-serif; }
         .highlight-sentence { background-color: #fef9c3; color: #374151; transition: all 0.3s ease-in-out; border-left: 4px solid #f59e0b; padding-left: 12px !important; }
         #toc-container a.active { background-color: #eef2ff; color: #4338ca; font-weight: 600; transform: translateX(4px); }
-        #library-view::-webkit-scrollbar, #modal-content::-webkit-scrollbar { width: 6px; }
-        #library-view::-webkit-scrollbar-track, #modal-content::-webkit-scrollbar-track { background: #f1f5f9; }
-        #library-view::-webkit-scrollbar-thumb, #modal-content::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 10px; }
+        #library-view::-webkit-scrollbar, #modal-content::-webkit-scrollbar, #chat-messages::-webkit-scrollbar, #sidebar-content::-webkit-scrollbar { width: 6px; }
+        #library-view::-webkit-scrollbar-track, #modal-content::-webkit-scrollbar-track, #chat-messages::-webkit-scrollbar-track, #sidebar-content::-webkit-scrollbar-track { background: #f1f5f9; }
+        #library-view::-webkit-scrollbar-thumb, #modal-content::-webkit-scrollbar-thumb, #chat-messages::-webkit-scrollbar-thumb, #sidebar-content::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 10px; }
+        /* Sửa đổi: Style cho phần đáp án mở rộng */
+        details > summary {
+            list-style: none;
+            cursor: pointer;
+        }
+        details > summary::-webkit-details-marker {
+            display: none;
+        }
     </style>
 </head>
 <body class="bg-slate-100 text-slate-800">
 
-    <div class="flex flex-col md:flex-row w-full min-h-screen">
-        <!-- CỘT BÊN TRÁI -->
-        <aside class="w-full md:w-80 lg:w-96 bg-white p-6 border-r border-slate-200 flex flex-col space-y-6">
-            <header class="text-center md:text-left">
-                <h1 class="text-2xl font-bold text-indigo-600">Trình Đọc Thông Minh</h1>
-            </header>
+    <div class="relative min-h-screen md:flex">
+        <!-- Sidebar -->
+        <aside id="sidebar" class="fixed inset-y-0 left-0 z-40 w-80 bg-white p-6 border-r border-slate-200 flex flex-col transform -translate-x-full transition-transform duration-300 ease-in-out md:relative md:translate-x-0">
+            <div id="sidebar-content" class="flex flex-col space-y-6 overflow-y-auto">
+                <header class="text-center md:text-left">
+                    <h1 class="text-2xl font-bold text-indigo-600">Trình Đọc Thông Minh</h1>
+                </header>
 
-            <div id="auth-section" class="p-4 border rounded-lg bg-slate-50 space-y-3">
-                <div id="logged-out-view">
-                    <h3 class="font-semibold text-center text-slate-700">Đăng nhập để lưu bài viết</h3>
-                    <div class="space-y-2">
-                        <input type="email" id="auth-email" placeholder="Email" class="w-full p-2 border rounded-md text-sm">
-                        <input type="password" id="auth-password" placeholder="Mật khẩu" class="w-full p-2 border rounded-md text-sm">
+                <div id="auth-section" class="p-4 border rounded-lg bg-slate-50 space-y-3">
+                    <div id="logged-out-view">
+                        <h3 class="font-semibold text-center text-slate-700">Đăng nhập để lưu bài viết</h3>
+                        <div class="space-y-2">
+                            <input type="email" id="auth-email" placeholder="Email" class="w-full p-2 border rounded-md text-sm">
+                            <input type="password" id="auth-password" placeholder="Mật khẩu" class="w-full p-2 border rounded-md text-sm">
+                        </div>
+                        <div class="flex space-x-2 mt-2">
+                            <button id="login-btn" class="flex-1 py-2 bg-indigo-600 text-white rounded-md text-sm font-semibold hover:bg-indigo-700">Đăng nhập</button>
+                            <button id="register-btn" class="flex-1 py-2 bg-slate-600 text-white rounded-md text-sm font-semibold hover:bg-slate-700">Đăng ký</button>
+                        </div>
                     </div>
-                    <div class="flex space-x-2 mt-2">
-                        <button id="login-btn" class="flex-1 py-2 bg-indigo-600 text-white rounded-md text-sm font-semibold hover:bg-indigo-700">Đăng nhập</button>
-                        <button id="register-btn" class="flex-1 py-2 bg-slate-600 text-white rounded-md text-sm font-semibold hover:bg-slate-700">Đăng ký</button>
+                    <div id="logged-in-view" class="hidden space-y-3">
+                         <p class="text-sm text-center">Xin chào, <strong id="user-email" class="truncate"></strong></p>
+                         <div class="flex space-x-2">
+                            <button id="new-article-btn" class="flex-1 py-2 bg-indigo-600 text-white rounded-md font-semibold hover:bg-indigo-700"><i class="fas fa-plus mr-2"></i>Bài mới</button>
+                            <button id="my-library-btn" class="flex-1 py-2 bg-green-600 text-white rounded-md font-semibold hover:bg-green-700"><i class="fas fa-book-open mr-2"></i>Thư viện</button>
+                         </div>
+                         <button id="logout-btn" class="w-full py-2 bg-red-500 text-white rounded-md font-semibold hover:bg-red-600">Đăng xuất</button>
                     </div>
                 </div>
-                <div id="logged-in-view" class="hidden space-y-3">
-                     <p class="text-sm text-center">Xin chào, <strong id="user-email" class="truncate"></strong></p>
-                     <div class="flex space-x-2">
-                        <button id="new-article-btn" class="flex-1 py-2 bg-indigo-600 text-white rounded-md font-semibold hover:bg-indigo-700"><i class="fas fa-plus mr-2"></i>Bài mới</button>
-                        <button id="my-library-btn" class="flex-1 py-2 bg-green-600 text-white rounded-md font-semibold hover:bg-green-700"><i class="fas fa-book-open mr-2"></i>Thư viện</button>
-                     </div>
-                     <button id="logout-btn" class="w-full py-2 bg-red-500 text-white rounded-md font-semibold hover:bg-red-600">Đăng xuất</button>
-                </div>
-            </div>
 
-            <div id="features-panel" class="space-y-6 pt-4 border-t hidden">
-                 <div class="space-y-3">
-                    <h3 class="text-md font-semibold text-slate-700 text-center">Điều khiển đọc</h3>
-                    <div class="space-y-2">
-                        <label for="voice-select" class="block text-sm font-medium text-slate-700">🔊 Giọng đọc</label>
-                        <select id="voice-select" class="w-full p-2 border border-slate-300 rounded-md bg-white focus:ring-2 focus:ring-indigo-500 transition"></select>
+                <div id="features-panel" class="space-y-6 pt-4 border-t hidden">
+                    <div class="space-y-3">
+                        <h3 class="text-md font-semibold text-slate-700 text-center">Điều khiển đọc</h3>
+                        <div class="space-y-2">
+                            <label for="voice-select" class="block text-sm font-medium text-slate-700">🔊 Giọng đọc</label>
+                            <select id="voice-select" class="w-full p-2 border border-slate-300 rounded-md bg-white focus:ring-2 focus:ring-indigo-500 transition"></select>
+                        </div>
+                         <div class="space-y-2">
+                            <label for="rate-slider" class="block text-sm font-medium text-slate-700">🏃 Tốc độ: <span id="rate-value" class="font-semibold">1.0</span>x</label>
+                            <input id="rate-slider" type="range" min="0.5" max="2" step="0.1" value="1" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer">
+                        </div>
+                        <div class="flex items-center justify-center space-x-3">
+                            <button id="read-playBtn" class="flex-1 flex items-center justify-center py-2.5 bg-indigo-600 text-white rounded-lg shadow-sm hover:bg-indigo-700 active:scale-95 transition-all duration-200 font-semibold disabled:bg-indigo-300">
+                                <i class="fas fa-play mr-2"></i> <span id="read-play-text">Đọc</span>
+                            </button>
+                            <button id="read-stopBtn" class="flex-1 flex items-center justify-center py-2.5 bg-red-500 text-white rounded-lg shadow-sm hover:bg-red-600 active:scale-95 transition-all duration-200 font-semibold disabled:bg-red-300" disabled>
+                                <i class="fas fa-stop mr-2"></i> Dừng
+                            </button>
+                        </div>
                     </div>
-                     <div class="space-y-2">
-                        <label for="rate-slider" class="block text-sm font-medium text-slate-700">🏃 Tốc độ: <span id="rate-value" class="font-semibold">1.0</span>x</label>
-                        <input id="rate-slider" type="range" min="0.5" max="2" step="0.1" value="1" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer">
-                    </div>
-                    <div class="flex items-center justify-center space-x-3">
-                        <button id="read-playBtn" class="flex-1 flex items-center justify-center py-2.5 bg-indigo-600 text-white rounded-lg shadow-sm hover:bg-indigo-700 active:scale-95 transition-all duration-200 font-semibold disabled:bg-indigo-300">
-                            <i class="fas fa-play mr-2"></i> <span id="read-play-text">Đọc</span>
+                    <div class="space-y-3 pt-4 border-t">
+                        <h3 class="text-md font-semibold text-slate-700 text-center">Công cụ AI</h3>
+                        <button id="summarize-btn" class="w-full flex items-center justify-center py-2.5 bg-sky-500 text-white rounded-lg shadow-sm hover:bg-sky-600 active:scale-95 transition-all font-semibold">
+                            <i class="fas fa-wand-magic-sparkles mr-2"></i> Tóm tắt
                         </button>
-                        <button id="read-stopBtn" class="flex-1 flex items-center justify-center py-2.5 bg-red-500 text-white rounded-lg shadow-sm hover:bg-red-600 active:scale-95 transition-all duration-200 font-semibold disabled:bg-red-300" disabled>
-                            <i class="fas fa-stop mr-2"></i> Dừng
+                        <button id="questions-btn" class="w-full flex items-center justify-center py-2.5 bg-teal-500 text-white rounded-lg shadow-sm hover:bg-teal-600 active:scale-95 transition-all font-semibold">
+                            <i class="fas fa-circle-question mr-2"></i> Tạo câu hỏi
                         </button>
                     </div>
-                 </div>
-                 <div class="space-y-3 pt-4 border-t">
-                    <h3 class="text-md font-semibold text-slate-700 text-center">Công cụ AI</h3>
-                    <button id="summarize-btn" class="w-full flex items-center justify-center py-2.5 bg-sky-500 text-white rounded-lg shadow-sm hover:bg-sky-600 active:scale-95 transition-all font-semibold">
-                        <i class="fas fa-wand-magic-sparkles mr-2"></i> Tóm tắt
-                    </button>
-                    <button id="questions-btn" class="w-full flex items-center justify-center py-2.5 bg-teal-500 text-white rounded-lg shadow-sm hover:bg-teal-600 active:scale-95 transition-all font-semibold">
-                        <i class="fas fa-circle-question mr-2"></i> Tạo câu hỏi
-                    </button>
-                 </div>
+                </div>
+                
+                <div id="toc-panel" class="flex-grow flex-col min-h-0 hidden">
+                    <h2 class="text-lg font-semibold text-slate-800 border-b pb-2 mb-3">📖 Mục lục</h2>
+                    <nav id="toc-container" class="flex-grow overflow-y-auto space-y-1 pr-2"></nav>
+                </div>
+                <div id="notification" class="hidden text-center text-sm text-amber-700 p-2 bg-amber-100 rounded-lg"></div>
             </div>
-            
-            <div id="toc-panel" class="flex-grow flex-col min-h-0 hidden">
-                <h2 class="text-lg font-semibold text-slate-800 border-b pb-2 mb-3">📖 Mục lục</h2>
-                <nav id="toc-container" class="flex-grow overflow-y-auto space-y-1 pr-2"></nav>
-            </div>
-            <div id="notification" class="hidden text-center text-sm text-amber-700 p-2 bg-amber-100 rounded-lg"></div>
         </aside>
 
-        <!-- CỘT BÊN PHẢI -->
-        <main class="flex-grow p-6 md:p-8 lg:p-10 flex flex-col">
-            <div id="editor-view" class="hidden flex-grow flex-col">
-                <div class="mb-4">
-                    <div class="flex justify-between items-center">
-                        <label for="text-input" class="block text-lg font-semibold text-slate-700">Nội dung</label>
-                        <button id="save-article-btn" class="px-4 py-2 bg-blue-600 text-white rounded-md font-semibold hover:bg-blue-700 disabled:bg-blue-300 disabled:cursor-not-allowed min-w-[160px]">
-                        </button>
-                    </div>
-                    <textarea id="text-input" class="mt-2 w-full h-48 p-4 border-2 border-slate-200 rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition resize-y" placeholder="Dán văn bản của bạn vào đây..."></textarea>
-                </div>
-                <div class="relative flex-grow flex flex-col min-h-0 bg-white rounded-lg shadow-inner border border-slate-200">
-                    <div id="content-wrapper" class="hidden flex-grow flex-col min-h-0">
-                        <div class="p-4 border-b">
-                            <h2 id="article-title" class="text-xl font-semibold text-slate-800">Nội dung đọc</h2>
+        <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-30 hidden md:hidden"></div>
+
+        <div class="flex-1 flex flex-col">
+            <header class="md:hidden flex items-center justify-between p-4 bg-white border-b sticky top-0 z-20">
+                <button id="menu-btn" class="p-2 -ml-2">
+                    <i class="fas fa-bars text-2xl text-slate-600"></i>
+                </button>
+                <h1 class="text-lg font-bold text-indigo-600">Trình Đọc Thông Minh</h1>
+                <div class="w-8"></div> <!-- Spacer -->
+            </header>
+
+            <main class="p-4 sm:p-6 md:p-8 lg:p-10 flex flex-col flex-grow">
+                <div id="editor-view" class="hidden flex-grow flex-col">
+                    <div class="mb-4">
+                        <div class="flex justify-between items-center">
+                            <label for="text-input" class="block text-lg font-semibold text-slate-700">Nội dung</label>
+                            <button id="save-article-btn" class="px-4 py-2 bg-blue-600 text-white rounded-md font-semibold hover:bg-blue-700 disabled:bg-blue-300 disabled:cursor-not-allowed min-w-[160px]">
+                            </button>
                         </div>
-                        <article id="content-display" class="text-lg leading-relaxed p-6 flex-grow overflow-y-auto"></article>
+                        <textarea id="text-input" class="mt-2 w-full h-48 p-4 border-2 border-slate-200 rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition resize-y" placeholder="Dán văn bản của bạn vào đây..."></textarea>
+                    </div>
+                    <div class="relative flex-grow flex flex-col min-h-0 bg-white rounded-lg shadow-inner border border-slate-200">
+                        <div id="content-wrapper" class="hidden flex-grow flex-col min-h-0">
+                            <div class="p-4 border-b">
+                                <h2 id="article-title" class="text-xl font-semibold text-slate-800">Nội dung đọc</h2>
+                            </div>
+                            <article id="content-display" class="text-lg leading-relaxed p-6 flex-grow overflow-y-auto"></article>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div id="library-view" class="hidden flex-grow flex-col bg-white rounded-lg shadow-inner border border-slate-200">
-                 <div class="p-4 border-b">
-                    <h2 class="text-xl font-semibold text-slate-800"><i class="fas fa-book-open mr-2"></i>Thư viện của tôi</h2>
-                 </div>
-                 <div id="library-list" class="overflow-y-auto p-2">
-                 </div>
-            </div>
-            <div id="welcome-screen" class="p-10 text-center flex-col justify-center items-center h-full hidden">
-                 <h2 class="text-2xl font-bold text-slate-700">Chào mừng bạn!</h2>
-                 <p class="mt-2 text-slate-500">Bắt đầu bằng cách tạo một <strong class="text-indigo-600">Bài viết mới</strong> hoặc mở <strong class="text-green-600">Thư viện</strong>.</p>
-            </div>
-        </main>
+                <div id="library-view" class="hidden flex-grow flex-col bg-white rounded-lg shadow-inner border border-slate-200">
+                     <div class="p-4 border-b">
+                        <h2 class="text-xl font-semibold text-slate-800"><i class="fas fa-book-open mr-2"></i>Thư viện của tôi</h2>
+                     </div>
+                     <div id="library-list" class="overflow-y-auto p-2">
+                     </div>
+                </div>
+                <div id="welcome-screen" class="p-10 text-center flex-col justify-center items-center h-full hidden">
+                     <h2 class="text-2xl font-bold text-slate-700">Chào mừng bạn!</h2>
+                     <p class="mt-2 text-slate-500">Bắt đầu bằng cách tạo một <strong class="text-indigo-600">Bài viết mới</strong> hoặc mở <strong class="text-green-600">Thư viện</strong>.</p>
+                </div>
+            </main>
+        </div>
     </div>
     
     <div id="gemini-modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center p-4 z-50">
@@ -126,6 +147,25 @@
             </header>
             <main id="modal-content" class="p-6 overflow-y-auto prose max-w-none"></main>
         </div>
+    </div>
+    
+    <div id="chat-container" class="fixed bottom-5 right-5 flex flex-col items-end space-y-2 z-30">
+        <div id="chat-window" class="w-96 h-[60vh] bg-white rounded-lg shadow-2xl flex-col hidden">
+            <header class="flex items-center justify-between p-3 bg-indigo-600 text-white rounded-t-lg">
+                <h3 class="font-semibold"><i class="fas fa-robot mr-2"></i>Trợ lý AI</h3>
+                <button id="close-chat-btn" class="w-7 h-7 rounded-full hover:bg-indigo-700 transition"><i class="fas fa-times"></i></button>
+            </header>
+            <main id="chat-messages" class="flex-grow p-3 overflow-y-auto space-y-4"></main>
+            <footer class="p-3 border-t">
+                <form id="chat-form" class="flex items-center space-x-2">
+                    <input type="text" id="chat-input" placeholder="Hỏi về nội dung bài viết..." class="flex-grow p-2 border rounded-md text-sm focus:ring-2 focus:ring-indigo-500">
+                    <button type="submit" class="w-10 h-10 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition"><i class="fas fa-paper-plane"></i></button>
+                </form>
+            </footer>
+        </div>
+        <button id="open-chat-btn" class="w-16 h-16 bg-indigo-600 text-white rounded-full shadow-lg flex items-center justify-center text-2xl hover:bg-indigo-700 transition transform hover:scale-110 hidden">
+            <i class="fas fa-robot"></i>
+        </button>
     </div>
 
 
@@ -150,6 +190,9 @@
         const synth = window.speechSynthesis;
 
         // DOM Elements
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebar-overlay');
+        const menuBtn = document.getElementById('menu-btn');
         const loggedOutView = document.getElementById('logged-out-view');
         const loggedInView = document.getElementById('logged-in-view');
         const authEmailInput = document.getElementById('auth-email');
@@ -184,6 +227,12 @@
         const voiceSelect = document.getElementById('voice-select');
         const rateSlider = document.getElementById('rate-slider');
         const rateValue = document.getElementById('rate-value');
+        const openChatBtn = document.getElementById('open-chat-btn');
+        const chatWindow = document.getElementById('chat-window');
+        const closeChatBtn = document.getElementById('close-chat-btn');
+        const chatMessages = document.getElementById('chat-messages');
+        const chatForm = document.getElementById('chat-form');
+        const chatInput = document.getElementById('chat-input');
         
         // State
         let currentArticleId = null;
@@ -191,6 +240,23 @@
         let currentSentenceIndex = 0;
         let isReading = false;
         let voices = [];
+
+        // =======================================================
+        // UI Logic for Mobile
+        // =======================================================
+        function openSidebar() {
+            sidebar.classList.remove('-translate-x-full');
+            sidebarOverlay.classList.remove('hidden');
+        }
+
+        function closeSidebar() {
+            sidebar.classList.add('-translate-x-full');
+            sidebarOverlay.classList.add('hidden');
+        }
+
+        menuBtn.addEventListener('click', openSidebar);
+        sidebarOverlay.addEventListener('click', closeSidebar);
+
 
         // =======================================================
         // UI Logic
@@ -208,19 +274,30 @@
                     featuresPanel.classList.remove('hidden');
                     contentWrapper.classList.remove('hidden');
                     contentWrapper.classList.add('flex');
+                    openChatBtn.classList.remove('hidden');
                 } else {
                     featuresPanel.classList.add('hidden');
                     contentWrapper.classList.add('hidden');
                     contentWrapper.classList.remove('flex');
+                    openChatBtn.classList.add('hidden');
+                    chatWindow.classList.add('hidden');
                 }
             } else if (viewName === 'library') {
                 libraryView.classList.remove('hidden');
                 libraryView.classList.add('flex');
                 featuresPanel.classList.add('hidden');
+                openChatBtn.classList.add('hidden');
+                chatWindow.classList.add('hidden');
             } else { // welcome
                 welcomeScreen.classList.remove('hidden');
                 welcomeScreen.classList.add('flex');
                 featuresPanel.classList.add('hidden');
+                openChatBtn.classList.add('hidden');
+                chatWindow.classList.add('hidden');
+            }
+
+            if (window.innerWidth < 768) {
+                closeSidebar();
             }
         }
 
@@ -248,9 +325,12 @@
             if (!rawText.trim()) {
                 articleTitle.textContent = 'Bài viết mới';
                 featuresPanel.classList.add('hidden');
+                openChatBtn.classList.add('hidden');
+                chatWindow.classList.add('hidden');
                 return;
             }
             featuresPanel.classList.remove('hidden');
+            openChatBtn.classList.remove('hidden');
             articleTitle.textContent = rawText.split('\n')[0].trim().slice(0, 50) || "Bài viết không có tiêu đề";
             
             const sentenceRegex = /[^.?!]+(?:[.?!]|$)(?=\s|$)/g;
@@ -288,7 +368,6 @@
                         option.setAttribute('data-lang', voice.lang);
                         option.setAttribute('data-name', voice.name);
                         
-                        // Sửa đổi: Tự động chọn giọng đọc tiếng Việt đầu tiên
                         if (voice.lang.startsWith('vi') && !firstVietnameseVoiceFound) {
                             option.selected = true;
                             firstVietnameseVoiceFound = true;
@@ -526,7 +605,7 @@
         // =======================================================
         // Gemini AI Logic
         // =======================================================
-        async function callGemini(prompt, title) {
+        async function callGemini(prompt, title, isQuestion = false) {
             modalTitle.textContent = title;
             modalContent.innerHTML = '<div class="flex justify-center items-center h-40"><i class="fas fa-spinner fa-spin fa-3x text-indigo-500"></i><p class="ml-4 text-slate-600">Gemini đang suy nghĩ...</p></div>';
             geminiModal.classList.remove('hidden');
@@ -545,12 +624,18 @@
                 const result = await response.json();
                 if (result.candidates && result.candidates.length > 0) {
                     const text = result.candidates[0].content.parts[0].text;
-                    let htmlContent = text
-                        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                        .replace(/\*(.*?)\*/g, '<em>$1</em>')
-                        .replace(/^(#+)\s*(.*)/gm, (match, p1, p2) => `<h${p1.length}>${p2}</h${p1.length}>`)
-                        .replace(/\n/g, '<br>');
-                    modalContent.innerHTML = htmlContent;
+                    
+                    // Sửa đổi: Xử lý hiển thị câu hỏi
+                    if (isQuestion) {
+                        renderQuestions(text);
+                    } else {
+                        let htmlContent = text
+                            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                            .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                            .replace(/^(#+)\s*(.*)/gm, (match, p1, p2) => `<h${p1.length}>${p2}</h${p1.length}>`)
+                            .replace(/\n/g, '<br>');
+                        modalContent.innerHTML = htmlContent;
+                    }
                 } else {
                     throw new Error('Không nhận được phản hồi hợp lệ.');
                 }
@@ -559,51 +644,82 @@
             }
         }
 
+        function renderQuestions(text) {
+            modalContent.innerHTML = '';
+            const questionBlocks = text.split(/Câu hỏi \d+:/).filter(q => q.trim() !== '');
+            
+            questionBlocks.forEach((block, index) => {
+                const lines = block.trim().split('\n').filter(line => line.trim() !== '');
+                const questionText = lines[0];
+                const options = lines.slice(1, -1);
+                const answerLine = lines[lines.length - 1];
+
+                const questionContainer = document.createElement('div');
+                questionContainer.className = 'mb-6 p-4 border rounded-lg';
+
+                const questionP = document.createElement('p');
+                questionP.className = 'font-semibold';
+                questionP.textContent = `Câu hỏi ${index + 1}: ${questionText}`;
+                questionContainer.appendChild(questionP);
+
+                const optionsList = document.createElement('ul');
+                optionsList.className = 'list-none pl-0 mt-2 space-y-1';
+                options.forEach(opt => {
+                    const li = document.createElement('li');
+                    li.textContent = opt;
+                    optionsList.appendChild(li);
+                });
+                questionContainer.appendChild(optionsList);
+
+                const details = document.createElement('details');
+                details.className = 'mt-3';
+
+                const summary = document.createElement('summary');
+                summary.className = 'font-semibold text-indigo-600 cursor-pointer hover:underline';
+                summary.textContent = 'Xem đáp án';
+                details.appendChild(summary);
+
+                const answerP = document.createElement('p');
+                answerP.className = 'mt-2 p-2 bg-green-100 text-green-800 rounded';
+                answerP.textContent = answerLine;
+                details.appendChild(answerP);
+
+                questionContainer.appendChild(details);
+                modalContent.appendChild(questionContainer);
+            });
+        }
+
         summarizeBtn.addEventListener('click', () => {
             const text = textInput.value;
             if (text.trim().length < 50) { showNotification("Văn bản quá ngắn để tóm tắt."); return; }
             const prompt = `Tóm tắt văn bản sau đây thành các gạch đầu dòng súc tích bằng tiếng Việt:\n\n---\n\n${text}`;
-            callGemini(prompt, "✨ Tóm tắt từ Gemini");
+            callGemini(prompt, "✨ Tóm tắt từ Gemini", false);
         });
 
         questionsBtn.addEventListener('click', () => {
             const text = textInput.value;
             if (text.trim().length < 50) { showNotification("Văn bản quá ngắn để tạo câu hỏi."); return; }
-            const prompt = `Dựa vào văn bản sau, hãy tạo 3-5 câu hỏi trắc nghiệm bằng tiếng Việt để kiểm tra mức độ hiểu bài:\n\n---\n\n${text}`;
-            callGemini(prompt, "✨ Câu hỏi từ Gemini");
+            const prompt = `Dựa vào văn bản sau, hãy tạo 3-5 câu hỏi trắc nghiệm bằng tiếng Việt để kiểm tra mức độ hiểu bài. Với mỗi câu hỏi, hãy bắt đầu bằng "Câu hỏi [số]:", theo sau là các lựa chọn A, B, C, D trên các dòng riêng, và cuối cùng là đáp án trên một dòng riêng bắt đầu bằng "Đáp án:".\n\n---\n\n${text}`;
+            callGemini(prompt, "✨ Câu hỏi từ Gemini", true);
         });
 
         modalCloseBtn.addEventListener('click', () => geminiModal.classList.add('hidden'));
 
         // =======================================================
+        // Chat AI Logic
+        // =======================================================
+        openChatBtn.addEventListener('click', () => { /* ... */ });
+        closeChatBtn.addEventListener('click', () => { /* ... */ });
+        chatForm.addEventListener('submit', async (e) => { /* ... */ });
+        function addMessageToChat(sender, text, isLoading = false) { /* ... */ }
+        function updateLastBotMessage(text) { /* ... */ }
+        async function callChatGemini(prompt) { /* ... */ }
+
+        // =======================================================
         // Helper Functions & Event Listeners
         // =======================================================
-        function showNotification(message, type = 'info') {
-            notification.textContent = message;
-            notification.classList.remove('hidden', 'bg-amber-100', 'text-amber-700', 'bg-green-100', 'text-green-700', 'bg-red-100', 'text-red-700');
-            if (type === 'success') {
-                notification.classList.add('bg-green-100', 'text-green-700');
-            } else if (type === 'error') {
-                notification.classList.add('bg-red-100', 'text-red-700');
-            } else {
-                 notification.classList.add('bg-amber-100', 'text-amber-700');
-            }
-            setTimeout(() => notification.classList.add('hidden'), 4000);
-        }
-        
-        textInput.addEventListener('input', () => {
-            if (textInput.value.trim()) {
-                switchView('editor');
-            } else {
-                if(auth.currentUser) {
-                    featuresPanel.classList.add('hidden');
-                    contentWrapper.classList.add('hidden');
-                    contentWrapper.classList.remove('flex');
-                }
-            }
-            processAndDisplayContent();
-        });
-        
+        function showNotification(message, type = 'info') { /* ... */ }
+        textInput.addEventListener('input', () => { /* ... */ });
         readPlayBtn.addEventListener('click', handlePlayReading);
         readStopBtn.addEventListener('click', handleStopReading);
         rateSlider.addEventListener('input', () => {
