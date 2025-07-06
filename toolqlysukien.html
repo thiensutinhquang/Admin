@@ -270,9 +270,12 @@
     <div id="geminiSuggestModal" class="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50 hidden">
         <div class="bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-2xl mx-4 flex flex-col">
             <h3 class="text-xl font-bold text-white mb-4 flex items-center gap-2">✨ Trợ lý Sáng tạo AI</h3>
-            <p class="text-gray-400 mb-4">Mô tả chủ đề hoặc ý tưởng chính của sự kiện (ví dụ: "văn nghệ mừng lễ Vu Lan báo hiếu", "thiền trà cuối năm", "kỷ niệm ngày Phật thành đạo"). AI sẽ gợi ý các mục đăng ký phù hợp.</p>
-            <textarea id="geminiPrompt" class="form-textarea w-full" rows="3" placeholder="Nhập chủ đề sự kiện ở đây..."></textarea>
-            <button id="getGeminiSuggestionsBtn" class="btn btn-primary w-full mt-4">Tạo gợi ý</button>
+            <p class="text-gray-400 mb-4">Mô tả chủ đề sự kiện, AI sẽ tự động điền đầy đủ thông tin vào các cột tương ứng trong bảng của bạn.</p>
+            <textarea id="geminiPrompt" class="form-textarea w-full" rows="3" placeholder="Ví dụ: Văn nghệ mừng lễ Vu Lan báo hiếu..."></textarea>
+            <div class="flex gap-4 mt-4">
+                <button id="getGeminiSuggestionsBtn" class="btn btn-primary w-full">Tạo gợi ý</button>
+                <button id="resetGeminiSuggestionsBtn" class="btn btn-secondary w-full hidden">Tạo lại từ đầu</button>
+            </div>
             <div id="gemini-loading" class="text-center my-4 hidden">
                 <p class="text-purple-400">AI đang suy nghĩ, vui lòng chờ trong giây lát...</p>
                 <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500 mx-auto mt-2"></div>
@@ -331,8 +334,8 @@
             manageColsModal, exportOptionsModal, actionsToggleBtn, actionsContainer,
             eventNameEl, eventStatusEl, shareModal, shareLinkInput, copyShareLinkBtn, closeShareModalBtn,
             eventSelector, reportTitleEl, deleteSelectedEventBtn,
-            geminiSuggestModal, geminiSuggestBtn, getGeminiSuggestionsBtn, geminiPrompt, geminiSuggestionsContainer,
-            geminiLoading, cancelGeminiSuggestBtn, addSuggestionsBtn;
+            geminiSuggestModal, geminiSuggestBtn, getGeminiSuggestionsBtn, resetGeminiSuggestionsBtn, geminiPrompt, 
+            geminiSuggestionsContainer, geminiLoading, cancelGeminiSuggestBtn, addSuggestionsBtn;
 
         // Local State
         let provinceChart = null;
@@ -867,28 +870,41 @@
             geminiLoading.classList.remove('hidden');
             geminiSuggestionsContainer.innerHTML = '';
             addSuggestionsBtn.classList.add('hidden');
+            getGeminiSuggestionsBtn.disabled = true;
 
             const apiKey = ""; 
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
             
-            const fullPrompt = `Dựa trên chủ đề sự kiện sau đây: "${promptText}", hãy tạo một danh sách các tiết mục hoặc mục đăng ký phù hợp cho một chương trình văn nghệ Phật giáo tại Việt Nam. Trả về kết quả dưới dạng một mảng JSON. Mỗi đối tượng trong mảng phải có các khóa: 'ten' (tên tiết mục), 'theloai' (ví dụ: Hát, Múa, Ngâm thơ), và 'noidung' (mô tả ngắn gọn về nội dung hoặc tên bài hát/tác phẩm).`;
+            // FIX: Dynamically build prompt and schema based on current columns
+            const { columns } = eventData;
+            const columnStructure = JSON.stringify(columns.map(c => ({ id: c.id, label: c.label })));
+            const columnLabels = columns.map(c => `"${c.label}"`).join(', ');
+
+            const fullPrompt = `Với vai trò là một trợ lý tổ chức sự kiện cho một chương trình Phật giáo tại Việt Nam, hãy tạo một danh sách các mục đăng ký phù hợp với chủ đề sau: "${promptText}".
+            Bảng dữ liệu có các cột sau: ${columnLabels}.
+            Hãy điền thông tin cho tất cả các cột một cách hợp lý và sáng tạo.
+            Trả về kết quả dưới dạng một mảng JSON. Mỗi đối tượng trong mảng phải có các khóa tương ứng với cấu trúc cột sau: ${columnStructure}.`;
+
+            const properties = {};
+            const required = [];
+            columns.forEach(col => {
+                properties[col.id] = { "type": "STRING" };
+                required.push(col.id);
+            });
+            const responseSchema = {
+                type: "ARRAY",
+                items: {
+                    type: "OBJECT",
+                    properties,
+                    required
+                }
+            };
 
             const payload = {
                 contents: [{ parts: [{ text: fullPrompt }] }],
                 generationConfig: {
                     responseMimeType: "application/json",
-                    responseSchema: {
-                        type: "ARRAY",
-                        items: {
-                            type: "OBJECT",
-                            properties: {
-                                "ten": { "type": "STRING" },
-                                "theloai": { "type": "STRING" },
-                                "noidung": { "type": "STRING" }
-                            },
-                            required: ["ten", "theloai", "noidung"]
-                        }
-                    }
+                    responseSchema
                 }
             };
 
@@ -915,6 +931,7 @@
             } catch (error) {
                 console.error("Gemini API Error:", error);
                 showToast("Có lỗi xảy ra khi tạo gợi ý. Vui lòng thử lại.", "error");
+                getGeminiSuggestionsBtn.disabled = false;
             } finally {
                 geminiLoading.classList.add('hidden');
             }
@@ -924,27 +941,42 @@
             geminiSuggestionsContainer.innerHTML = '';
             if (!suggestions || suggestions.length === 0) {
                 geminiSuggestionsContainer.innerHTML = `<p class="text-gray-400 text-center">Không có gợi ý nào được tạo ra.</p>`;
+                getGeminiSuggestionsBtn.disabled = false;
                 return;
             }
 
+            const { columns } = eventData;
             const fragment = document.createDocumentFragment();
             suggestions.forEach((item, index) => {
                 const div = document.createElement('div');
                 div.className = 'bg-gray-700 p-3 rounded-lg flex items-start gap-3';
+                let contentHtml = '';
+                columns.forEach(col => {
+                    const value = item[col.id] || '(trống)';
+                    contentHtml += `<p class="text-sm text-gray-300"><span class="font-medium text-purple-400">${col.label}:</span> ${value}</p>`;
+                });
+
                 div.innerHTML = `
                     <input type="checkbox" id="suggestion-${index}" class="mt-1 h-4 w-4 rounded border-gray-500 bg-gray-600 text-purple-500 focus:ring-purple-600" checked>
-                    <div class="flex-1">
-                        <label for="suggestion-${index}" class="font-semibold text-white">${item.ten}</label>
-                        <p class="text-sm text-gray-300"><span class="font-medium text-purple-400">${item.theloai}:</span> ${item.noidung}</p>
-                    </div>
+                    <div class="flex-1">${contentHtml}</div>
                 `;
-                // Store data directly on the element for later retrieval
                 div.querySelector('input').dataset.suggestion = JSON.stringify(item);
                 fragment.appendChild(div);
             });
 
             geminiSuggestionsContainer.appendChild(fragment);
             addSuggestionsBtn.classList.remove('hidden');
+            resetGeminiSuggestionsBtn.classList.remove('hidden');
+            getGeminiSuggestionsBtn.classList.add('hidden');
+        }
+
+        function resetGeminiSuggestions() {
+            geminiSuggestionsContainer.innerHTML = '';
+            addSuggestionsBtn.classList.add('hidden');
+            resetGeminiSuggestionsBtn.classList.add('hidden');
+            getGeminiSuggestionsBtn.classList.remove('hidden');
+            getGeminiSuggestionsBtn.disabled = false;
+            geminiPrompt.focus();
         }
 
         async function handleAddSuggestions() {
@@ -956,19 +988,13 @@
 
             const newRegistrations = Array.from(checkedInputs).map((input, index) => {
                 const suggestion = JSON.parse(input.dataset.suggestion);
-                const values = {};
-                // Map suggestions to existing column IDs
-                values['col_name'] = suggestion.ten;
-                values['col_category'] = suggestion.theloai;
-                values['col_content'] = suggestion.noidung;
-                // Leave other columns blank
-                 eventData.columns.forEach(col => {
-                    if (!values[col.id]) {
-                        values[col.id] = '';
+                const newValues = { ...suggestion };
+                eventData.columns.forEach(col => {
+                    if (!newValues[col.id]) {
+                        newValues[col.id] = '';
                     }
                 });
-
-                return { id: Date.now() + index, values };
+                return { id: Date.now() + index, values: newValues };
             });
 
             const updatedRegistrations = [...(eventData.registrations || []), ...newRegistrations];
@@ -1009,6 +1035,7 @@
             geminiSuggestModal = document.getElementById('geminiSuggestModal');
             geminiSuggestBtn = document.getElementById('geminiSuggestBtn');
             getGeminiSuggestionsBtn = document.getElementById('getGeminiSuggestionsBtn');
+            resetGeminiSuggestionsBtn = document.getElementById('resetGeminiSuggestionsBtn');
             geminiPrompt = document.getElementById('geminiPrompt');
             geminiSuggestionsContainer = document.getElementById('geminiSuggestionsContainer');
             geminiLoading = document.getElementById('gemini-loading');
@@ -1270,11 +1297,13 @@
                 // Gemini AI Listeners
                 geminiSuggestBtn.addEventListener('click', () => {
                     geminiSuggestModal.classList.remove('hidden');
+                    resetGeminiSuggestions(); // Reset on open
                 });
                 cancelGeminiSuggestBtn.addEventListener('click', () => {
                     geminiSuggestModal.classList.add('hidden');
                 });
                 getGeminiSuggestionsBtn.addEventListener('click', handleGetGeminiSuggestions);
+                resetGeminiSuggestionsBtn.addEventListener('click', resetGeminiSuggestions);
                 addSuggestionsBtn.addEventListener('click', handleAddSuggestions);
 
             } catch(e) {
