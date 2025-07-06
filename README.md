@@ -1,10 +1,6 @@
-<p align="left">
-  <img src="calendar-7-7.png" width="50" style="vertical-align: middle; margin-right: 10px;">
-  <strong>🌟 ToolQly - Công Cụ Quản Lý Sự Kiện Tịnh Quang</strong>
-</p>
-
-<p align="right">
-  <img src="logo-toolqly.png" alt="Logo ToolQly" width="80">
+<p align="left" style="display: flex; align-items: center;">
+  <img src="logo-toolqly.png" width="60" style="vertical-align: middle; margin-right: 10px;">
+  <strong>🌟 ToolQly - Công Cụ Quản Lý Sự Kiện gia đình Tịnh Quang</strong>
 </p>
 
 ## 🧭 Giới thiệu
@@ -13,7 +9,7 @@
 
 ## 💌 Lời ngỏ từ người phát triển
 
-> Kính thưa quý đồng tu,  
+> Kính thưa quý Thầy/anh/chị đồng tu,  
 >
 > ToolQly không chỉ là một ứng dụng, mà là tâm huyết và nỗ lực của **Tịnh Hải**, với mong muốn đóng góp một phần nhỏ bé vào công việc chung của Ban Làm Việc.  
 > Ý tưởng về công cụ này nảy sinh từ chính những khó khăn trong việc quản lý, tổng hợp và báo cáo các sự kiện.
@@ -23,8 +19,8 @@
 >
 > Hy vọng rằng công cụ này sẽ là **người trợ lý đắc lực**, giúp quý vị tiết kiệm thời gian và công sức, để chúng ta có thể **dành trọn vẹn tâm trí cho tu tập và phụng sự thiêng liêng.**
 >
-> Trân trọng,  
-> **Tịnh Hải**
+> Trân trọng,       &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<img src="calendar-7-7.png" width="45">
+> **Tịnh Hải** 
 
 ---
 
@@ -70,61 +66,11 @@
 
 ## 📖 Hướng dẫn sử dụng chi tiết
 
-### 1. 🗂️ Quản lý Sự kiện
-
-- **Tạo mới**: Nhấn “Tạo sự kiện mới”.
-- **Chọn sự kiện**: Dùng menu thả xuống.
-- **Đổi tên**: Chọn và nhấn “Đổi tên”.
-- **Xóa**: Chọn rồi nhấn “Xoá”.
-- **Chia sẻ**: Nhấn “Chia sẻ” để lấy liên kết.
-
-### 2. 📝 Nhập và Chỉnh sửa Dữ liệu
-
-- **Thêm mục mới**:
-  - Điện thoại: chuyển sang tab "Nhập liệu".
-  - Máy tính: form nằm bên trái.
-  - Điền form và nhấn “Thêm vào Báo cáo”.
-
-- **Chỉnh sửa mục**:
-  - Nhấn vào hàng cần sửa → thông tin hiện lên form.
-  - Sửa và nhấn “Cập nhật mục”.
-
-- **Xoá mục**:
-  - Nhấn nút "Xoá" ở cuối hàng, hoặc
-  - Khi chỉnh sửa → nhấn “Xoá mục”.
-
-### 3. 🧩 Tùy chỉnh Bảng và Báo cáo
-
-- **Quản lý cột**:
-  - Nhấn “Quản lý Cột” để mở tùy chỉnh.
-  - Đổi tên, kéo-thả, thêm/xóa cột.
-
-- **Xuất file**:
-  - Nhấn “Xuất Excel”, “Xuất TXT”, hoặc “Xuất ảnh JPG”.
-  - Có thể thêm tên người ký, tải logo riêng cho báo cáo.
-  - Nếu không có logo, hệ thống sẽ dùng logo mặc định Tịnh Quang.
-
-### 4. 📊 Xem Thống kê
-
-- Điện thoại: vào tab “Thống kê”.
-- Máy tính: xem panel thống kê bên phải.
-- Dùng menu chọn tiêu chí hiển thị biểu đồ (ví dụ: Tỉnh, Nhóm,...).
-
----
+...
 
 ## 💖 Lời Kết: Một Công Cụ Của Sự Tin Tưởng
 
-> ⚠️ **Lưu ý quan trọng**:
->
-> Công cụ dành riêng cho **Ban Làm Việc nội bộ**.
->
-> - Dữ liệu được lưu trên máy chủ chung, bảo mật dựa trên **niềm tin và tinh thần trách nhiệm**.
-> - Ai có liên kết đều có thể xem và chỉnh sửa → giúp **làm việc nhóm hiệu quả, tức thời**.
-> - Nếu phát hiện lỗi, bất kỳ ai cũng có thể sửa ngay, không cần quy trình phức tạp.
->
-> Đây không chỉ là một ứng dụng, mà là **ngôi nhà chung** cho những người chung chí hướng, muốn **đóng góp cho điều tốt đẹp**.
-
----
+...
 
 ## 📬 Liên hệ
 
