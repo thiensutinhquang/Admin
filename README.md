@@ -19,7 +19,7 @@
 >
 > Hy vọng rằng công cụ này sẽ là **người trợ lý đắc lực**, giúp quý vị tiết kiệm thời gian và công sức, để chúng ta có thể **dành trọn vẹn tâm trí cho tu tập và phụng sự thiêng liêng.**
 >
-> Trân trọng,  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<img src="calendar-7-7.png" width="45">
+> Trân trọng,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<img src="calendar-7-7.png" width="45">
 > **Tịnh Hải** 
 
 ---
