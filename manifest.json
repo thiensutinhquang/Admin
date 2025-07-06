@@ -1,22 +1,20 @@
 {
-  "name": "Tool Qlý Đa năng cho BLV MSTQ",
-  "short_name": "ToolQly",
-  "start_url": "./Noidungdangkyvannghe.html",
-  "scope": "./",
+  "name": "Tool Quản lý Sự kiện Tịnh Quang",
+  "short_name": "ToolQLy",
+  "description": "Công cụ quản lý và báo cáo sự kiện đa năng của Gia đình Minh Sư Tịnh Quang.",
+  "start_url": ".",
   "display": "standalone",
-  "orientation": "portrait",
   "background_color": "#111827",
-  "theme_color": "#111827",
-  "description": "Công cụ quản lý sự kiện đa năng, cho phép cộng tác thời gian thực.",
+  "theme_color": "#2563EB",
   "icons": [
     {
-      "src": "icons/icon-192.png",
+      "src": "https://thiensutinhquang.github.io/Admin/icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "icons/icon-512.png",
+      "src": "https://thiensutinhquang.github.io/Admin/icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
