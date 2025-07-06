@@ -1,1 +1,132 @@
-<h1><span style="display: inline-block; vertical-align: middle; margin-right: 10px; border: 1px solid #555; border-radius: 5px; width: 55px; text-align: center; font-family: sans-serif; background-color: #2d3748;"><span style="display: block; background-color: #d83c3c; color: white; padding: 2px 0; border-radius: 4px 4px 0 0; font-size: 11px; font-weight: bold;">THÁNG 7</span><span style="display: block; font-size: 24px; font-weight: bold; color: #e2e8f0; padding: 5px 0;">7</span></span><span style="vertical-align: middle;">🌟 ToolQly - Công Cụ Quản Lý Sự Kiện Tịnh Quang</span></h1>Được tạo ra từ tâm huyết phụng sự, dành riêng cho Gia đình Minh Sư Tịnh Quang.Lời ngỏ từ người phát triểnKính thưa quý đồng tu,ToolQly không chỉ là một ứng dụng, mà là tâm huyết và nỗ lực của Tịnh Hải, với mong muốn đóng góp một phần nhỏ bé vào công việc chung của Ban Làm Việc. Ý tưởng về công cụ này nảy sinh từ chính những khó khăn trong việc quản lý, tổng hợp và báo cáo các sự kiện. Mỗi dòng mã, mỗi tính năng đều được xây dựng với một mục tiêu duy nhất: giúp công việc tổ chức của chúng ta trở nên chuyên nghiệp hơn, hiệu quả hơn và nhẹ nhàng hơn.Hy vọng rằng, công cụ này sẽ là người trợ lý đắc lực, giúp quý vị tiết kiệm thời gian và công sức, để chúng ta có thể dành trọn vẹn tâm trí cho những giây phút tu tập và phụng sự thiêng liêng.Trân trọng,Tịnh Hải.✨ Những tính năng vượt trộiToolQly được trang bị đầy đủ các công cụ mạnh mẽ để bạn quản lý sự kiện một cách toàn diện:🎨 Tạo sự kiện linh hoạt: Dễ dàng tạo mới, đổi tên, và quản lý nhiều sự kiện cùng lúc. Mỗi sự kiện là một không gian làm việc riêng.✏️ Tùy biến cột không giới hạn: Bạn toàn quyền quyết định các cột thông tin cho bảng báo cáo của mình. Thêm, xóa, sắp xếp lại các cột chỉ với vài thao tác kéo-thả.🤝 Cộng tác thời gian thực: Chia sẻ sự kiện với người khác qua một liên kết duy nhất. Mọi thay đổi sẽ được cập nhật ngay lập tức cho tất cả mọi người.📊 Báo cáo chuyên nghiệp:Xuất ảnh JPG: Tạo ra những tấm hình báo cáo đẹp mắt với nền xanh hiện đại, logo và tiêu đề cân đối, sẵn sàng để chia sẻ lên các nền tảng mạng xã hội.Xuất Excel (.xlsx): Dành cho việc lưu trữ, phân tích dữ liệu chuyên sâu.Xuất văn bản (.txt): Đơn giản, nhanh chóng để sao chép nội dung.📈 Thống kê trực quan: Xem biểu đồ thống kê số lượng đăng ký theo từng tiêu chí (ví dụ: theo Tỉnh), giúp bạn có cái nhìn tổng quan tức thì.📱 Trải nghiệm như ứng dụng di động (PWA): Cài đặt ToolQly lên màn hình chính điện thoại để truy cập nhanh, hoạt động toàn màn hình mượt mà không cần App Store.🚀 Cài đặt và Sử dụngToolQly hoạt động hoàn hảo trên cả máy tính và điện thoại.📱 Trên Điện thoại (Khuyên dùng)Cách tốt nhất để sử dụng là cài đặt ứng dụng (PWA) vào màn hình chính:Mở trình duyệt (Chrome, Safari,...) và truy cập vào đường link của công cụ.Tìm và nhấn vào nút "Thêm vào Màn hình chính" (Add to Home Screen) trong menu của trình duyệt.Một biểu tượng tên là "ToolQly" sẽ xuất hiện trên màn hình điện thoại của bạn.Từ giờ, bạn chỉ cần nhấn vào biểu tượng đó để mở ứng dụng, không cần mở trình duyệt nữa.💻 Trên Máy tínhMở trình duyệt (Chrome, Cốc Cốc, Edge,...) và truy cập vào đường link của công cụ.Bạn có thể sử dụng trực tiếp trên web.Để tiện lợi hơn, bạn có thể nhấn vào biểu tượng "Cài đặt" ở cuối thanh địa chỉ để tạo một shortcut trên màn hình desktop.📖 Hướng dẫn sử dụng chi tiết1. Quản lý Sự kiệnTạo sự kiện mới: Nhấn nút "Tạo sự kiện mới". Một sự kiện trống sẽ được tạo và tự động lưu.Chọn sự kiện: Dùng menu thả xuống ở mục "Chọn sự kiện đã tạo" để chuyển đổi giữa các sự kiện.Đổi tên: Chọn sự kiện bạn muốn, sau đó nhấn nút "Đổi tên".Xóa sự kiện: Chọn sự kiện trong danh sách, sau đó nhấn nút "Xoá" bên cạnh.Chia sẻ để cộng tác: Nhấn nút "Chia sẻ", sao chép liên kết và gửi cho người bạn muốn mời cùng làm việc.2. Nhập và Chỉnh sửa Dữ liệuThêm mục mới:Trên điện thoại, chuyển sang tab "Nhập liệu".Trên máy tính, form nhập liệu nằm ở bên trái.Điền thông tin và nhấn nút "Thêm vào Báo cáo".Chỉnh sửa mục: Nhấn trực tiếp vào một hàng bất kỳ trong bảng báo cáo. Dữ liệu của hàng đó sẽ được điền vào form. Sau khi sửa xong, nhấn nút "Cập nhật mục".Xóa một mục: Có 2 cách:Nhấn nút "Xoá" màu đỏ ở cuối mỗi hàng trong bảng.Khi đang chỉnh sửa, nhấn nút "Xoá mục" trong form.3. Tùy chỉnh Bảng và Báo cáoQuản lý cột: Nhấn nút "Quản lý Cột" để mở cửa sổ tùy chỉnh. Tại đây bạn có thể:Đổi tên cột.Kéo-thả để thay đổi thứ tự.Thêm cột mới hoặc xóa cột không cần thiết.Xuất file:Nhấn vào các nút "Xuất Excel", "Xuất TXT", hoặc "Xuất ảnh JPG".Với file JPG và Excel, bạn có thể điền Tên người ký và tải lên logo riêng để báo cáo trông chuyên nghiệp hơn. Nếu không tải logo, logo mặc định của Tịnh Quang sẽ được sử dụng.4. Xem Thống kêTrên điện thoại, chuyển sang tab "Thống kê".Trên máy tính, panel thống kê nằm ở bên phải.Dùng menu thả xuống để chọn tiêu chí bạn muốn xem biểu đồ (ví dụ: thống kê theo Tỉnh, theo Thể loại,...).💖 Lời Kết: Một Công Cụ Của Sự Tin TưởngLưu ý quan trọng: 🛡️ Công cụ này được xây dựng dành riêng cho nội bộ Ban Làm Việc. Xin vui lòng chỉ chia sẻ liên kết cho những thành viên có trách nhiệm.Dữ liệu của chúng ta được lưu trữ chung trên một máy chủ an toàn. Cơ chế này được thiết lập dựa trên niềm tin và tinh thần trách nhiệm tập thể. Bất kỳ ai có liên kết đều có thể xem và chỉnh sửa, tạo điều kiện cho việc làm việc nhóm trở nên hiệu quả và tức thời. Nếu một người phát hiện lỗi, họ có thể sửa ngay cho người khác mà không cần qua các bước bảo mật phức tạp.Đây không chỉ là một ứng dụng, mà có thể xem như một ngôi nhà chung của những người cùng chí hướng, cùng một mong muốn đóng góp cho những điều tốt đẹp.🙏 Để hiểu sâu hơn về ứng dụng, đề xuất tính năng mới hoặc cần hỗ trợ nâng cấp cho các mục đích cụ thể, xin vui lòng liên hệ với Tịnh Hải.
+<p align="left">
+  <img src="calendar-7-7.png" width="50" style="vertical-align: middle; margin-right: 10px;">
+  <strong>🌟 ToolQly - Công Cụ Quản Lý Sự Kiện Tịnh Quang</strong>
+</p>
+
+<p align="right">
+  <img src="logo-toolqly.png" alt="Logo ToolQly" width="80">
+</p>
+
+## 🧭 Giới thiệu
+
+**ToolQly** được tạo ra từ tâm huyết phụng sự, dành riêng cho **Gia đình Minh Sư Tịnh Quang**.
+
+## 💌 Lời ngỏ từ người phát triển
+
+> Kính thưa quý đồng tu,  
+>
+> ToolQly không chỉ là một ứng dụng, mà là tâm huyết và nỗ lực của **Tịnh Hải**, với mong muốn đóng góp một phần nhỏ bé vào công việc chung của Ban Làm Việc.  
+> Ý tưởng về công cụ này nảy sinh từ chính những khó khăn trong việc quản lý, tổng hợp và báo cáo các sự kiện.
+>
+> Mỗi dòng mã, mỗi tính năng đều được xây dựng với một mục tiêu duy nhất:  
+> **Giúp công việc tổ chức trở nên chuyên nghiệp hơn, hiệu quả hơn và nhẹ nhàng hơn.**
+>
+> Hy vọng rằng công cụ này sẽ là **người trợ lý đắc lực**, giúp quý vị tiết kiệm thời gian và công sức, để chúng ta có thể **dành trọn vẹn tâm trí cho tu tập và phụng sự thiêng liêng.**
+>
+> Trân trọng,  
+> **Tịnh Hải**
+
+---
+
+## ✨ Những tính năng vượt trội
+
+- 🎨 **Tạo sự kiện linh hoạt**  
+  Tạo mới, đổi tên, quản lý nhiều sự kiện riêng biệt – mỗi sự kiện là một không gian làm việc độc lập.
+
+- ✏️ **Tùy biến cột không giới hạn**  
+  Thêm, xoá, sắp xếp cột theo ý muốn bằng thao tác kéo-thả đơn giản.
+
+- 🤝 **Cộng tác thời gian thực**  
+  Chia sẻ sự kiện qua liên kết – mọi thay đổi đều đồng bộ ngay lập tức.
+
+- 📊 **Báo cáo chuyên nghiệp**  
+  - **JPG**: Xuất hình ảnh đẹp với logo, nền xanh trang nhã.  
+  - **Excel (.xlsx)**: Phân tích dữ liệu sâu hơn.  
+  - **Văn bản (.txt)**: Nhanh chóng, tiện lợi.
+
+- 📈 **Thống kê trực quan**  
+  Biểu đồ hiển thị số lượng đăng ký theo các tiêu chí (ví dụ: Tỉnh, Nhóm).
+
+- 📱 **Trải nghiệm như ứng dụng di động (PWA)**  
+  Cài đặt lên màn hình điện thoại như một app thực thụ, không cần qua App Store.
+
+---
+
+## 🚀 Cài đặt và Sử dụng
+
+### 📱 Trên Điện thoại _(Khuyên dùng)_
+
+1. Mở trình duyệt (Chrome, Safari,...).
+2. Truy cập đường dẫn của công cụ.
+3. Chọn "Thêm vào Màn hình chính".
+4. ToolQly sẽ xuất hiện như ứng dụng riêng biệt.
+
+### 💻 Trên Máy tính
+
+1. Truy cập công cụ qua Chrome, Edge,...
+2. Dùng trực tiếp hoặc nhấn biểu tượng "Cài đặt" trên thanh địa chỉ để tạo shortcut.
+
+---
+
+## 📖 Hướng dẫn sử dụng chi tiết
+
+### 1. 🗂️ Quản lý Sự kiện
+
+- **Tạo mới**: Nhấn “Tạo sự kiện mới”.
+- **Chọn sự kiện**: Dùng menu thả xuống.
+- **Đổi tên**: Chọn và nhấn “Đổi tên”.
+- **Xóa**: Chọn rồi nhấn “Xoá”.
+- **Chia sẻ**: Nhấn “Chia sẻ” để lấy liên kết.
+
+### 2. 📝 Nhập và Chỉnh sửa Dữ liệu
+
+- **Thêm mục mới**:
+  - Điện thoại: chuyển sang tab "Nhập liệu".
+  - Máy tính: form nằm bên trái.
+  - Điền form và nhấn “Thêm vào Báo cáo”.
+
+- **Chỉnh sửa mục**:
+  - Nhấn vào hàng cần sửa → thông tin hiện lên form.
+  - Sửa và nhấn “Cập nhật mục”.
+
+- **Xoá mục**:
+  - Nhấn nút "Xoá" ở cuối hàng, hoặc
+  - Khi chỉnh sửa → nhấn “Xoá mục”.
+
+### 3. 🧩 Tùy chỉnh Bảng và Báo cáo
+
+- **Quản lý cột**:
+  - Nhấn “Quản lý Cột” để mở tùy chỉnh.
+  - Đổi tên, kéo-thả, thêm/xóa cột.
+
+- **Xuất file**:
+  - Nhấn “Xuất Excel”, “Xuất TXT”, hoặc “Xuất ảnh JPG”.
+  - Có thể thêm tên người ký, tải logo riêng cho báo cáo.
+  - Nếu không có logo, hệ thống sẽ dùng logo mặc định Tịnh Quang.
+
+### 4. 📊 Xem Thống kê
+
+- Điện thoại: vào tab “Thống kê”.
+- Máy tính: xem panel thống kê bên phải.
+- Dùng menu chọn tiêu chí hiển thị biểu đồ (ví dụ: Tỉnh, Nhóm,...).
+
+---
+
+## 💖 Lời Kết: Một Công Cụ Của Sự Tin Tưởng
+
+> ⚠️ **Lưu ý quan trọng**:
+>
+> Công cụ dành riêng cho **Ban Làm Việc nội bộ**.
+>
+> - Dữ liệu được lưu trên máy chủ chung, bảo mật dựa trên **niềm tin và tinh thần trách nhiệm**.
+> - Ai có liên kết đều có thể xem và chỉnh sửa → giúp **làm việc nhóm hiệu quả, tức thời**.
+> - Nếu phát hiện lỗi, bất kỳ ai cũng có thể sửa ngay, không cần quy trình phức tạp.
+>
+> Đây không chỉ là một ứng dụng, mà là **ngôi nhà chung** cho những người chung chí hướng, muốn **đóng góp cho điều tốt đẹp**.
+
+---
+
+## 📬 Liên hệ
+
+👉 Để hiểu sâu hơn, đề xuất tính năng hoặc cần hỗ trợ nâng cấp, xin vui lòng liên hệ:  
+**Tịnh Hải**
