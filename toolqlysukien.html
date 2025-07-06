@@ -152,11 +152,15 @@
             <!-- Panel Báo cáo: Mặc định hiển thị trên mobile -->
             <div id="report-panel" class="bg-gray-800 p-6 rounded-xl shadow-lg flex-col lg:col-span-3 flex">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
-                    <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-4 flex-wrap">
                         <h2 id="reportTitle" class="text-2xl font-semibold"></h2>
                         <button id="manageColsBtn" class="btn btn-secondary text-xs p-2" data-tooltip="Thêm, xoá, hoặc sắp xếp các cột trong bảng">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
                             Quản lý Cột
+                        </button>
+                        <button id="transposeBtn" class="btn btn-secondary text-xs p-2" data-tooltip="Hoán đổi hàng và cột">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1"><polyline points="16 3 21 3 21 8"></polyline><line x1="4" y1="20" x2="21" y2="3"></line><polyline points="8 21 3 21 3 16"></polyline><line x1="15" y1="15" x2="3" y2="3"></line></svg>
+                            Hoán đổi
                         </button>
                     </div>
                     <div class="relative w-full md:w-auto">
@@ -335,7 +339,7 @@
             eventNameEl, eventStatusEl, shareModal, shareLinkInput, copyShareLinkBtn, closeShareModalBtn,
             eventSelector, reportTitleEl, deleteSelectedEventBtn,
             geminiSuggestModal, geminiSuggestBtn, getGeminiSuggestionsBtn, resetGeminiSuggestionsBtn, geminiPrompt, 
-            geminiSuggestionsContainer, geminiLoading, cancelGeminiSuggestBtn, addSuggestionsBtn;
+            geminiSuggestionsContainer, geminiLoading, cancelGeminiSuggestBtn, addSuggestionsBtn, transposeBtn;
 
         // Local State
         let provinceChart = null;
@@ -345,6 +349,7 @@
         let currentExportType = null;
         let tempColumns = [];
         let sortableInstance = null;
+        let isTransposed = false; // State for table transpose
         
         // --- UTILS ---
         const capitalizeFirst = str => !str ? '' : str.charAt(0).toUpperCase() + str.slice(1);
@@ -426,31 +431,58 @@
         const renderTable = () => {
             if (!eventData) return;
             const { registrations, columns } = eventData;
-            
-            reportHeaderRow.innerHTML = `<th>STT</th>` + columns.map(c => `<th>${c.label}</th>`).join('') + `<th>Hành động</th>`;
-            
             const registrationArray = registrations || [];
-            reportBody.innerHTML = ''; // Clear before appending
-            const fragment = document.createDocumentFragment();
+            
+            reportHeaderRow.innerHTML = '';
+            reportBody.innerHTML = '';
 
-            if (registrationArray.length === 0) {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `<td colspan="${columns.length + 2}" class="text-center p-4">Chưa có dữ liệu.</td></tr>`;
-                fragment.appendChild(tr);
-            } else {
-                 registrationArray.forEach((reg, index) => {
-                    const tr = document.createElement('tr');
-                    tr.className = `hover:bg-gray-700/50 transition-colors duration-150 ${reg.id === currentlyEditingId ? 'editing-in-form' : ''}`;
-                    tr.dataset.id = reg.id;
-                    tr.innerHTML = `
-                        <td class="font-medium">${index + 1}</td>
-                        ${columns.map(c => `<td data-field="${c.id}" style="white-space: pre-wrap;">${reg.values[c.id] || ''}</td>`).join('')}
-                        <td><div class="flex items-center justify-center space-x-2"><button class="btn btn-delete text-xs" data-tooltip="Xoá mục này">Xoá</button></div></td>
-                    `;
-                    fragment.appendChild(tr);
+            if (isTransposed) {
+                // TRANSPOSED VIEW
+                let headerHtml = '<th>Mục</th>';
+                registrationArray.forEach((reg, index) => {
+                    headerHtml += `<th data-reg-index="${index}" class="cursor-pointer hover:bg-gray-600 p-2">${index + 1}</th>`;
                 });
+                reportHeaderRow.innerHTML = headerHtml;
+
+                let bodyHtml = '';
+                columns.forEach(col => {
+                    bodyHtml += `<tr><td class="font-semibold bg-gray-700/50 text-left p-2">${col.label}</td>`;
+                    registrationArray.forEach(reg => {
+                        bodyHtml += `<td data-field="${col.id}">${reg.values[col.id] || ''}</td>`;
+                    });
+                    bodyHtml += `</tr>`;
+                });
+
+                bodyHtml += `<tr><td class="font-semibold bg-gray-700/50 text-left p-2">Hành động</td>`;
+                registrationArray.forEach(reg => {
+                    bodyHtml += `<td><button class="btn btn-delete text-xs" data-id="${reg.id}" data-tooltip="Xoá mục này">Xoá</button></td>`;
+                });
+                bodyHtml += `</tr>`;
+                reportBody.innerHTML = bodyHtml;
+
+            } else {
+                // NORMAL VIEW
+                reportHeaderRow.innerHTML = `<th>STT</th>` + columns.map(c => `<th>${c.label}</th>`).join('') + `<th>Hành động</th>`;
+                const fragment = document.createDocumentFragment();
+                if (registrationArray.length === 0) {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `<td colspan="${columns.length + 2}" class="text-center p-4">Chưa có dữ liệu.</td></tr>`;
+                    fragment.appendChild(tr);
+                } else {
+                    registrationArray.forEach((reg, index) => {
+                        const tr = document.createElement('tr');
+                        tr.className = `hover:bg-gray-700/50 transition-colors duration-150 ${reg.id === currentlyEditingId ? 'editing-in-form' : ''}`;
+                        tr.dataset.id = reg.id;
+                        tr.innerHTML = `
+                            <td class="font-medium">${index + 1}</td>
+                            ${columns.map(c => `<td data-field="${c.id}" style="white-space: pre-wrap;">${reg.values[c.id] || ''}</td>`).join('')}
+                            <td><div class="flex items-center justify-center space-x-2"><button class="btn btn-delete text-xs" data-id="${reg.id}" data-tooltip="Xoá mục này">Xoá</button></div></td>
+                        `;
+                        fragment.appendChild(tr);
+                    });
+                }
+                reportBody.appendChild(fragment);
             }
-            reportBody.appendChild(fragment);
         };
         const updateDatalists = () => {
             const datalistsContainer = document.getElementById('datalists-container');
@@ -666,9 +698,19 @@
             if (!activeList?.registrations?.length) { showToast("Không có dữ liệu.", "error"); return; }
             const { columns, registrations, name } = activeList;
             let content = `${name.toUpperCase()}\n==================================\n\n`;
-            registrations.forEach((reg, i) => {
-                content += `STT: ${i + 1}\n` + columns.map(col => `${col.label}: ${capitalizeFirst(reg.values[col.id] || '')}`).join('\n') + `\n\n`;
-            });
+
+            if (isTransposed) {
+                columns.forEach(col => {
+                    content += `${col.label}: `;
+                    const rowValues = registrations.map(reg => capitalizeFirst(reg.values[col.id] || '')).join(' | ');
+                    content += `${rowValues}\n`;
+                });
+            } else {
+                registrations.forEach((reg, i) => {
+                    content += `STT: ${i + 1}\n` + columns.map(col => `${col.label}: ${capitalizeFirst(reg.values[col.id] || '')}`).join('\n') + `\n\n`;
+                });
+            }
+
             const blob = new Blob([content], {type: 'text/plain;charset=utf-8'});
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
@@ -701,23 +743,41 @@
             const cellStyle = { alignment: { horizontal: "center", vertical: "center", wrapText: true }, border: { top: { style: "thin" }, bottom: { style: "thin" }, left: { style: "thin" }, right: { style: "thin" } } };
             const signatureStyle = { font: { bold: true, sz: 12, name: "Inter" }, alignment: { horizontal: "center", vertical: "center" } };
 
-            const header = ['STT', ...columns.map(c => c.label.toUpperCase())];
-            const data = registrations.map((reg, index) => [index + 1, ...columns.map(c => capitalizeFirst(reg.values[c.id] || ''))]);
+            let finalData;
+            let wsCols;
+
+            if (isTransposed) {
+                const header = ['Mục', ...registrations.map((reg, index) => index + 1)];
+                const data = columns.map(col => {
+                    const rowData = [col.label];
+                    registrations.forEach(reg => {
+                        rowData.push(capitalizeFirst(reg.values[col.id] || ''));
+                    });
+                    return rowData;
+                });
+                finalData = [header, ...data];
+                wsCols = [{wch: 20}, ...registrations.map(() => ({wch: 20}))];
+            } else {
+                const header = ['STT', ...columns.map(c => c.label.toUpperCase())];
+                const data = registrations.map((reg, index) => [index + 1, ...columns.map(c => capitalizeFirst(reg.values[c.id] || ''))]);
+                
+                const today = new Date();
+                const dateString = `Ngày ${String(today.getDate()).padStart(2, '0')} tháng ${String(today.getMonth() + 1).padStart(2, '0')} năm ${today.getFullYear()}`;
+                const emptyRow = Array(header.length).fill(null);
+                
+                data.push(emptyRow, emptyRow);
+                let signatureData = [
+                    [...Array(header.length-1).fill(null), dateString],
+                    emptyRow,
+                    [...Array(header.length-1).fill(null), 'Người làm văn bản'],
+                    emptyRow, emptyRow, emptyRow,
+                    [...Array(header.length-1).fill(null), (signerName || '').toUpperCase()]
+                ];
+                
+                finalData = [header, ...data, ...signatureData];
+                wsCols = [{wch:5}, ...columns.map(c => ({ wch: Math.max(c.label.length, 20) }))];
+            }
             
-            const today = new Date();
-            const dateString = `Ngày ${String(today.getDate()).padStart(2, '0')} tháng ${String(today.getMonth() + 1).padStart(2, '0')} năm ${today.getFullYear()}`;
-            const emptyRow = Array(header.length).fill(null);
-            
-            data.push(emptyRow, emptyRow);
-            let signatureData = [
-                [...Array(header.length-1).fill(null), dateString],
-                emptyRow,
-                [...Array(header.length-1).fill(null), 'Người làm văn bản'],
-                emptyRow, emptyRow, emptyRow,
-                [...Array(header.length-1).fill(null), (signerName || '').toUpperCase()]
-            ];
-            
-            const finalData = [header, ...data, ...signatureData];
             const ws = XLSX.utils.aoa_to_sheet(finalData);
             
             const range = XLSX.utils.decode_range(ws['!ref']);
@@ -726,18 +786,25 @@
                     const cell_ref = XLSX.utils.encode_cell({ c: C, r: R });
                     if (!ws[cell_ref]) continue;
                     
-                    if (R === 0) ws[cell_ref].s = headerStyle;
-                    else if (R > 0 && R <= registrations.length) ws[cell_ref].s = cellStyle;
-                    else if (ws[cell_ref].v) {
-                        ws[cell_ref].s = { alignment: { horizontal: "center", vertical: "center" } };
+                    if (R === 0) {
+                        ws[cell_ref].s = headerStyle;
+                    } else if (isTransposed && C === 0) {
+                         ws[cell_ref].s = { ...headerStyle, fill: { fgColor: { rgb: "D3D3D3" } } };
+                    } else if (!isTransposed && R > 0 && R <= registrations.length) {
+                        ws[cell_ref].s = cellStyle;
+                    } else if (isTransposed && R > 0 && R <= columns.length) {
+                         ws[cell_ref].s = cellStyle;
                     }
                 }
             }
-            const signerNameRowIndex = registrations.length + 7;
-            const signerCellRef = XLSX.utils.encode_cell({ c: header.length - 1, r: signerNameRowIndex });
-            if (ws[signerCellRef] && signerName) ws[signerCellRef].s = signatureStyle;
+            
+            if (!isTransposed) {
+                const signerNameRowIndex = registrations.length + 7;
+                const signerCellRef = XLSX.utils.encode_cell({ c: columns.length, r: signerNameRowIndex });
+                if (ws[signerCellRef] && signerName) ws[signerCellRef].s = signatureStyle;
+            }
 
-            ws['!cols'] = [{wch:5}, ...columns.map(c => ({ wch: Math.max(c.label.length, 20) }))];
+            ws['!cols'] = wsCols;
             
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, ws, "DanhSach");
@@ -809,23 +876,43 @@
                     <div style="flex: 1; text-align: right;"></div>
                 </div>`;
             
-            const tableHtml = `<table style="width: 100%; border-collapse: collapse;">
-                <thead>
-                    <tr>
-                        <th style="background-color: #FDE047; color: #1F2937; font-weight: bold; text-transform: uppercase;">STT</th>
-                        ${columns.map(c => `<th style="background-color: #FDE047; color: #1F2937; font-weight: bold; text-transform: uppercase;">${c.label}</th>`).join('')}
-                    </tr>
-                </thead>
-                <tbody>
-                    ${registrations.map((reg, index) => `
+            let tableHtml;
+            if (isTransposed) {
+                tableHtml = `<table style="width: 100%; border-collapse: collapse;">
+                    <thead>
                         <tr>
-                            <td>${index + 1}</td>
-                            ${columns.map(c => `<td>${capitalizeFirst(reg.values[c.id] || '')}</td>`).join('')}
+                            <th style="background-color: #FDE047; color: #1F2937; font-weight: bold; text-transform: uppercase;">Mục</th>
+                            ${registrations.map((reg, index) => `<th style="background-color: #FDE047; color: #1F2937; font-weight: bold;">${index + 1}</th>`).join('')}
                         </tr>
-                    `).join('')}
-                </tbody>
-            </table>`;
-            
+                    </thead>
+                    <tbody>
+                        ${columns.map(col => `
+                            <tr>
+                                <td style="font-weight: bold; text-align: left !important; background-color: #ffffff1a;">${col.label}</td>
+                                ${registrations.map(reg => `<td>${capitalizeFirst(reg.values[col.id] || '')}</td>`).join('')}
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>`;
+            } else {
+                tableHtml = `<table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr>
+                            <th style="background-color: #FDE047; color: #1F2937; font-weight: bold; text-transform: uppercase;">STT</th>
+                            ${columns.map(c => `<th style="background-color: #FDE047; color: #1F2937; font-weight: bold; text-transform: uppercase;">${c.label}</th>`).join('')}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${registrations.map((reg, index) => `
+                            <tr>
+                                <td>${index + 1}</td>
+                                ${columns.map(c => `<td>${capitalizeFirst(reg.values[c.id] || '')}</td>`).join('')}
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>`;
+            }
+
             const footerHtml = `
                 <div style="text-align: right; margin-top: 40px; padding-right: 20px;">
                     <div style="display: inline-block; text-align: center;">
@@ -841,7 +928,11 @@
                 Object.assign(cell.style, { border: '1px solid #ffffff80', padding: '10px', textAlign: 'center', verticalAlign: 'middle', wordBreak: 'break-word', color: '#ffffff'});
             });
             exportContainer.querySelectorAll('thead th').forEach(th => th.style.color = '#1F2937');
-
+            if (isTransposed) {
+                exportContainer.querySelectorAll('tbody td:first-child').forEach(cell => {
+                     Object.assign(cell.style, { fontWeight: 'bold', textAlign: 'left', backgroundColor: '#ffffff1a' });
+                });
+            }
 
             document.body.appendChild(exportContainer);
 
@@ -875,7 +966,6 @@
             const apiKey = ""; 
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
             
-            // FIX: Dynamically build prompt and schema based on current columns
             const { columns } = eventData;
             const columnStructure = JSON.stringify(columns.map(c => ({ id: c.id, label: c.label })));
             const columnLabels = columns.map(c => `"${c.label}"`).join(', ');
@@ -1031,6 +1121,7 @@
             eventSelector = document.getElementById('eventSelector');
             reportTitleEl = document.getElementById('reportTitle');
             deleteSelectedEventBtn = document.getElementById('deleteSelectedEventBtn');
+            transposeBtn = document.getElementById('transposeBtn');
             // Gemini elements
             geminiSuggestModal = document.getElementById('geminiSuggestModal');
             geminiSuggestBtn = document.getElementById('geminiSuggestBtn');
@@ -1168,26 +1259,59 @@
                     registrationForm.querySelector('input')?.focus();
                 });
 
-                reportBody.addEventListener('click', e => {
-                    const row = e.target.closest('tr[data-id]');
-                    if (!row) return;
-
-                    const id = Number(row.dataset.id);
-                    if (e.target.closest('button.btn-delete')) {
-                        showConfirmModal('Xoá mục này?', 'Bạn có chắc chắn không?', { action: () => {
-                            const newRegistrations = eventData.registrations.filter(r => r.id !== id);
-                            updateEvent({ registrations: newRegistrations });
-                            showToast('Đã xoá mục.');
-                        }});
-                    } else { 
-                        const entry = eventData?.registrations.find(r => r.id === id);
-                        if (!entry) return;
-                        registrationForm.querySelectorAll('input[data-col-id]').forEach(input => {
-                            input.value = entry.values[input.dataset.colId] || '';
+                function handleTableClick(e) {
+                    const deleteBtn = e.target.closest('button.btn-delete[data-id]');
+                    if (deleteBtn) {
+                        const id = Number(deleteBtn.dataset.id);
+                        showConfirmModal('Xoá mục này?', 'Bạn có chắc chắn không?', {
+                            action: () => {
+                                const newRegistrations = eventData.registrations.filter(r => r.id !== id);
+                                updateEvent({ registrations: newRegistrations });
+                                showToast('Đã xoá mục.');
+                            }
                         });
-                        currentlyEditingId = id;
-                        switchToEditMode(entry);
+                        return;
                     }
+
+                    if (!isTransposed) {
+                        const row = e.target.closest('tr[data-id]');
+                        if (row) {
+                            const id = Number(row.dataset.id);
+                            const entry = eventData?.registrations.find(r => r.id === id);
+                            if (entry) {
+                                registrationForm.querySelectorAll('input[data-col-id]').forEach(input => {
+                                    input.value = entry.values[input.dataset.colId] || '';
+                                });
+                                currentlyEditingId = id;
+                                switchToEditMode(entry);
+                            }
+                        }
+                    }
+                }
+                
+                function handleHeaderClick(e) {
+                    if (isTransposed) {
+                        const th = e.target.closest('th[data-reg-index]');
+                        if (th) {
+                            const regIndex = parseInt(th.dataset.regIndex, 10);
+                            const entry = eventData?.registrations[regIndex];
+                            if (entry) {
+                                registrationForm.querySelectorAll('input[data-col-id]').forEach(input => {
+                                    input.value = entry.values[input.dataset.colId] || '';
+                                });
+                                currentlyEditingId = entry.id;
+                                switchToEditMode(entry);
+                            }
+                        }
+                    }
+                }
+
+                reportBody.addEventListener('click', handleTableClick);
+                reportHeaderRow.addEventListener('click', handleHeaderClick);
+
+                transposeBtn.addEventListener('click', () => {
+                    isTransposed = !isTransposed;
+                    renderTable();
                 });
             
                 eventSelector.addEventListener('change', () => {
