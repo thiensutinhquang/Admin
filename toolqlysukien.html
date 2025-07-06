@@ -127,6 +127,7 @@
                       </div>
                 </div>
                 <div class="flex flex-col sm:flex-row flex-wrap gap-2 justify-center">
+                    <button id="geminiSuggestBtn" class="btn bg-purple-600 hover:bg-purple-700 text-white w-full sm:w-auto" data-tooltip="Dùng AI để gợi ý các mục đăng ký dựa trên chủ đề sự kiện">✨ Gợi ý mục</button>
                     <button id="newListBtn" class="btn btn-primary w-full sm:w-auto" data-tooltip="Tạo một sự kiện mới">Tạo sự kiện mới</button>
                     <button id="renameListBtn" class="btn btn-secondary w-full sm:w-auto" data-tooltip="Đổi tên sự kiện hiện tại">Đổi tên</button>
                     <button id="shareListBtn" class="btn btn-save w-full sm:w-auto" data-tooltip="Chia sẻ sự kiện này để cộng tác">Chia sẻ</button>
@@ -135,7 +136,7 @@
         </section>
 
         <main class="grid grid-cols-1 lg:grid-cols-5 gap-8">
-            <!-- Panel Nhập liệu: ẩn trên mobile, hiện trên desktop -->
+            <!-- Panel Nhập liệu: Luôn ẩn trên mobile theo mặc định, chỉ hiện khi được JS kích hoạt -->
             <div id="form-panel" class="bg-gray-800 p-6 rounded-xl shadow-lg lg:col-span-2 self-start lg:sticky top-8 hidden lg:block">
                 <h2 id="form-title" class="text-xl font-semibold mb-6 border-b border-gray-700 pb-4 text-center"></h2>
                 <form id="registrationForm" class="space-y-4"></form>
@@ -148,7 +149,7 @@
                 </div>
             </div>
 
-            <!-- Panel Báo cáo: hiện mặc định trên mobile, hiện trên desktop -->
+            <!-- Panel Báo cáo: Mặc định hiển thị trên mobile -->
             <div id="report-panel" class="bg-gray-800 p-6 rounded-xl shadow-lg flex-col lg:col-span-3 flex">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
                     <div class="flex items-center gap-4">
@@ -180,7 +181,7 @@
                 </div>
             </div>
             
-            <!-- Panel Thống kê: ẩn trên mobile, hiện trên desktop -->
+            <!-- Panel Thống kê: Luôn ẩn trên mobile theo mặc định -->
             <div id="stats-panel" class="bg-gray-800 p-6 rounded-xl shadow-lg flex-col lg:col-span-3 hidden lg:flex">
                  <div class="flex justify-between items-center mb-4">
                       <h3 id="chartTitle" class="text-xl font-semibold"></h3>
@@ -265,6 +266,26 @@
         </div>
     </div>
 
+    <!-- Gemini AI Suggestion Modal -->
+    <div id="geminiSuggestModal" class="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50 hidden">
+        <div class="bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-2xl mx-4 flex flex-col">
+            <h3 class="text-xl font-bold text-white mb-4 flex items-center gap-2">✨ Trợ lý Sáng tạo AI</h3>
+            <p class="text-gray-400 mb-4">Mô tả chủ đề hoặc ý tưởng chính của sự kiện (ví dụ: "văn nghệ mừng lễ Vu Lan báo hiếu", "thiền trà cuối năm", "kỷ niệm ngày Phật thành đạo"). AI sẽ gợi ý các mục đăng ký phù hợp.</p>
+            <textarea id="geminiPrompt" class="form-textarea w-full" rows="3" placeholder="Nhập chủ đề sự kiện ở đây..."></textarea>
+            <button id="getGeminiSuggestionsBtn" class="btn btn-primary w-full mt-4">Tạo gợi ý</button>
+            <div id="gemini-loading" class="text-center my-4 hidden">
+                <p class="text-purple-400">AI đang suy nghĩ, vui lòng chờ trong giây lát...</p>
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500 mx-auto mt-2"></div>
+            </div>
+            <div id="geminiSuggestionsContainer" class="mt-6 max-h-64 overflow-y-auto space-y-3 pr-2"></div>
+            <div class="flex justify-end gap-4 mt-6 border-t border-gray-700 pt-4">
+                <button id="cancelGeminiSuggestBtn" type="button" class="btn btn-secondary">Đóng</button>
+                <button id="addSuggestionsBtn" type="button" class="btn btn-save hidden">Thêm các mục đã chọn</button>
+            </div>
+        </div>
+    </div>
+
+
     <script type="module">
         // Import Firebase modules
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
@@ -309,7 +330,9 @@
             participantCounter, chartTitle, chartColumnSelector, provinceChartCanvas,
             manageColsModal, exportOptionsModal, actionsToggleBtn, actionsContainer,
             eventNameEl, eventStatusEl, shareModal, shareLinkInput, copyShareLinkBtn, closeShareModalBtn,
-            eventSelector, reportTitleEl, deleteSelectedEventBtn;
+            eventSelector, reportTitleEl, deleteSelectedEventBtn,
+            geminiSuggestModal, geminiSuggestBtn, getGeminiSuggestionsBtn, geminiPrompt, geminiSuggestionsContainer,
+            geminiLoading, cancelGeminiSuggestBtn, addSuggestionsBtn;
 
         // Local State
         let provinceChart = null;
@@ -721,9 +744,8 @@
         
         async function imageUrlToDataUrl(url) {
             try {
-                // FIX: Removed the CORS proxy which was causing errors.
                 const response = await fetch(url);
-                if (!response.ok) {
+                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 const blob = await response.blob();
@@ -735,6 +757,7 @@
                 });
             } catch (error) {
                 console.error("Error converting image URL to Data URL:", error);
+                showToast(`Lỗi tải logo từ URL: ${error.message}`, 'error');
                 throw error;
             }
         }
@@ -763,20 +786,22 @@
             const exportContainer = document.createElement('div');
             Object.assign(exportContainer.style, {
                 position: 'absolute', left: '-9999px', padding: '24px',
-                backgroundColor: '#1f2937', color: '#f9fafb', width: '1000px',
+                background: 'linear-gradient(135deg, #1e3a8a, #3b82f6)', 
+                color: '#ffffff',
+                width: '1000px',
                 fontFamily: "'Inter', sans-serif"
             });
             
             const today = new Date();
             const dateString = `Ngày ${String(today.getDate()).padStart(2, '0')} tháng ${String(today.getMonth() + 1).padStart(2, '0')} năm ${today.getFullYear()}`;
             
-            const logoHtml = finalLogoData ? `<img src="${finalLogoData}" style="height: 90px; width: auto; object-fit: contain;">` : '<div></div>';
+            const logoHtml = finalLogoData ? `<img src="${finalLogoData}" style="height: 100px; width: auto; object-fit: contain;">` : '<div></div>';
 
             const headerHtml = `
-                <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 16px; border-bottom: 2px solid #4B5563; margin-bottom: 24px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 16px; border-bottom: 2px solid #ffffff40; margin-bottom: 24px;">
                     <div style="flex: 1; text-align: left;">${logoHtml}</div>
                     <div style="flex: 2; text-align: center;">
-                        <h2 style="font-size: 28px; font-weight: bold; margin: 0; text-transform: uppercase; line-height: 1.3;">${name}</h2>
+                        <h2 style="font-size: 28px; font-weight: bold; margin: 0; text-transform: uppercase; line-height: 1.3; color: #ffffff;">${name}</h2>
                     </div>
                     <div style="flex: 1; text-align: right;"></div>
                 </div>`;
@@ -801,21 +826,23 @@
             const footerHtml = `
                 <div style="text-align: right; margin-top: 40px; padding-right: 20px;">
                     <div style="display: inline-block; text-align: center;">
-                         <p style="font-style: italic;">${dateString}</p>
-                         <p style="font-weight: bold; margin-top: 16px;">Người làm văn bản</p>
+                         <p style="font-style: italic; color: #ffffff;">${dateString}</p>
+                         <p style="font-weight: bold; margin-top: 16px; color: #ffffff;">Người làm văn bản</p>
                          <div style="height: 80px;"></div>
-                         <p style="font-weight: bold; text-transform: uppercase; margin: 0; min-height: 24px;">${signerName.toUpperCase() || ' '}</p>
+                         <p style="font-weight: bold; text-transform: uppercase; margin: 0; min-height: 24px; color: #ffffff;">${signerName.toUpperCase() || ' '}</p>
                     </div>
                 </div>`;
 
             exportContainer.innerHTML = headerHtml + tableHtml + footerHtml;
             exportContainer.querySelectorAll('th, td').forEach(cell => {
-                Object.assign(cell.style, { border: '1px solid #4B5563', padding: '10px', textAlign: 'center', verticalAlign: 'middle', wordBreak: 'break-word'});
+                Object.assign(cell.style, { border: '1px solid #ffffff80', padding: '10px', textAlign: 'center', verticalAlign: 'middle', wordBreak: 'break-word', color: '#ffffff'});
             });
-            
+            exportContainer.querySelectorAll('thead th').forEach(th => th.style.color = '#1F2937');
+
+
             document.body.appendChild(exportContainer);
 
-            html2canvas(exportContainer, { scale: 2, useCORS: true }).then(canvas => {
+            html2canvas(exportContainer, { scale: 2, useCORS: true, backgroundColor: null }).then(canvas => {
                 const link = document.createElement('a');
                 link.download = `${name}.jpg`;
                 link.href = canvas.toDataURL('image/jpeg', 0.95);
@@ -829,6 +856,129 @@
             });
         };
         
+        // --- Gemini AI Functions ---
+        async function handleGetGeminiSuggestions() {
+            const promptText = geminiPrompt.value.trim();
+            if (!promptText) {
+                showToast("Vui lòng nhập chủ đề sự kiện.", "error");
+                return;
+            }
+
+            geminiLoading.classList.remove('hidden');
+            geminiSuggestionsContainer.innerHTML = '';
+            addSuggestionsBtn.classList.add('hidden');
+
+            const apiKey = ""; 
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+            
+            const fullPrompt = `Dựa trên chủ đề sự kiện sau đây: "${promptText}", hãy tạo một danh sách các tiết mục hoặc mục đăng ký phù hợp cho một chương trình văn nghệ Phật giáo tại Việt Nam. Trả về kết quả dưới dạng một mảng JSON. Mỗi đối tượng trong mảng phải có các khóa: 'ten' (tên tiết mục), 'theloai' (ví dụ: Hát, Múa, Ngâm thơ), và 'noidung' (mô tả ngắn gọn về nội dung hoặc tên bài hát/tác phẩm).`;
+
+            const payload = {
+                contents: [{ parts: [{ text: fullPrompt }] }],
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: "ARRAY",
+                        items: {
+                            type: "OBJECT",
+                            properties: {
+                                "ten": { "type": "STRING" },
+                                "theloai": { "type": "STRING" },
+                                "noidung": { "type": "STRING" }
+                            },
+                            required: ["ten", "theloai", "noidung"]
+                        }
+                    }
+                }
+            };
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API Error: ${response.status} ${response.statusText}`);
+                }
+
+                const result = await response.json();
+                
+                if (result.candidates && result.candidates.length > 0) {
+                    const suggestions = JSON.parse(result.candidates[0].content.parts[0].text);
+                    renderSuggestions(suggestions);
+                } else {
+                    throw new Error("Không nhận được gợi ý từ AI.");
+                }
+
+            } catch (error) {
+                console.error("Gemini API Error:", error);
+                showToast("Có lỗi xảy ra khi tạo gợi ý. Vui lòng thử lại.", "error");
+            } finally {
+                geminiLoading.classList.add('hidden');
+            }
+        }
+
+        function renderSuggestions(suggestions) {
+            geminiSuggestionsContainer.innerHTML = '';
+            if (!suggestions || suggestions.length === 0) {
+                geminiSuggestionsContainer.innerHTML = `<p class="text-gray-400 text-center">Không có gợi ý nào được tạo ra.</p>`;
+                return;
+            }
+
+            const fragment = document.createDocumentFragment();
+            suggestions.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = 'bg-gray-700 p-3 rounded-lg flex items-start gap-3';
+                div.innerHTML = `
+                    <input type="checkbox" id="suggestion-${index}" class="mt-1 h-4 w-4 rounded border-gray-500 bg-gray-600 text-purple-500 focus:ring-purple-600" checked>
+                    <div class="flex-1">
+                        <label for="suggestion-${index}" class="font-semibold text-white">${item.ten}</label>
+                        <p class="text-sm text-gray-300"><span class="font-medium text-purple-400">${item.theloai}:</span> ${item.noidung}</p>
+                    </div>
+                `;
+                // Store data directly on the element for later retrieval
+                div.querySelector('input').dataset.suggestion = JSON.stringify(item);
+                fragment.appendChild(div);
+            });
+
+            geminiSuggestionsContainer.appendChild(fragment);
+            addSuggestionsBtn.classList.remove('hidden');
+        }
+
+        async function handleAddSuggestions() {
+            const checkedInputs = geminiSuggestionsContainer.querySelectorAll('input[type="checkbox"]:checked');
+            if (checkedInputs.length === 0) {
+                showToast("Vui lòng chọn ít nhất một gợi ý.", "error");
+                return;
+            }
+
+            const newRegistrations = Array.from(checkedInputs).map((input, index) => {
+                const suggestion = JSON.parse(input.dataset.suggestion);
+                const values = {};
+                // Map suggestions to existing column IDs
+                values['col_name'] = suggestion.ten;
+                values['col_category'] = suggestion.theloai;
+                values['col_content'] = suggestion.noidung;
+                // Leave other columns blank
+                 eventData.columns.forEach(col => {
+                    if (!values[col.id]) {
+                        values[col.id] = '';
+                    }
+                });
+
+                return { id: Date.now() + index, values };
+            });
+
+            const updatedRegistrations = [...(eventData.registrations || []), ...newRegistrations];
+            await updateEvent({ registrations: updatedRegistrations });
+
+            showToast(`Đã thêm ${newRegistrations.length} mục mới từ AI!`, 'success');
+            geminiSuggestModal.classList.add('hidden');
+        }
+
+
         // --- EVENT LISTENERS INITIALIZATION ---
         document.addEventListener('DOMContentLoaded', async () => {
             // Assign DOM elements once the DOM is ready
@@ -855,12 +1005,37 @@
             eventSelector = document.getElementById('eventSelector');
             reportTitleEl = document.getElementById('reportTitle');
             deleteSelectedEventBtn = document.getElementById('deleteSelectedEventBtn');
+            // Gemini elements
+            geminiSuggestModal = document.getElementById('geminiSuggestModal');
+            geminiSuggestBtn = document.getElementById('geminiSuggestBtn');
+            getGeminiSuggestionsBtn = document.getElementById('getGeminiSuggestionsBtn');
+            geminiPrompt = document.getElementById('geminiPrompt');
+            geminiSuggestionsContainer = document.getElementById('geminiSuggestionsContainer');
+            geminiLoading = document.getElementById('gemini-loading');
+            cancelGeminiSuggestBtn = document.getElementById('cancelGeminiSuggestBtn');
+            addSuggestionsBtn = document.getElementById('addSuggestionsBtn');
+
 
             try {
                 await initializeAppLogic();
                 if(user) {
                     listenToUserEvents();
                     await loadEventFromUrl();
+                }
+
+                // PWA & Mobile layout initialization
+                setupInitialView();
+                setupMobileNavigation();
+
+                // Register Service Worker for PWA
+                if ('serviceWorker' in navigator) {
+                    window.addEventListener('load', () => {
+                        navigator.serviceWorker.register('./sw.js').then(registration => {
+                            console.log('SW registered: ', registration);
+                        }).catch(registrationError => {
+                            console.log('SW registration failed: ', registrationError);
+                        });
+                    });
                 }
 
                 // Attach all other event listeners
@@ -1092,45 +1267,65 @@
                     }
                 });
 
-                // --- Mobile View Switching ---
-                const mobileNav = document.getElementById('mobile-nav');
-                if (mobileNav) {
-                    const mobileTabs = mobileNav.querySelectorAll('.mobile-tab');
-                    const panels = {
-                        'form-panel': document.getElementById('form-panel'),
-                        'report-panel': document.getElementById('report-panel'),
-                        'stats-panel': document.getElementById('stats-panel')
-                    };
-
-                    mobileNav.addEventListener('click', (e) => {
-                        const tab = e.target.closest('.mobile-tab');
-                        if (!tab) return;
-
-                        const viewId = tab.dataset.view;
-                        if (!panels[viewId]) return;
-
-                        // Hide all main content panels
-                        Object.values(panels).forEach(panel => {
-                            if (panel) panel.classList.add('hidden', 'lg:hidden');
-                        });
-                        
-                        // Show the selected panel and ensure it's displayed correctly based on screen size
-                        panels[viewId].classList.remove('hidden');
-                        if(viewId === 'form-panel') panels[viewId].classList.add('lg:block');
-                        if(viewId === 'report-panel') panels[viewId].classList.add('lg:flex');
-                        if(viewId === 'stats-panel') panels[viewId].classList.add('lg:flex');
-
-
-                        // Update the visual style of the active tab
-                        mobileTabs.forEach(t => t.classList.remove('active'));
-                        tab.classList.add('active');
-                    });
-                }
+                // Gemini AI Listeners
+                geminiSuggestBtn.addEventListener('click', () => {
+                    geminiSuggestModal.classList.remove('hidden');
+                });
+                cancelGeminiSuggestBtn.addEventListener('click', () => {
+                    geminiSuggestModal.classList.add('hidden');
+                });
+                getGeminiSuggestionsBtn.addEventListener('click', handleGetGeminiSuggestions);
+                addSuggestionsBtn.addEventListener('click', handleAddSuggestions);
 
             } catch(e) {
                  console.error("Error initializing app:", e);
             }
         });
+
+        function setupInitialView() {
+            // On mobile, hide all panels except the default one ('report-panel')
+            if (window.innerWidth < 1024) {
+                document.getElementById('form-panel').classList.add('hidden');
+                document.getElementById('stats-panel').classList.add('hidden');
+                document.getElementById('report-panel').classList.remove('hidden');
+            }
+        }
+
+        function setupMobileNavigation() {
+            const mobileNav = document.getElementById('mobile-nav');
+            if (mobileNav) {
+                const mobileTabs = mobileNav.querySelectorAll('.mobile-tab');
+                const panels = {
+                    'form-panel': document.getElementById('form-panel'),
+                    'report-panel': document.getElementById('report-panel'),
+                    'stats-panel': document.getElementById('stats-panel')
+                };
+
+                const showMobilePanel = (viewId) => {
+                    if (!panels[viewId]) return;
+
+                    // Hide all panels first
+                    Object.values(panels).forEach(panel => {
+                        if (panel) panel.classList.add('hidden');
+                    });
+
+                    // Show the target panel
+                    panels[viewId].classList.remove('hidden');
+
+                    // Update active tab style
+                    mobileTabs.forEach(t => {
+                        t.classList.toggle('active', t.dataset.view === viewId);
+                    });
+                };
+
+                mobileNav.addEventListener('click', (e) => {
+                    const tab = e.target.closest('.mobile-tab');
+                    if (tab) {
+                        showMobilePanel(tab.dataset.view);
+                    }
+                });
+            }
+        }
         
         window.addEventListener('hashchange', () => {
             const eventId = window.location.hash.substring(1);
