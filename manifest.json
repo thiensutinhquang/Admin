@@ -1,8 +1,8 @@
 {
-  "name": "Tool Quản lý Sự kiện Tịnh Quang",
-  "short_name": "ToolQLy",
+  "name": "Công cụ Quản lý Sự kiện",
+  "short_name": "ToolQly",
   "description": "Công cụ quản lý và báo cáo sự kiện đa năng của Gia đình Minh Sư Tịnh Quang.",
-  "start_url": ".",
+  "start_url": "./toolqlysukien.html",
   "display": "standalone",
   "background_color": "#111827",
   "theme_color": "#2563EB",
