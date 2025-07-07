@@ -185,10 +185,6 @@
             <!-- Container for all report sections -->
             <div id="sections-container" class="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-8">
                 <!-- Report sections will be rendered here by JavaScript -->
-                <div id="empty-state-message" class="lg:col-span-full md:col-span-2 text-center p-8 bg-gray-700 rounded-xl hidden">
-                    <p class="text-xl text-gray-300 font-semibold mb-4">Chưa có sự kiện nào được chọn hoặc tạo.</p>
-                    <p class="text-gray-400">Vui lòng chọn một sự kiện từ danh sách hoặc nhấn nút "Tạo sự kiện mới" để bắt đầu.</p>
-                </div>
             </div>
             
             <!-- Panel Thống kê: Luôn ẩn trên mobile theo mặc định -->
@@ -376,7 +372,7 @@
             eventSelector, deleteSelectedEventBtn, newListBtn, renameListBtn, shareListBtn,
             geminiSuggestModal, geminiSuggestBtn, getGeminiSuggestionsBtn, resetGeminiSuggestionsBtn, geminiPrompt, 
             geminiSuggestionsContainer, geminiLoading, cancelGeminiSuggestBtn, addSuggestionsBtn, geminiSectionSelector,
-            cancelEditBtn, deleteFromFormBtn, exportBtn, emptyStateMessage;
+            cancelEditBtn, deleteFromFormBtn, exportBtn;
 
         // Local State for modals and temporary data
         let provinceChart = null; // Chart.js instance
@@ -454,40 +450,11 @@
             if(modal) modal.classList.add('hidden');
         };
 
-        /**
-         * Displays the loading overlay with a specific message.
-         * @param {string} message - The message to display on the loading overlay.
-         */
-        const showLoadingOverlay = (message) => {
-            document.getElementById('loading-text').textContent = message;
-            document.getElementById('loading-overlay').classList.remove('hidden');
-            document.getElementById('loading-overlay').style.opacity = '1';
-        };
-
-        /** Hides the loading overlay. */
-        const hideLoadingOverlay = () => {
-            document.getElementById('loading-overlay').style.opacity = '0';
-            setTimeout(() => {
-                document.getElementById('loading-overlay').classList.add('hidden');
-            }, 300); // Match CSS transition duration
-        };
-
 
         // --- DYNAMIC UI RENDERING ---
         /** Renders the main UI components based on current event data. */
         const renderUI = () => {
-            if (!eventData || !eventSelector) {
-                // Handle empty state when no event is loaded
-                sectionsContainer.innerHTML = ''; // Clear existing sections
-                emptyStateMessage.classList.remove('hidden'); // Show empty state message
-                formTitle.textContent = "Chọn một mục để thêm hoặc sửa";
-                registrationForm.innerHTML = '<p class="text-gray-400 text-center">Nhấn nút "Thêm Hàng" hoặc "Thêm Cột" trên một bảng báo cáo bất kỳ để bắt đầu.</p>';
-                document.getElementById('form-actions').classList.add('hidden');
-                return;
-            } else {
-                emptyStateMessage.classList.add('hidden'); // Hide empty state message
-            }
-
+            if (!eventData || !eventSelector) return;
             if (eventSelector) eventSelector.value = currentEventId;
 
             // Get panel elements
@@ -519,13 +486,11 @@
         /** Renders all report sections and their tables. */
         const renderSections = () => {
             // Clear sections container if no event data or sections
-            if (!eventData || !eventData.sections || eventData.sections.length === 0) {
+            if (!eventData || !eventData.sections) {
                 sectionsContainer.innerHTML = '';
-                emptyStateMessage.classList.remove('hidden'); // Ensure empty state message is visible
                 return;
             }
             sectionsContainer.innerHTML = ''; // Clear previous sections
-            emptyStateMessage.classList.add('hidden'); // Hide empty state message if sections exist
             
             // Iterate through each section and create its HTML structure
             eventData.sections.forEach(section => {
@@ -623,7 +588,7 @@
                 // Display a message if no data
                 if (registrationArray.length === 0) {
                     const tr = document.createElement('tr');
-                    tr.innerHTML = `<td colspan="${columns.length + 2}" class="text-center p-4 text-gray-400">Chưa có dữ liệu trong mục này. Nhấn "Thêm Hàng" để bắt đầu.</td></tr>`;
+                    tr.innerHTML = `<td colspan="${columns.length + 2}" class="text-center p-4">Chưa có dữ liệu.</td></tr>`;
                     fragment.appendChild(tr);
                 } else {
                     // Create a row for each registration entry
@@ -760,15 +725,14 @@
         async function updateEvent(data) {
             if (!currentEventId) {
                 showToast("Không có sự kiện nào được chọn để cập nhật.", "error");
-                console.error("Lỗi: Không có currentEventId để cập nhật sự kiện.");
                 return;
             }
             try {
                 const eventRef = doc(db, 'events', currentEventId);
                 await updateDoc(eventRef, data);
             } catch (error) {
-                console.error("Lỗi khi cập nhật sự kiện:", error);
-                showToast(`Lỗi khi cập nhật sự kiện: ${error.message}`, "error");
+                console.error("Error updating event:", error);
+                showToast("Lỗi khi cập nhật sự kiện.", "error");
             }
         }
         
@@ -781,7 +745,7 @@
         function migrateOldData(data) {
             // Check if data needs migration (old structure has registrations or columns directly, not sections)
             if (data && !data.sections && (data.registrations || data.columns)) {
-                console.log("Đang di chuyển cấu trúc dữ liệu cũ sang định dạng mới...");
+                console.log("Migrating old data structure...");
                 return {
                     ...data,
                     sections: [{
@@ -801,21 +765,23 @@
         // --- INITIALIZATION ---
         /** Initializes Firebase authentication and resolves when user is ready. */
         async function initializeAppLogic() {
-            showLoadingOverlay("Đang khởi tạo ứng dụng...");
+            document.getElementById('loading-overlay').classList.remove('hidden'); // Show loading overlay
             return new Promise((resolve, reject) => {
                 onAuthStateChanged(auth, async (userAuth) => {
                     if (userAuth) {
                         user = userAuth;
-                        hideLoadingOverlay();
+                        document.getElementById('loading-overlay').style.opacity = '0';
+                        setTimeout(() => document.getElementById('loading-overlay').style.display = 'none', 300);
                         resolve(user);
                     } else {
                         try {
                            // Attempt anonymous sign-in if no user is authenticated
                            await signInAnonymously(auth);
                         } catch (error) {
-                            console.error("Lỗi xác thực Firebase ẩn danh:", error);
+                            console.error("Firebase Anonymous Sign-In Error:", error);
                             showToast("Lỗi kết nối xác thực. Vui lòng kiểm tra lại cấu hình Firebase của bạn và đảm bảo đã bật phương thức đăng nhập 'Ẩn danh' trong Firebase Console.", "error");
-                            document.getElementById('loading-text').innerHTML = `Lỗi kết nối.<br>Vui lòng kiểm tra lại cấu hình Firebase.`;
+                            const loadingOverlay = document.getElementById('loading-overlay');
+                            loadingOverlay.innerHTML = `<div class="text-white text-lg text-center p-4">Lỗi kết nối.<br>Vui lòng kiểm tra lại cấu hình Firebase.</div>`;
                             reject(error);
                         }
                     }
@@ -868,7 +834,7 @@
                     renderUI(); // Re-render the UI with the new data
                 } else {
                     // Handle case where event does not exist or was deleted
-                    showToast("Sự kiện này không tồn tại hoặc đã bị xoá. Đang tải sự kiện mặc định hoặc tạo mới.", "error");
+                    showToast("Sự kiện này không tồn tại hoặc đã bị xoá.", "error");
                     window.location.hash = ''; // Clear URL hash
                     eventData = null; // Clear event data
                     activeSectionId = null; // Clear active section
@@ -876,8 +842,8 @@
                     renderForm(null); // Clear the form
                 }
             }, (error) => {
-                   console.error("Lỗi khi lắng nghe sự kiện:", error);
-                   showToast(`Lỗi khi tải dữ liệu sự kiện: ${error.message}`, "error");
+                   console.error("Error listening to event:", error);
+                   showToast("Lỗi khi tải dữ liệu sự kiện.", "error");
             });
         }
 
@@ -889,9 +855,6 @@
         function listenToUserEvents(createIfNeeded = false) {
             if (unsubscribeFromEventList) unsubscribeFromEventList(); // Unsubscribe from previous listener
             // Query all events (security rules should handle access control)
-            // For large datasets, consider adding a 'where' clause for ownership and 'orderBy' for performance
-            // e.g., query(collection(db, "events"), where("owner", "==", user.uid), orderBy("createdAt", "desc"));
-            // This would require a Firestore index. For this app, we fetch all events the user can access.
             const q = query(collection(db, "events")); 
             
             unsubscribeFromEventList = onSnapshot(q, (querySnapshot) => {
@@ -910,8 +873,8 @@
                        window.location.hash = events[0].id;
                 }
             }, (error) => {
-                console.error("Lỗi khi lắng nghe danh sách sự kiện:", error);
-                showToast(`Lỗi khi tải danh sách sự kiện: ${error.message}`, "error");
+                console.error("Error listening to event list:", error);
+                showToast("Lỗi khi tải danh sách sự kiện.", "error");
             });
         }
 
@@ -919,10 +882,8 @@
         async function createNewOnlineEvent() {
             if (!user) {
                 showToast("Chưa thể tạo sự kiện. Vui lòng chờ xác thực.", "error");
-                console.error("Lỗi: Người dùng chưa được xác thực khi cố gắng tạo sự kiện.");
                 return;
             }
-            showLoadingOverlay("Đang tạo sự kiện mới...");
             const newEvent = {
                 name: "Sự kiện Mới",
                 createdAt: Date.now(),
@@ -940,20 +901,15 @@
                 showToast("Đã tạo sự kiện online mới!", "success");
                 window.location.hash = docRef.id; // Navigate to the new event
             } catch (e) {
-                console.error("Lỗi khi thêm tài liệu: ", e);
-                showToast(`Không thể tạo sự kiện mới: ${e.message}`, "error");
-            } finally {
-                hideLoadingOverlay();
+                console.error("Error adding document: ", e);
+                showToast("Không thể tạo sự kiện mới.", "error");
             }
         }
         
         // --- MODAL MANAGEMENT ---
         /** Opens the "Manage Sections" modal. */
         const openManageSectionsModal = () => {
-            if (!eventData) {
-                showToast("Vui lòng chọn hoặc tạo một sự kiện trước khi quản lý mục.", "info");
-                return;
-            }
+            if (!eventData) return;
             // Create a deep copy of sections for temporary editing
             tempSections = JSON.parse(JSON.stringify(eventData.sections));
             renderManageSectionsForm(); // Render the form within the modal
@@ -984,10 +940,7 @@
          */
         const openManageColsModal = (sectionId) => {
             const section = eventData.sections.find(s => s.id === sectionId);
-            if (!section) {
-                showToast("Không tìm thấy mục để quản lý cột.", "error");
-                return;
-            }
+            if (!section) return;
             activeSectionIdForCols = sectionId;
             // Create a deep copy of columns for temporary editing
             tempColumns = JSON.parse(JSON.stringify(section.columns));
@@ -1064,7 +1017,6 @@
             cancelGeminiSuggestBtn = document.getElementById('cancelGeminiSuggestBtn');
             addSuggestionsBtn = document.getElementById('addSuggestionsBtn');
             geminiSectionSelector = document.getElementById('geminiSectionSelector');
-            emptyStateMessage = document.getElementById('empty-state-message');
 
 
             try {
@@ -1134,8 +1086,8 @@
                                 window.location.hash = ''; // Clear hash, triggering load of new/default event
                                 hideConfirmModal();
                             } catch (error) {
-                                console.error("Lỗi khi xoá sự kiện: ", error);
-                                showToast(`Lỗi khi xoá sự kiện: ${error.message}`, 'error');
+                                console.error("Error deleting event: ", error);
+                                showToast('Lỗi khi xoá sự kiện.', 'error');
                                 hideConfirmModal();
                             }
                         }
@@ -1151,7 +1103,6 @@
                     const sectionIndex = eventData.sections.findIndex(s => s.id === activeSectionId);
                     if (sectionIndex === -1) {
                         showToast('Mục không tồn tại.', 'error');
-                        console.error("Lỗi: Mục không tồn tại khi cố gắng gửi biểu mẫu.");
                         return;
                     }
 
@@ -1162,25 +1113,13 @@
                         values[input.dataset.colId] = input.value;
                     });
 
-                    // Simple validation: Ensure at least one field has a value
-                    const hasAnyValue = Object.values(values).some(val => val.trim() !== '');
-                    if (!hasAnyValue) {
-                        showToast('Vui lòng điền ít nhất một trường.', 'error');
-                        return;
-                    }
-
                     if (currentlyEditingId) {
                         // Update existing registration entry
                         const regIndex = section.registrations.findIndex(r => r.id === currentlyEditingId);
                         if (regIndex > -1) section.registrations[regIndex].values = values;
-                        else {
-                            showToast('Không tìm thấy mục đang chỉnh sửa.', 'error');
-                            console.error("Lỗi: Không tìm thấy currentlyEditingId trong danh sách đăng ký.");
-                            return;
-                        }
                     } else {
                         // Add new registration entry
-                        const newRegistration = { id: `reg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`, values: values };
+                        const newRegistration = { id: `reg_${Date.now()}`, values: values };
                         if (!section.registrations) section.registrations = [];
                         section.registrations.push(newRegistration);
                     }
@@ -1192,8 +1131,8 @@
                         registrationForm.reset(); // Clear form
                         if (currentlyEditingId) switchToaddMode(section); // Switch back to add mode if was editing
                     } catch (error) {
-                        console.error("Lỗi khi lưu dữ liệu đăng ký:", error);
-                        showToast(`Lỗi khi lưu dữ liệu: ${error.message}`, 'error');
+                        console.error("Error saving data:", error);
+                        showToast('Lỗi khi lưu dữ liệu.', 'error');
                     }
                 });
 
@@ -1212,7 +1151,7 @@
                 copyShareLinkBtn.addEventListener('click', () => {
                     shareLinkInput.select(); 
                     document.execCommand('copy'); // Copy link to clipboard
-                    showToast('Đã sao chép liên kết!', 'success');
+                    showToast('Đã sao chép!', 'success');
                 });
                 
                 // --- SECTION & COLUMN MANAGEMENT ---
@@ -1244,28 +1183,18 @@
                                 if (activeSectionId === sectionId) {
                                     switchToaddMode(section);
                                 }
-                            } else {
-                                console.error("Lỗi: Không tìm thấy mục khi cố gắng hoán đổi bảng.");
-                                showToast("Lỗi: Không tìm thấy mục để hoán đổi bảng.", "error");
                             }
                         }
                            if (button.classList.contains('add-item-btn')) {
                                 const section = eventData.sections.find(s => s.id === button.dataset.sectionId);
                                 if(section) switchToaddMode(section); // Switch to add mode for this section
-                                else {
-                                    console.error("Lỗi: Không tìm thấy mục khi cố gắng thêm mục mới.");
-                                    showToast("Lỗi: Không tìm thấy mục để thêm nội dung.", "error");
-                                }
                             }
                             // Handle delete button inside the table
                             if (button.classList.contains('btn-delete') && button.dataset.id && button.closest('.report-table')) {
                                 const regId = button.dataset.id;
                                 const sectionId = button.dataset.sectionId;
                                 const section = eventData.sections.find(s => s.id === sectionId);
-                                if (!section) {
-                                    console.error("Lỗi: Không tìm thấy mục khi cố gắng xoá mục đăng ký.");
-                                    return showToast("Lỗi: Không tìm thấy mục liên quan.", "error");
-                                }
+                                if (!section) return;
 
                                 const itemType = section.isTransposed ? 'cột' : 'hàng';
                                 showConfirmModal(`Xác nhận Xoá`, `Bạn có chắc chắn muốn xoá ${itemType} này không?`, {
@@ -1279,9 +1208,6 @@
                                             if (currentlyEditingId === regId) {
                                                 switchToaddMode(section); // If deleted item was being edited, switch to add mode
                                             }
-                                        } else {
-                                            console.error("Lỗi: Không tìm thấy chỉ mục mục khi xoá mục đăng ký.");
-                                            showToast("Lỗi: Không thể xoá mục. Vui lòng thử lại.", "error");
                                         }
                                         hideConfirmModal();
                                     }
@@ -1296,9 +1222,6 @@
                             if (registration) {
                                 switchToEditMode(registration, section); // Switch to edit mode
                                 showToast('Đã chọn mục để chỉnh sửa.', 'info');
-                            } else {
-                                console.error("Lỗi: Không tìm thấy mục đăng ký khi cố gắng chỉnh sửa từ hàng bảng.");
-                                showToast("Lỗi: Không tìm thấy mục để chỉnh sửa.", "error");
                             }
                         }
                     } else if (tableHeader) { // Click on a header in transposed view
@@ -1310,9 +1233,6 @@
                             if (registration) {
                                 switchToEditMode(registration, section); // Switch to edit mode
                                 showToast('Đã chọn mục để chỉnh sửa.', 'info');
-                            } else {
-                                console.error("Lỗi: Không tìm thấy mục đăng ký khi cố gắng chỉnh sửa từ tiêu đề bảng.");
-                                showToast("Lỗi: Không tìm thấy mục để chỉnh sửa.", "error");
                             }
                         }
                     }
@@ -1325,20 +1245,14 @@
                         if (section) {
                             switchToaddMode(section); // Cancel edit and switch to add mode
                             showToast('Đã huỷ chỉnh sửa.', 'info');
-                        } else {
-                            console.error("Lỗi: Không tìm thấy mục khi cố gắng huỷ chỉnh sửa.");
-                            showToast("Lỗi: Không tìm thấy mục để huỷ chỉnh sửa.", "error");
                         }
                     }
                 });
 
                 deleteFromFormBtn.addEventListener('click', () => {
-                    if (!currentlyEditingId || !activeSectionId) return showToast("Không có mục nào đang được chọn để xoá.", "error");
+                    if (!currentlyEditingId || !activeSectionId) return;
                     const section = eventData.sections.find(s => s.id === activeSectionId);
-                    if (!section) {
-                        console.error("Lỗi: Không tìm thấy mục khi cố gắng xoá mục từ biểu mẫu.");
-                        return showToast("Lỗi: Không tìm thấy mục liên quan.", "error");
-                    }
+                    if (!section) return;
                     const itemType = section.isTransposed ? 'cột' : 'hàng';
                     showConfirmModal(`Xác nhận Xoá`, `Bạn có chắc chắn muốn xoá ${itemType} này không?`, {
                         action: async () => {
@@ -1349,9 +1263,6 @@
                                 await updateEvent({ sections: eventData.sections }); // Update Firestore
                                 showToast('Đã xoá thành công!', 'success');
                                 switchToaddMode(section); // Switch to add mode
-                            } else {
-                                console.error("Lỗi: Không tìm thấy chỉ mục mục khi xoá mục từ biểu mẫu.");
-                                showToast("Lỗi: Không thể xoá mục. Vui lòng thử lại.", "error");
                             }
                             hideConfirmModal();
                         }
@@ -1380,14 +1291,9 @@
                             if (originalSection && input) originalSection.title = input.value.trim() || 'Không tên'; // Update title
                             return originalSection;
                         }).filter(Boolean); // Filter out any null/undefined
-                        try {
-                            await updateEvent({ sections: reorderedSections }); // Await the update
-                            manageSectionsModal.classList.add('hidden'); // Hide modal
-                            showToast('Đã cập nhật các mục!', 'success');
-                        } catch (error) {
-                            console.error("Lỗi khi lưu các mục:", error);
-                            showToast(`Lỗi khi lưu các mục: ${error.message}`, "error");
-                        }
+                        await updateEvent({ sections: reorderedSections }); // Await the update
+                        manageSectionsModal.classList.add('hidden'); // Hide modal
+                        showToast('Đã cập nhật các mục!', 'success');
                     } else if (button.id === 'cancelManageSectionsBtn') {
                         manageSectionsModal.classList.add('hidden'); // Hide modal without saving
                     }
@@ -1421,17 +1327,9 @@
                         const sectionIndex = eventData.sections.findIndex(s => s.id === activeSectionIdForCols);
                         if (sectionIndex > -1) {
                             eventData.sections[sectionIndex].columns = reorderedCols; // Update columns in main event data
-                            try {
-                                await updateEvent({ sections: eventData.sections }); // Await the update
-                                manageColsModal.classList.add('hidden'); // Hide modal
-                                showToast(`Đã cập nhật ${capitalizeFirst(itemType)}!`, 'success');
-                            } catch (error) {
-                                console.error("Lỗi khi lưu các cột:", error);
-                                showToast(`Lỗi khi lưu các cột: ${error.message}`, "error");
-                            }
-                        } else {
-                            console.error("Lỗi: Không tìm thấy chỉ mục mục khi lưu cột.");
-                            showToast("Lỗi: Không tìm thấy mục liên quan để lưu cột.", "error");
+                            await updateEvent({ sections: eventData.sections }); // Await the update
+                            manageColsModal.classList.add('hidden'); // Hide modal
+                            showToast(`Đã cập nhật ${capitalizeFirst(itemType)}!`, 'success');
                         }
                     } else if (button.id === 'cancelManageColsBtn') {
                         manageColsModal.classList.add('hidden'); // Hide modal without saving
@@ -1489,7 +1387,7 @@
                         if (!response.ok) {
                             const errorBody = await response.text();
                             console.error("API Error Body:", errorBody);
-                            throw new Error(`Lỗi API: ${response.status} ${response.statusText}. Chi tiết: ${errorBody.substring(0, 200)}...`);
+                            throw new Error(`Lỗi API: ${response.status} ${response.statusText}`);
                         }
                         
                         const result = await response.json();
@@ -1513,13 +1411,13 @@
 
                             addSuggestionsBtn.classList.remove('hidden'); // Show add suggestions button
                         } else {
-                            console.error("Phản hồi API không mong muốn:", result);
+                            console.error("Unexpected API response:", result);
                             throw new Error("Không nhận được gợi ý hợp lệ từ AI. Vui lòng kiểm tra console để biết chi tiết.");
                         }
 
                     } catch (error) {
-                        console.error("Lỗi AI Gemini:", error);
-                        showToast(`Không thể tạo gợi ý: ${error.message}. Vui lòng thử lại.`, "error");
+                        console.error("Gemini AI Error:", error);
+                        showToast("Không thể tạo gợi ý. Vui lòng thử lại.", "error");
                         geminiSuggestionsContainer.innerHTML = `<p class="text-red-400 text-center">${error.message}</p>`;
                     } finally {
                         geminiLoading.classList.add('hidden'); // Hide loading indicator
@@ -1531,10 +1429,7 @@
                 addSuggestionsBtn.addEventListener('click', async () => {
                     const selectedSectionId = geminiSectionSelector.value;
                     const sectionIndex = eventData.sections.findIndex(s => s.id === selectedSectionId);
-                    if (sectionIndex === -1) {
-                        console.error("Lỗi: Không tìm thấy mục đã chọn khi cố gắng thêm gợi ý.");
-                        return showToast("Lỗi: Không tìm thấy mục đã chọn để thêm gợi ý.", "error");
-                    }
+                    if (sectionIndex === -1) return;
 
                     const checkedBoxes = geminiSuggestionsContainer.querySelectorAll('input:checked');
                     if (checkedBoxes.length === 0) return showToast('Vui lòng chọn ít nhất một gợi ý.', 'error');
@@ -1542,22 +1437,17 @@
                     checkedBoxes.forEach(box => {
                         const suggestionData = JSON.parse(box.dataset.suggestion);
                         // Create new registration entry from suggestion
-                        const newRegistration = { id: `reg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`, values: suggestionData };
+                        const newRegistration = { id: `reg_${Date.now()}_${Math.random()}`, values: suggestionData };
                         if (!eventData.sections[sectionIndex].registrations) {
                             eventData.sections[sectionIndex].registrations = [];
                         }
                         eventData.sections[sectionIndex].registrations.push(newRegistration);
                     });
 
-                    try {
-                        await updateEvent({ sections: eventData.sections }); // Update Firestore
-                        showToast(`${checkedBoxes.length} gợi ý đã được thêm!`, 'success');
-                        geminiSuggestModal.classList.add('hidden'); // Hide modal
-                        resetGeminiSuggestionsBtn.click(); // Reset the modal state
-                    } catch (error) {
-                        console.error("Lỗi khi thêm gợi ý từ AI:", error);
-                        showToast(`Lỗi khi thêm gợi ý: ${error.message}`, "error");
-                    }
+                    await updateEvent({ sections: eventData.sections }); // Update Firestore
+                    showToast(`${checkedBoxes.length} gợi ý đã được thêm!`, 'success');
+                    geminiSuggestModal.classList.add('hidden'); // Hide modal
+                    resetGeminiSuggestionsBtn.click(); // Reset the modal state
                 });
 
                 resetGeminiSuggestionsBtn.addEventListener('click', () => {
@@ -1583,10 +1473,6 @@
                             preview.src = uploadedLogo;
                             preview.classList.remove('hidden'); // Show logo preview
                         };
-                        reader.onerror = (error) => {
-                            console.error("Lỗi khi đọc file logo:", error);
-                            showToast("Không thể đọc file logo. Vui lòng thử lại.", "error");
-                        };
                         reader.readAsDataURL(file);
                     }
                 });
@@ -1598,8 +1484,8 @@
 
 
             } catch(e) {
-                   console.error("Lỗi khi khởi tạo ứng dụng:", e);
-                   showToast(`Đã xảy ra lỗi nghiêm trọng khi khởi tạo ứng dụng: ${e.message}. Vui lòng kiểm tra console.`, "error");
+                   console.error("Error initializing app:", e);
+                   showToast("Đã xảy ra lỗi nghiêm trọng khi khởi tạo ứng dụng. Vui lòng kiểm tra console.", "error");
             }
         });
 
@@ -1647,20 +1533,11 @@
             }
         });
 
-        // Global error handler for unhandled exceptions
-        window.onerror = function(message, source, lineno, colno, error) {
-            console.error("Unhandled Error:", { message, source, lineno, colno, error });
-            showToast(`Lỗi không mong muốn: ${message}. Vui lòng kiểm tra console để biết chi tiết.`, "error");
-            // Optionally, send this error to a logging service
-            return true; // Prevent default browser error handling
-        };
-
         // --- EXPORT FUNCTIONALITY ---
         async function exportHandler(type) {
-            showLoadingOverlay(`Đang tạo file ${type.toUpperCase()}...`);
+            showToast(`Đang chuẩn bị xuất file ${type.toUpperCase()}...`, 'info');
             if (!eventData || !eventData.sections || eventData.sections.length === 0) {
                 showToast('Không có dữ liệu để xuất.', 'error');
-                hideLoadingOverlay();
                 return;
             }
 
@@ -1694,7 +1571,6 @@
 
             try {
                 if (type === 'jpg' || type === 'pdf') {
-                    showLoadingOverlay(`Đang tạo báo cáo hình ảnh...`);
                     // Construct the report HTML specifically for JPG/PDF with blue background and white text
                     let reportHtmlContent = `
                         <div style="background-color: #0000FF; color: #FFFFFF; padding: 40px; font-family: 'Inter', sans-serif; min-height: 100vh; box-sizing: border-box;">
@@ -1747,5 +1623,101 @@
                     });
 
                     if (type === 'jpg') {
-                        showLoadingOverlay(`Đang tải file JPG...`);
-                        const imgData = canvas.toDataURL('image/jpe
+                        const imgData = canvas.toDataURL('image/jpeg', 0.9);
+                        const link = document.createElement('a');
+                        link.href = imgData;
+                        link.download = `${eventData.name || 'bao_cao'}.jpg`;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        showToast('Xuất JPG thành công!', 'success');
+                    } else if (type === 'pdf') {
+                        const imgData = canvas.toDataURL('image/jpeg', 0.9);
+                        const pdf = new jsPDF('p', 'mm', 'a4');
+                        const imgWidth = pdf.internal.pageSize.getWidth();
+                        const pageHeight = pdf.internal.pageSize.getHeight();
+                        const imgHeight = canvas.height * imgWidth / canvas.width;
+                        let heightLeft = imgHeight;
+                        let position = 0;
+
+                        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+                        heightLeft -= pageHeight;
+
+                        while (heightLeft > 0) {
+                            position = heightLeft - pageHeight;
+                            pdf.addPage();
+                            pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+                            heightLeft -= pageHeight;
+                        }
+                        pdf.save(`${eventData.name || 'bao_cao'}.pdf`);
+                        showToast('Xuất PDF thành công!', 'success');
+                    }
+                } else if (type === 'xlsx') {
+                    // Logic for XLSX export
+                    const ws_data = [];
+                    eventData.sections.forEach(section => {
+                        ws_data.push([section.title]); // Section title as a header
+                        const headers = section.columns.map(c => c.label);
+                        ws_data.push(['STT', ...headers]); // Table headers
+                        section.registrations.forEach((reg, index) => {
+                            const row = [index + 1];
+                            section.columns.forEach(col => {
+                                row.push(reg.values[col.id] || '');
+                            });
+                            ws_data.push(row);
+                        });
+                        ws_data.push([]); // Empty row for separation between sections
+                    });
+
+                    const ws = XLSX.utils.aoa_to_sheet(ws_data);
+                    const wb = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(wb, ws, "Báo cáo");
+                    XLSX.writeFile(wb, `${eventData.name || 'bao_cao'}.xlsx`);
+                    showToast('Xuất Excel thành công!', 'success');
+                } else if (type === 'txt') {
+                    // Logic for TXT export
+                    let txtContent = '';
+                    eventData.sections.forEach(section => {
+                        txtContent += `--- ${section.title} ---\n`;
+                        const headers = section.columns.map(c => c.label);
+                        txtContent += `STT\t${headers.join('\t')}\n`;
+                        section.registrations.forEach((reg, index) => {
+                            const row = [index + 1];
+                            section.columns.forEach(col => {
+                                row.push(reg.values[col.id] || '');
+                            });
+                            txtContent += `${row.join('\t')}\n`;
+                        });
+                        txtContent += '\n'; // Add a newline for separation
+                    });
+
+                    const blob = new Blob([txtContent], { type: 'text/plain;charset=utf-8' });
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = `${eventData.name || 'bao_cao'}.txt`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(link.href);
+                    showToast('Xuất TXT thành công!', 'success');
+                }
+            } catch (error) {
+                console.error(`Error exporting ${type.toUpperCase()}:`, error);
+                showToast(`Lỗi khi xuất ${type.toUpperCase()}.`, 'error');
+            } finally {
+                // Revert changes to UI
+                printableReportContainer.classList.remove('visible-for-capture'); // Hide it again
+                printableReportContainer.innerHTML = ''; // Clean up temporary content
+
+                // Restore original UI elements
+                formPanel.style.display = originalFormPanelDisplay;
+                statsPanel.style.display = originalStatsPanelDisplay;
+                mainContentArea.className = originalMainClasses; 
+                
+                // Re-render the UI to ensure correct state after export
+                renderUI(); 
+            }
+        }
+    </script>
+</body>
+</html>
