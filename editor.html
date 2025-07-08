@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trình Chỉnh Sửa Nội Dung GitHub Pages</title>
+    <!-- Tailwind CSS CDN để tạo kiểu dáng nhanh chóng và responsive -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Tùy chỉnh font chữ Inter */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* Màu nền nhẹ */
+        }
+        /* Đảm bảo textarea có chiều cao tối thiểu và cuộn khi cần */
+        textarea {
+            min-height: 400px;
+            resize: vertical; /* Cho phép người dùng thay đổi chiều cao */
+        }
+        /* Kiểu dáng cho nút */
+        .btn {
+            @apply px-6 py-3 rounded-lg font-semibold shadow-md transition-all duration-200 ease-in-out;
+        }
+        .btn-primary {
+            @apply bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-75;
+        }
+        .btn-secondary {
+            @apply bg-gray-300 text-gray-800 hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-75;
+        }
+        .btn-danger {
+            @apply bg-red-600 text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-75;
+        }
+    </style>
+</head>
+<body class="p-4 sm:p-6 md:p-8 flex flex-col items-center">
+
+    <div class="max-w-4xl w-full bg-white p-6 sm:p-8 rounded-xl shadow-lg">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6 text-center">Trình Chỉnh Sửa Nội Dung GiaoLy</h1>
+
+        <!-- Phần nhập URL và tải nội dung -->
+        <div class="mb-6">
+            <label for="urlInput" class="block text-gray-700 text-sm font-medium mb-2">
+                URL Bài Đăng GitHub Pages (.html):
+            </label>
+            <div class="flex flex-col sm:flex-row gap-3">
+                <input type="text" id="urlInput" placeholder="Ví dụ: https://thiensutinhquang.github.io/GiaoLy/ten-bai-viet.html"
+                       class="flex-grow p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm">
+                <button id="loadContentBtn" class="btn btn-secondary whitespace-nowrap">Tải Nội Dung</button>
+            </div>
+        </div>
+
+        <!-- Phần chỉnh sửa nội dung -->
+        <div class="mb-6">
+            <label for="contentEditor" class="block text-gray-700 text-sm font-medium mb-2">
+                Nội Dung Bài Đăng:
+            </label>
+            <textarea id="contentEditor"
+                      class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+                      placeholder="Nội dung bài viết sẽ xuất hiện ở đây..."></textarea>
+        </div>
+
+        <!-- Nút lưu nội dung -->
+        <div class="text-center">
+            <button id="saveContentBtn" class="btn btn-primary">Lưu Nội Dung Lên GitHub</button>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-functions.js"></script>
+    <script>
+        // Cấu hình Firebase của bạn
+        // Bạn có thể tìm thấy cấu hình này trong Firebase Console -> Project settings -> General -> Your apps
+        // Vui lòng thay thế các giá trị YOUR_... bằng thông tin dự án của bạn
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "giaoly-editor", // Đảm bảo đây là ID dự án Firebase của bạn
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        // Khởi tạo Firebase
+        firebase.initializeApp(firebaseConfig);
+        const functions = firebase.functions();
+        // Nếu bạn đang phát triển cục bộ với Firebase Emulators, bỏ comment dòng dưới đây:
+        // functions.useEmulator("localhost", 5001);
+
+        // Lấy các phần tử DOM
+        const urlInput = document.getElementById('urlInput');
+        const loadContentBtn = document.getElementById('loadContentBtn');
+        const contentEditor = document.getElementById('contentEditor');
+        const saveContentBtn = document.getElementById('saveContentBtn');
+
+        // Hàm tải nội dung từ URL GitHub Pages
+        async function loadContent() {
+            const url = urlInput.value.trim();
+            if (!url) {
+                alert('Vui lòng nhập URL bài đăng.');
+                return;
+            }
+
+            // Kiểm tra xem URL có phải là từ GitHub Pages của bạn không
+            const baseUrl = 'https://thiensutinhquang.github.io/GiaoLy/';
+            if (!url.startsWith(baseUrl)) {
+                alert('URL không hợp lệ. Vui lòng nhập URL từ thư mục GiaoLy của bạn.');
+                return;
+            }
+
+            try {
+                alert('Đang tải nội dung...');
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const content = await response.text();
+                contentEditor.value = content;
+                alert('Nội dung đã tải thành công!');
+            } catch (error) {
+                alert(`Không thể tải nội dung: ${error.message}. Vui lòng kiểm tra URL.`);
+                console.error('Lỗi khi tải nội dung:', error);
+            }
+        }
+
+        // Hàm lưu nội dung bằng cách gọi Cloud Function
+        async function saveContent() {
+            const updatedContent = contentEditor.value;
+            const url = urlInput.value.trim();
+
+            if (!url) {
+                alert('Vui lòng nhập URL bài đăng trước khi lưu.');
+                return;
+            }
+
+            // Trích xuất đường dẫn tệp từ URL
+            const baseUrl = 'https://thiensutinhquang.github.io/GiaoLy/';
+            if (!url.startsWith(baseUrl)) {
+                alert('URL không hợp lệ. Vui lòng nhập URL từ thư mục GiaoLy của bạn.');
+                return;
+            }
+            // Lấy phần đường dẫn tương đối của tệp (ví dụ: 'ten-bai-viet.html')
+            const filePath = url.substring(baseUrl.length);
+
+            const commitMessage = prompt('Nhập thông điệp commit (ví dụ: Cập nhật bài hanhoanchaodon.html):', `Cập nhật ${filePath}`);
+            if (!commitMessage) {
+                alert('Cần có thông điệp commit để lưu.');
+                return;
+            }
+
+            try {
+                alert('Đang lưu nội dung lên GitHub...');
+                // Gọi Cloud Function updateGitHubContent
+                const updateFunction = functions.httpsCallable('updateGitHubContent');
+                const result = await updateFunction({
+                    filePath: filePath,
+                    newContent: updatedContent,
+                    commitMessage: commitMessage
+                });
+
+                if (result.data.success) {
+                    alert(`Nội dung đã được lưu thành công! Commit: ${result.data.commitUrl}`);
+                    console.log('Commit URL:', result.data.commitUrl);
+                } else {
+                    // Xử lý lỗi từ Cloud Function (nếu success là false)
+                    alert(`Lưu nội dung thất bại: ${result.data.error || 'Lỗi không xác định.'}`);
+                    console.error('Lỗi khi lưu:', result.data.error);
+                }
+            } catch (error) {
+                // Xử lý lỗi khi gọi Cloud Function (ví dụ: mạng, function không tồn tại)
+                alert(`Đã xảy ra lỗi khi gọi Cloud Function: ${error.message}`);
+                console.error('Lỗi khi gọi Cloud Function:', error);
+            }
+        }
+
+        // Thêm sự kiện click cho các nút
+        loadContentBtn.addEventListener('click', loadContent);
+        saveContentBtn.addEventListener('click', saveContent);
+
+        // Tải nội dung mẫu khi trang tải (tùy chọn)
+        // urlInput.value = 'https://thiensutinhquang.github.io/GiaoLy/index.html'; // Thay bằng URL mẫu của bạn
+        // loadContent();
+    </script>
+</body>
+</html>
