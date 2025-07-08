@@ -167,24 +167,24 @@
                     })
                 });
 
-                if (!response.ok) {
-                    // Nếu phản hồi không OK, đọc lỗi từ body
-                    const errorText = await response.text();
-                    throw new Error(`Lỗi từ Cloud Function (${response.status}): ${errorText}`);
-                }
+                // Luôn cố gắng đọc phản hồi dưới dạng JSON, ngay cả khi response.ok là false
+                const result = await response.json();
 
-                const result = await response.json(); // Phản hồi JSON từ Cloud Function
+                if (!response.ok) {
+                    // Nếu phản hồi không OK, và có lỗi trong JSON, hiển thị lỗi đó
+                    throw new Error(result.error || `Lỗi từ Cloud Function (${response.status}): ${JSON.stringify(result)}`);
+                }
 
                 if (result.success) {
                     alert(`Nội dung đã được lưu thành công! Commit: ${result.commitUrl}`);
                     console.log('Commit URL:', result.commitUrl);
                 } else {
-                    // Xử lý lỗi từ Cloud Function (nếu success là false)
+                    // Trường hợp hiếm khi response.ok là true nhưng success là false
                     alert(`Lưu nội dung thất bại: ${result.error || 'Lỗi không xác định.'}`);
                     console.error('Lỗi khi lưu:', result.error);
                 }
             } catch (error) {
-                // Xử lý lỗi khi gọi Cloud Function (ví dụ: mạng, function không tồn tại)
+                // Xử lý lỗi khi gọi Cloud Function (ví dụ: mạng, function không tồn tại, hoặc lỗi JSON)
                 alert(`Đã xảy ra lỗi khi gọi Cloud Function: ${error.message}`);
                 console.error('Lỗi khi gọi Cloud Function:', error);
             }
