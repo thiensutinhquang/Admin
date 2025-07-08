@@ -66,9 +66,10 @@
         </div>
     </div>
 
-    <!-- Firebase SDKs -->
+    <!-- Firebase SDKs (chỉ cần firebase-app.js nếu không dùng callable functions) -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-functions.js"></script>
+    <!-- Không cần firebase-functions.js nữa vì chúng ta dùng HTTP Function -->
+    <!-- <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-functions.js"></script> -->
     <script>
         // Cấu hình Firebase của bạn
         // Bạn có thể tìm thấy cấu hình này trong Firebase Console -> Project settings -> General -> Your apps
@@ -84,7 +85,7 @@
 
         // Khởi tạo Firebase
         firebase.initializeApp(firebaseConfig);
-        const functions = firebase.functions();
+        // Không cần const functions = firebase.functions(); nữa cho HTTP function
         // Nếu bạn đang phát triển cục bộ với Firebase Emulators, bỏ comment dòng dưới đây:
         // functions.useEmulator("localhost", 5001);
 
@@ -124,7 +125,7 @@
             }
         }
 
-        // Hàm lưu nội dung bằng cách gọi Cloud Function
+        // Hàm lưu nội dung bằng cách gọi Cloud Function (HTTP Function)
         async function saveContent() {
             const updatedContent = contentEditor.value;
             const url = urlInput.value.trim();
@@ -134,7 +135,6 @@
                 return;
             }
 
-            // Trích xuất đường dẫn tệp từ URL
             const baseUrl = 'https://thiensutinhquang.github.io/GiaoLy/';
             if (!url.startsWith(baseUrl)) {
                 alert('URL không hợp lệ. Vui lòng nhập URL từ thư mục GiaoLy của bạn.');
@@ -151,21 +151,37 @@
 
             try {
                 alert('Đang lưu nội dung lên GitHub...');
-                // Gọi Cloud Function updateGitHubContent
-                const updateFunction = functions.httpsCallable('updateGitHubContent');
-                const result = await updateFunction({
-                    filePath: filePath,
-                    newContent: updatedContent,
-                    commitMessage: commitMessage
+                // URL của HTTP Cloud Function của bạn
+                // Thay 'giaoly-editor' bằng Project ID Firebase của bạn
+                const functionUrl = 'https://us-central1-giaoly-editor.cloudfunctions.net/updateGitHubContent';
+
+                const response = await fetch(functionUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        filePath: filePath,
+                        newContent: updatedContent,
+                        commitMessage: commitMessage
+                    })
                 });
 
-                if (result.data.success) {
-                    alert(`Nội dung đã được lưu thành công! Commit: ${result.data.commitUrl}`);
-                    console.log('Commit URL:', result.data.commitUrl);
+                if (!response.ok) {
+                    // Nếu phản hồi không OK, đọc lỗi từ body
+                    const errorText = await response.text();
+                    throw new Error(`Lỗi từ Cloud Function (${response.status}): ${errorText}`);
+                }
+
+                const result = await response.json(); // Phản hồi JSON từ Cloud Function
+
+                if (result.success) {
+                    alert(`Nội dung đã được lưu thành công! Commit: ${result.commitUrl}`);
+                    console.log('Commit URL:', result.commitUrl);
                 } else {
                     // Xử lý lỗi từ Cloud Function (nếu success là false)
-                    alert(`Lưu nội dung thất bại: ${result.data.error || 'Lỗi không xác định.'}`);
-                    console.error('Lỗi khi lưu:', result.data.error);
+                    alert(`Lưu nội dung thất bại: ${result.error || 'Lỗi không xác định.'}`);
+                    console.error('Lỗi khi lưu:', result.error);
                 }
             } catch (error) {
                 // Xử lý lỗi khi gọi Cloud Function (ví dụ: mạng, function không tồn tại)
