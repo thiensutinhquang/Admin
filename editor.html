@@ -1,370 +1,620 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trình Chỉnh Sửa Nội Dung GitHub Pages</title>
-    <!-- Tailwind CSS CDN để tạo kiểu dáng nhanh chóng và responsive -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        /* Tùy chỉnh font chữ Inter */
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6; /* Màu nền nhẹ */
-        }
-        /* Đảm bảo textarea có chiều cao tối thiểu và cuộn khi cần */
-        textarea {
-            min-height: 400px;
-            resize: vertical; /* Cho phép người dùng thay đổi chiều cao */
-        }
-        /* Kiểu dáng cho nút */
-        .btn {
-            @apply px-6 py-3 rounded-lg font-semibold shadow-md transition-all duration-200 ease-in-out;
-        }
-        .btn-primary {
-            @apply bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-75;
-        }
-        .btn-secondary {
-            @apply bg-gray-300 text-gray-800 hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-75;
-        }
-        .btn-danger {
-            @apply bg-red-600 text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-75;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Trình Biên Tập Giao Lý - Đầy Đủ Tính Năng</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
+  <style>
+    html, body {
+      height: auto !important; /* Đảm bảo chiều cao tự động theo nội dung */
+      min-height: 100% !important; /* Đảm bảo chiều cao tối thiểu là 100% của viewport */
+      overflow-y: auto !important; /* Cho phép cuộn toàn trang nếu cần */
+    }
+    body {
+      font-family: 'Inter', sans-serif; /* Sử dụng font Inter */
+      background-color: #f5f5f5;
+      margin: 0; /* Đảm bảo body không có margin mặc định */
+      padding: 1rem; /* Padding tổng thể cho body */
+    }
+    /* Vùng chứa nội dung tổng thể */
+    #editableContentContainer {
+      border: 2px dashed #3b82f6;
+      padding: 0.5rem;
+      border-radius: 0.5rem;
+      background-color: white;
+      transition: background 0.2s ease;
+      min-height: 400px !important; /* Chiều cao tối thiểu cho vùng chỉnh sửa */
+      max-height: none !important; /* XÓA giới hạn chiều cao tối đa cho container */
+      height: auto !important; /* Chiều cao tự động theo nội dung */
+      overflow-y: visible !important; /* Cho phép cuộn trên body nếu cần, không cuộn riêng container */
+      position: relative; /* Đảm bảo các phần tử con tuyệt đối được chứa */
+      z-index: 10; /* Đảm bảo vùng chỉnh sửa nằm trên các phần tử khác */
+      /* Loại bỏ flexbox để đơn giản hóa luồng tài liệu */
+      /* display: flex; */
+      /* flex-direction: column; */
 
-<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
-<script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+      /* Các thuộc tính tạm thời để kiểm tra đã được loại bỏ */
+    }
+    #editableContentContainer:focus-within {
+      background-color: #ebf8ff;
+      outline: none;
+    }
 
+    /* Vùng nội dung có thể chỉnh sửa chính (bên trong container) */
+    #editableContentWrapper {
+      width: 100%;
+      height: auto; /* Để nội dung tự định nghĩa chiều cao */
+      /* Loại bỏ các thuộc tính flexbox không cần thiết khi container không phải flex */
+      /* flex-grow: 1; */
+      /* min-height: 0; */
+      /* overflow-y: auto; */ /* Container sẽ cuộn, không phải wrapper */
+      /* Reset các thuộc tính có thể gây lỗi từ HTML gốc */
+      position: static !important;
+      z-index: auto !important;
+      min-height: auto !important;
+      max-height: none !important;
+      margin-top: 0 !important; /* Quan trọng: Reset margin-top */
+      margin-bottom: 0 !important;
+      margin-left: 0 !important;
+      margin-right: 0 !important;
+      padding: 0; /* Đảm bảo không có padding thừa */
+    }
+
+    /* Các phần tử có thể chỉnh sửa bên trong wrapper */
+    [contenteditable].editable-area {
+      min-height: 1.5em; /* Đảm bảo có chiều cao tối thiểu cho mỗi dòng */
+      padding: 0.2em; /* Thêm padding nhỏ để dễ click */
+      /* Đảm bảo các phần tử con không có margin-top lớn */
+      margin-top: 0 !important;
+      margin-bottom: 0 !important;
+    }
+    /* Kiểu dáng cho ghi chú */
+    .comment {
+      position: relative;
+      background-color: #fefcbf;
+      padding: 2px 4px;
+      border-radius: 4px;
+      cursor: pointer;
+      display: inline-block; /* Đảm bảo ghi chú không phá vỡ dòng */
+    }
+    .tooltip {
+      position: absolute;
+      background-color: #333;
+      color: #fff;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      z-index: 50;
+      white-space: nowrap;
+      top: -25px; /* Hiển thị tooltip phía trên ghi chú */
+      left: 50%;
+      transform: translateX(-50%);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+    .comment:hover .tooltip {
+      opacity: 1;
+    }
+    .btn {
+        @apply px-4 py-2 rounded font-semibold transition-colors duration-200;
+    }
+    .btn-primary {
+        @apply bg-blue-600 text-white hover:bg-blue-700;
+    }
+    .btn-secondary {
+        @apply bg-gray-300 text-gray-800 hover:bg-gray-400;
+    }
+    .btn-success {
+        @apply bg-green-600 text-white hover:bg-green-700;
+    }
+    .btn-warning {
+        @apply bg-yellow-500 text-white hover:bg-yellow-600;
+    }
+  </style>
 </head>
-<body class="p-4 sm:p-6 md:p-8 flex flex-col items-center">
+<body class="p-4 text-gray-800">
 
-    <div class="max-w-4xl w-full bg-white p-6 sm:p-8 rounded-xl shadow-lg">
-        <h1 class="text-3xl font-bold text-gray-800 mb-6 text-center">Trình Chỉnh Sửa Nội Dung GiaoLy</h1>
+  <div class="max-w-4xl mx-auto space-y-6">
+    <h1 class="text-3xl font-bold text-center">📝 Chỉnh sửa bài giảng Giao Lý</h1>
 
-        <!-- Phần chọn URL từ menu xổ xuống và tải nội dung -->
-        <div class="mb-6">
-            <label for="fileSelect" class="block text-gray-700 text-sm font-medium mb-2">
-                Chọn Bài Đăng GitHub Pages (.html):
-            </label>
-            <div class="flex flex-col sm:flex-row gap-3">
-                <select id="fileSelect"
-                        class="flex-grow p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm">
-                    <option value="">-- Đang tải danh sách tệp --</option>
-                </select>
-                <button id="refreshFilesBtn" class="btn btn-secondary whitespace-nowrap">Tải Lại Danh Sách Tệp</button>
-            </div>
-            <p id="fileStatusMessage" class="mt-2 text-sm text-green-600 hidden">Đã chọn link đó có kết nối.</p>
-        </div>
-
-        <!-- Phần chỉnh sửa nội dung -->
-        <div class="mb-6">
-            <label for="contentEditor" class="block text-gray-700 text-sm font-medium mb-2">
-                Nội Dung Bài Đăng:
-            </label>
-            <div id="contentEditor" class="h-[500px] bg-white border border-gray-300 rounded-lg p-4 overflow-auto"></div>
-        </div>
-
-        <!-- Nút lưu nội dung -->
-        <div class="text-center">
-            <div class="flex flex-col sm:flex-row justify-center gap-4"><button onclick="showPreview()" class="btn btn-secondary">Xem Trước</button><button id="saveContentBtn" class="btn btn-primary">Lưu Nội Dung Lên GitHub</button></div>
-        </div>
+    <!-- File selector -->
+    <div class="bg-white p-4 rounded shadow">
+      <label class="block font-semibold mb-2">Chọn tệp HTML từ GitHub:</label>
+      <div class="flex flex-col sm:flex-row gap-2">
+        <select id="fileSelect" class="flex-1 border border-gray-300 p-2 rounded"></select>
+        <button onclick="fetchFileList()" class="btn btn-secondary">🔄 Tải danh sách</button>
+        <button onclick="loadFile()" class="btn btn-primary">📥 Tải nội dung</button>
+      </div>
+      <p id="fileStatusMessage" class="mt-2 text-sm text-green-600 hidden">Đã chọn link đó có kết nối.</p>
     </div>
 
-<!-- Modal xem trước -->
-<div id="previewModal" class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center z-50">
-    <div class="bg-white max-w-3xl w-full rounded-lg shadow-lg p-6 relative">
-        <h2 class="text-2xl font-bold mb-4">Xem Trước Bài Đăng</h2>
-        <div id="previewContent" class="prose max-w-none max-h-[60vh] overflow-auto"></div>
-        <button onclick="closePreview()" class="btn btn-secondary mt-4">Đóng</button>
+    <!-- Editable content area -->
+    <div id="editableContentContainer" class="space-y-4 mt-4 bg-white p-6 rounded-lg shadow-md">
+      <!-- Nội dung sẽ được tải vào đây -->
+      <p class="text-gray-500">Chọn một tệp để bắt đầu chỉnh sửa.</p>
     </div>
-</div>
 
+    <!-- Nút hành động -->
+    <div class="flex justify-between items-center mt-6">
+      <div class="flex gap-2">
+        <input type="file" id="imageInput" class="hidden" accept="image/*" />
+        <button onclick="document.getElementById('imageInput').click()" class="btn btn-success">🖼️ Chèn ảnh từ Firebase</button>
+        <button onclick="addComment()" class="btn btn-warning">💬 Ghi chú</button>
+      </div>
+      <div class="flex gap-2">
+        <button onclick="saveToLocal()" class="btn btn-secondary">💾 Lưu tạm</button>
+        <button onclick="saveContent()" class="btn btn-primary">📤 Lưu nội dung lên GitHub</button>
+      </div>
+    </div>
 
-    <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script> <!-- Đã thêm Firebase Storage SDK -->
-    <script>
-        // Cấu hình Firebase của bạn
-        // Bạn có thể tìm thấy cấu hình này trong Firebase Console -> Project settings -> General -> Your apps
-        // Vui lòng thay thế các giá trị YOUR_... bằng thông tin dự án của bạn
-        const firebaseConfig = {
-            apiKey: "AIzaSyAYDG6sVKYbLBzO_iQGwoK9FTH8deJVo3s",
-            authDomain: "giaoly-editor.firebaseapp.com",
-            projectId: "giaoly-editor",
-            storageBucket: "giaoly-editor.appspot.com", // Đã sửa đúng
-            messagingSenderId: "62184116846",
-            appId: "1:62184116846:web:5bd50b4f8a433a066bcc7f",
-            measurementId: "G-56PKNCYV6D" // measurementId vẫn được giữ lại theo yêu cầu
-        };
+    <!-- Chế độ xem trước toàn trang -->
+    <div class="flex justify-end gap-3 mt-6">
+      <button onclick="showPreviewDevice('desktop')" class="btn btn-secondary">💻 Desktop</button>
+      <button onclick="showPreviewDevice('tablet')" class="btn btn-secondary">📱 Tablet</button>
+      <button onclick="showPreviewDevice('mobile')" class="btn btn-secondary">📱 Mobile</button>
+    </div>
 
-        // Khởi tạo Firebase
-        firebase.initializeApp(firebaseConfig);
+    <!-- Nút cuộn xuống cuối trang (để kiểm tra) -->
+    <div class="text-center mt-4">
+        <button onclick="window.scrollTo(0, document.body.scrollHeight)" class="btn btn-secondary">Cuộn xuống cuối trang</button>
+    </div>
+  </div>
 
-        // Khởi tạo trình soạn thảo Quill với đầy đủ tính năng và tiếng Việt
-        const quill = new Quill('#contentEditor', {
-            theme: 'snow',
-            placeholder: 'Nhập nội dung bài viết tại đây...',
-            modules: {
-                toolbar: {
-                    container: [
-                        [{ header: [1, 2, 3, false] }],
-                        ['bold', 'italic', 'underline', 'strike'],
-                        ['blockquote', 'code-block'],
-                        [{ list: 'ordered' }, { list: 'bullet' }],
-                        [{ script: 'sub' }, { script: 'super' }],
-                        [{ indent: '-1' }, { indent: '+1' }],
-                        [{ direction: 'rtl' }],
-                        [{ size: ['small', false, 'large', 'huge'] }],
-                        [{ color: [] }, { background: [] }],
-                        [{ font: [] }],
-                        [{ align: [] }],
-                        ['link', 'image', 'video'],
-                        ['clean']
-                    ],
-                    handlers: {
-                        image: function () {
-                            const input = document.createElement('input');
-                            input.setAttribute('type', 'file');
-                            input.setAttribute('accept', 'image/*');
-                            input.click();
-                            input.onchange = async () => {
-                                const file = input.files[0];
-                                if (file) {
-                                    // Lấy tham chiếu đến Firebase Storage
-                                    const storageRef = firebase.storage().ref('images/' + Date.now() + '_' + file.name);
-                                    await storageRef.put(file);
-                                    const url = await storageRef.getDownloadURL();
-                                    const range = quill.getSelection();
-                                    quill.insertEmbed(range.index, 'image', url);
-                                }
-                            };
-                        }
-                    }
-                }
-            }
+  <!-- Modal xem trước -->
+  <div id="previewWrapper" class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center z-50">
+    <div class="bg-white rounded-lg shadow-lg w-[90%] h-[90%] overflow-auto p-4 relative">
+      <h2 class="text-xl font-bold mb-4">Xem trước bài giảng</h2>
+      <iframe id="previewFrame" class="w-full h-[calc(100%-60px)] border rounded-lg"></iframe>
+      <button onclick="hidePreview()" class="absolute top-4 right-4 bg-gray-300 px-3 py-1 rounded-full text-lg font-bold hover:bg-gray-400">✖</button>
+    </div>
+  </div>
+
+  <script>
+    console.log("Script execution started."); // Log khi script bắt đầu chạy
+
+    // Xử lý lỗi JavaScript toàn cục
+    window.onerror = function(message, source, lineno, colno, error) {
+      console.error("Global Error Caught:", { message, source, lineno, colno, error });
+      alert("Đã xảy ra lỗi JavaScript không mong muốn. Vui lòng kiểm tra console (F12) để biết chi tiết.");
+      return true; // Ngăn chặn xử lý lỗi mặc định của trình duyệt
+    };
+
+    // Firebase Configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyAYDG6sVKYbLBzO_iQGwoK9FTH8deJVo3s",
+      authDomain: "giaoly-editor.firebaseapp.com",
+      projectId: "giaoly-editor",
+      storageBucket: "giaoly-editor.appspot.com",
+      messagingSenderId: "62184116846",
+      appId: "1:62184116846:web:5bd50b4f8a433a066bcc7f"
+    };
+    firebase.initializeApp(firebaseConfig);
+    console.log("Firebase initialized."); // Log sau khi Firebase khởi tạo
+
+    const editableContentContainer = document.getElementById('editableContentContainer'); 
+    let editableContentWrapper; // Biến toàn cục để tham chiếu đến wrapper có thể chỉnh sửa
+
+    const fileSelect = document.getElementById('fileSelect');
+    const fileStatusMessage = document.getElementById('fileStatusMessage');
+    const functionUrl = 'https://us-central1-giaoly-editor.cloudfunctions.net/updateGitHubContent';
+    const baseUrl = 'https://thiensutinhquang.github.io/GiaoLy/';
+
+    // Biến toàn cục để lưu trữ cấu trúc HTML gốc của tệp được tải
+    let originalHtmlTemplate = {
+        doctype: '<!DOCTYPE html>',
+        htmlOpen: '<html lang="vi">',
+        headContent: '',
+        bodyOpen: '<body>',
+        bodyClose: '</body>',
+        htmlClose: '</html>',
+        scriptsInBody: '', // Sẽ lưu trữ các script ở cuối body
+        fixedElementsInBody: [] // Để lưu trữ outerHTML của các phần tử fixed/sticky từ body
+    };
+
+    // Fetch file list from Cloud Function
+    async function fetchFileList() {
+      console.log("fetchFileList function called."); 
+      fileSelect.innerHTML = '<option value="">Đang tải danh sách tệp...</option>';
+      fileSelect.disabled = true;
+      try {
+        const res = await fetch(functionUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'list_files' })
+        });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error || "Không lấy được danh sách.");
+        fileSelect.innerHTML = '<option value="">-- Chọn một tệp --</option>';
+        data.files.forEach(f => {
+          const opt = document.createElement('option');
+          opt.value = f;
+          opt.textContent = f;
+          fileSelect.appendChild(opt);
+        });
+        alert('Danh sách tệp đã tải thành công!');
+        console.log("Danh sách tệp đã tải thành công."); 
+      } catch (err) {
+        alert("❌ Lỗi tải danh sách tệp: " + err.message);
+        console.error("Lỗi tải danh sách tệp:", err); 
+        fileSelect.innerHTML = '<option value="">Lỗi tải tệp</option>';
+      } finally {
+        fileSelect.disabled = false;
+      }
+    }
+
+    // Load selected file content
+    async function loadFile() {
+      console.log("[loadFile] function called."); 
+      const file = fileSelect.value;
+      if (!file) {
+        alert("Chọn tệp trước.");
+        console.log("[loadFile] No file selected.");
+        return;
+      }
+      fileStatusMessage.classList.add('hidden'); 
+      editableContentContainer.innerHTML = '<p class="text-gray-500">Đang tải nội dung...</p>'; 
+      editableContentContainer.style.pointerEvents = 'none'; 
+      editableContentContainer.style.paddingTop = '0.5rem'; // Reset padding-top
+
+      try {
+        const res = await fetch(baseUrl + file);
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        const text = await res.text();
+        console.log("[loadFile] Raw HTML content fetched (first 500 chars):", text.substring(0, 500) + "..."); 
+
+        // Sử dụng DOMParser để phân tích cú pháp HTML
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(text, 'text/html');
+
+        // Lưu trữ doctype, thẻ html và body gốc với tất cả các thuộc tính
+        const doctypeNode = doc.doctype;
+        originalHtmlTemplate.doctype = doctypeNode ? `<!DOCTYPE ${doctypeNode.name}${doctypeNode.publicId ? ` PUBLIC "${doctypeNode.publicId}"` : ''}${doctypeNode.systemId ? ` "${doctypeNode.systemId}"` : ''}>` : '<!DOCTYPE html>';
+        
+        // Lấy thẻ html và body gốc với tất cả thuộc tính
+        originalHtmlTemplate.htmlOpen = doc.documentElement.outerHTML.match(/<html[^>]*>/i)[0];
+        originalHtmlTemplate.bodyOpen = doc.body.outerHTML.match(/<body[^>]*>/i)[0];
+        originalHtmlTemplate.htmlClose = '</html>'; 
+        originalHtmlTemplate.bodyClose = '</body>'; 
+
+        // Lưu trữ nội dung <head>
+        originalHtmlTemplate.headContent = doc.head.innerHTML;
+
+        // Reset fixed elements and scripts for new load
+        originalHtmlTemplate.fixedElementsInBody = [];
+        originalHtmlTemplate.scriptsInBody = '';
+        let fixedOffsetHeight = 0;
+
+        // --- Bước 1: Tạo một bản sao của body để thao tác ---
+        const tempBodyDiv = doc.createElement('div'); // Sử dụng một div tạm thời thay vì DocumentFragment để querySelector hoạt động tốt hơn
+        while (doc.body.firstChild) {
+            tempBodyDiv.appendChild(doc.body.firstChild);
+        }
+        console.log("[loadFile] Cloned body content into tempBodyDiv.");
+
+        // --- Bước 2: Loại bỏ và lưu trữ Header, Footer, và Scripts từ tempBodyDiv ---
+        const headerElement = tempBodyDiv.querySelector('header');
+        if (headerElement) {
+            console.log("[loadFile] Found and removing header:", headerElement.outerHTML.substring(0, 200) + "...");
+            originalHtmlTemplate.fixedElementsInBody.push(headerElement.outerHTML);
+            // Tạm thời thêm vào DOM để lấy chiều cao tính toán
+            const tempDivForHeight = document.createElement('div');
+            tempDivForHeight.style.visibility = 'hidden';
+            tempDivForHeight.style.position = 'absolute';
+            document.body.appendChild(tempDivForHeight);
+            tempDivForHeight.appendChild(headerElement.cloneNode(true));
+            fixedOffsetHeight += tempDivForHeight.firstChild.offsetHeight;
+            document.body.removeChild(tempDivForHeight);
+            headerElement.remove();
+        }
+
+        const footerElement = tempBodyDiv.querySelector('footer');
+        if (footerElement) {
+            console.log("[loadFile] Found and removing footer:", footerElement.outerHTML.substring(0, 200) + "...");
+            originalHtmlTemplate.fixedElementsInBody.push(footerElement.outerHTML);
+            footerElement.remove();
+        }
+
+        const scriptElements = tempBodyDiv.querySelectorAll('script');
+        scriptElements.forEach(script => {
+            console.log("[loadFile] Found and removing script:", script.outerHTML.substring(0, 100) + "...");
+            originalHtmlTemplate.scriptsInBody += script.outerHTML + '\n';
+            script.remove();
         });
 
-        // Lấy các phần tử DOM
-        const fileSelect = document.getElementById('fileSelect');
-        const refreshFilesBtn = document.getElementById('refreshFilesBtn');
-        const saveContentBtn = document.getElementById('saveContentBtn');
-        const fileStatusMessage = document.getElementById('fileStatusMessage');
+        // --- Bước 3: Trích xuất nội dung chính từ div.min-h-screen hoặc toàn bộ phần còn lại ---
+        const mainContentWrapperInTemp = tempBodyDiv.querySelector('div.min-h-screen');
+        const contentFragment = document.createDocumentFragment();
 
-        // URL cơ sở của GitHub Pages của bạn
-        const baseUrl = 'https://thiensutinhquang.github.io/GiaoLy/';
-        // URL của HTTP Cloud Function của bạn
-        const functionUrl = 'https://us-central1-giaoly-editor.cloudfunctions.net/updateGitHubContent';
-
-        // Biến toàn cục để lưu trữ cấu trúc HTML gốc của tệp được tải
-        let originalHtmlTemplate = {
-            doctype: '<!DOCTYPE html>',
-            htmlOpen: '<html lang="vi">',
-            headContent: '',
-            bodyOpen: '<body>',
-            bodyClose: '</body>',
-            htmlClose: '</html>',
-            scriptsInBody: '' // Sẽ lưu trữ các script ở cuối body
-        };
-
-        // Hàm tải danh sách tệp từ Cloud Function
-        async function fetchFileList() {
-            fileSelect.innerHTML = '<option value="">Đang tải danh sách tệp...</option>';
-            fileSelect.disabled = true;
-            refreshFilesBtn.disabled = true;
-            contentEditor.style.pointerEvents = 'none'; // Vô hiệu hóa Quill khi đang tải
-            fileStatusMessage.classList.add('hidden'); // Ẩn thông báo trạng thái
-
-            try {
-                const response = await fetch(functionUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        action: 'list_files' // Yêu cầu hành động liệt kê tệp
-                    })
-                });
-
-                const result = await response.json();
-
-                if (!response.ok || !result.success) {
-                    throw new Error(result.error || `Lỗi khi tải danh sách tệp (${response.status}): ${JSON.stringify(result)}`);
+        if (mainContentWrapperInTemp) {
+            console.log("[loadFile] Found main content wrapper (div.min-h-screen). Extracting its children.");
+            // Lấy các phần tử con của div.min-h-screen
+            while (mainContentWrapperInTemp.firstChild) {
+                const node = mainContentWrapperInTemp.firstChild;
+                if (node.nodeType === Node.ELEMENT_NODE) {
+                    // Reset margins and paddings for top-level children of the editable area
+                    node.style.setProperty('margin-top', '0px', 'important');
+                    node.style.setProperty('margin-bottom', '0px', 'important');
+                    node.style.setProperty('padding-top', '0px', 'important'); 
+                    node.style.setProperty('padding-bottom', '0px', 'important');
                 }
-
-                // Xóa các tùy chọn cũ và thêm tùy chọn mặc định
-                fileSelect.innerHTML = '<option value="">-- Chọn một tệp --</option>';
-                result.files.forEach(file => {
-                    const option = document.createElement('option');
-                    option.value = file; // Giá trị là đường dẫn tệp (ví dụ: "gioithieu.html")
-                    option.textContent = file; // Hiển thị tên tệp
-                    fileSelect.appendChild(option);
-                });
-                alert('Danh sách tệp đã tải thành công!');
-
-            } catch (error) {
-                alert(`Không thể tải danh sách tệp: ${error.message}`);
-                console.error('Lỗi khi tải danh sách tệp:', error);
-                fileSelect.innerHTML = '<option value="">Lỗi tải tệp</option>';
-            } finally {
-                fileSelect.disabled = false;
-                refreshFilesBtn.disabled = false;
-                contentEditor.style.pointerEvents = 'auto'; // Kích hoạt lại Quill
+                contentFragment.appendChild(node);
+            }
+            mainContentWrapperInTemp.remove(); // Loại bỏ div.min-h-screen sau khi đã lấy nội dung
+        } else {
+            // Nếu không tìm thấy div.min-h-screen, lấy tất cả các phần tử còn lại trong tempBodyDiv
+            console.log("[loadFile] No specific main content wrapper (div.min-h-screen) found. Taking all remaining children from tempBodyDiv.");
+            while (tempBodyDiv.firstChild) {
+                const node = tempBodyDiv.firstChild;
+                if (node.nodeType === Node.ELEMENT_ELEMENT) { // Changed from Node.ELEMENT_NODE to avoid issues with text nodes
+                    node.style.setProperty('margin-top', '0px', 'important');
+                    node.style.setProperty('margin-bottom', '0px', 'important');
+                    node.style.setProperty('padding-top', '0px', 'important');
+                    node.style.setProperty('padding-bottom', '0px', 'important');
+                }
+                contentFragment.appendChild(node);
             }
         }
 
-        // Hàm tải nội dung từ URL GitHub Pages và chuẩn bị cho Quill
-        async function loadContent(fullUrl) {
-            quill.setContents([]); // Xóa nội dung hiện tại của Quill
-            quill.clipboard.dangerouslyPasteHTML(0, 'Đang tải nội dung...'); 
-            contentEditor.style.pointerEvents = 'none'; // Vô hiệu hóa Quill khi đang tải
-            
-            try {
-                const response = await fetch(fullUrl);
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                const content = await response.text();
+        // Áp dụng padding cho editableContentContainer dựa trên chiều cao của header đã loại bỏ
+        // Thêm một khoảng đệm nhỏ (ví dụ: 20px) để đảm bảo không bị chồng chéo
+        editableContentContainer.style.paddingTop = `${fixedOffsetHeight + 20}px`; 
+        console.log(`[loadFile] Calculated padding-top for editableContentContainer: ${fixedOffsetHeight + 20}px`);
 
-                // Sử dụng DOMParser để phân tích cú pháp HTML
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(content, 'text/html');
-
-                // Lưu trữ nội dung <head>
-                originalHtmlTemplate.headContent = doc.head.innerHTML;
-
-                // Lấy nội dung body và loại bỏ các script
-                const bodyClone = doc.body.cloneNode(true);
-                let scripts = [];
-                // Lặp ngược để tránh vấn đề với chỉ số khi xóa phần tử
-                for (let i = bodyClone.children.length - 1; i >= 0; i--) {
-                    const child = bodyClone.children[i];
-                    // Kiểm tra nếu là thẻ <script>
-                    if (child.tagName === 'SCRIPT') {
-                        scripts.unshift(child.outerHTML); // Thêm vào đầu mảng để giữ đúng thứ tự
-                        bodyClone.removeChild(child); // Xóa script khỏi bodyClone
-                    }
-                }
-                originalHtmlTemplate.scriptsInBody = scripts.join('\n'); // Lưu các script đã loại bỏ
-
-                // Cập nhật nội dung Quill với HTML đã làm sạch
-                quill.clipboard.dangerouslyPasteHTML(0, bodyClone.innerHTML); 
-
-                fileStatusMessage.textContent = `Đã chọn link: ${fullUrl}. Nội dung đã được tải.`;
-                fileStatusMessage.classList.remove('hidden');
-                fileStatusMessage.classList.remove('text-red-600');
-                fileStatusMessage.classList.add('text-green-600');
-            } catch (error) {
-                alert(`Không thể tải nội dung từ ${fullUrl}: ${error.message}. Vui lòng kiểm tra URL.`);
-                console.error('Lỗi khi tải nội dung:', error);
-                quill.setContents([]); // Xóa nội dung nếu tải thất bại
-                fileStatusMessage.textContent = `Lỗi tải nội dung từ ${fullUrl}.`;
-                fileStatusMessage.classList.remove('hidden');
-                fileStatusMessage.classList.remove('text-green-600');
-                fileStatusMessage.classList.add('text-red-600');
-            } finally {
-                contentEditor.style.pointerEvents = 'auto'; // Kích hoạt lại Quill
-            }
+        // Lấy hoặc tạo editableContentWrapper
+        editableContentWrapper = document.getElementById('editableContentWrapper');
+        if (!editableContentWrapper) {
+            editableContentWrapper = document.createElement('div');
+            editableContentWrapper.id = 'editableContentWrapper';
+            editableContentWrapper.className = 'editable-area'; // Áp dụng các reset CSS cho nó
+            editableContentWrapper.contentEditable = 'true';
+            editableContentContainer.innerHTML = ''; // Xóa nội dung ban đầu
+            editableContentContainer.appendChild(editableContentWrapper);
+            console.log("[loadFile] Created new editableContentWrapper.");
+        } else {
+            editableContentWrapper.innerHTML = ''; // Xóa nội dung cũ
+            console.log("[loadFile] Cleared existing editableContentWrapper.");
         }
 
-        // Hàm lưu nội dung bằng cách gọi Cloud Function
-        async function saveContent() {
-            const updatedContent = quill.root.innerHTML; // Lấy nội dung HTML từ Quill
-            const selectedFilePath = fileSelect.value; // Lấy đường dẫn tệp được chọn
+        // Thêm nội dung đã xử lý vào editableContentWrapper
+        if (contentFragment.hasChildNodes()) {
+            editableContentWrapper.appendChild(contentFragment);
+            console.log("[loadFile] Appended processed content to editableContentWrapper.");
+        } else {
+            editableContentWrapper.innerHTML = '<p class="text-gray-500">Nội dung bài giảng trống hoặc không có phần có thể chỉnh sửa.</p>';
+            console.log("[loadFile] No content remaining after processing, showing fallback message.");
+        }
 
-            if (!selectedFilePath) {
-                alert('Vui lòng chọn một tệp từ danh sách trước khi lưu.');
-                return;
-            }
+        // Thêm onerror cho các thẻ ảnh để hiển thị placeholder nếu ảnh gốc lỗi
+        Array.from(editableContentWrapper.querySelectorAll('img')).forEach(img => {
+            img.onerror = function() {
+                this.onerror = null; // Ngăn chặn vòng lặp vô hạn nếu placeholder cũng lỗi
+                this.src = `https://placehold.co/${this.width || 100}x${this.height || 100}/cccccc/333333?text=Image+Error`; // Ảnh placeholder
+                this.alt = "Lỗi tải ảnh";
+                console.warn(`[loadFile] Image failed to load: ${this.src}. Replaced with placeholder.`);
+            };
+        });
 
-            const commitMessage = prompt('Nhập thông điệp commit (ví dụ: Cập nhật bài hanhoanchaodon.html):', `Cập nhật ${selectedFilePath}`);
-            if (!commitMessage) {
-                alert('Cần có thông điệp commit để lưu.');
-                return;
-            }
+        console.log("[loadFile] Content remaining in editableContentWrapper after processing (first 500 chars):", editableContentWrapper.innerHTML.substring(0, 500) + "..."); 
+        console.log("[loadFile] editableContentWrapper scrollHeight:", editableContentWrapper.scrollHeight, "clientHeight:", editableContentWrapper.clientHeight); // Kiểm tra chiều cao cuộn và chiều cao hiển thị
+        console.log("[loadFile] editableContentContainer computed height:", window.getComputedStyle(editableContentContainer).height);
+        console.log("[loadFile] editableContentContainer clientHeight:", editableContentContainer.clientHeight, "scrollHeight:", editableContentContainer.scrollHeight);
+        
+        // Log kiểm tra phần tử cuối
+        const lastElementInWrapper = editableContentWrapper.lastElementChild;
+        console.log("Chiều cao vùng nội dung (editableContentContainer):", editableContentContainer.scrollHeight, editableContentContainer.clientHeight);
+        console.log("Nội dung cuối (editableContentWrapper):", lastElementInWrapper ? lastElementInWrapper.innerText.substring(0, 100) + '...' : '[Không có]');
 
-            // Tái tạo toàn bộ HTML của tệp
-            const fullHtmlContent = `
+
+        fileStatusMessage.textContent = `Đã chọn link: ${baseUrl + file}. Nội dung đã được tải.`;
+        fileStatusMessage.classList.remove('hidden');
+        fileStatusMessage.classList.remove('text-red-600');
+        fileStatusMessage.classList.add('text-green-600');
+        console.log("[loadFile] File content loaded successfully."); 
+
+      } catch (err) {
+        alert("❌ Lỗi tải nội dung: " + err.message);
+        console.error("[loadFile] Error loading content:", err); 
+        editableContentContainer.innerHTML = '<p class="text-red-500">Không thể tải nội dung.</p>';
+        fileStatusMessage.textContent = `Lỗi tải nội dung từ ${baseUrl + file}.`;
+        fileStatusMessage.classList.remove('hidden');
+        fileStatusMessage.classList.remove('text-green-600');
+        fileStatusMessage.classList.add('text-red-600');
+      } finally {
+        editableContentContainer.style.pointerEvents = 'auto'; // Kích hoạt lại chỉnh sửa
+        console.log("[loadFile] editableContentContainer pointerEvents set to auto.");
+      }
+    }
+
+    // Save content to GitHub
+    async function saveContent() {
+      console.log("saveContent function called."); 
+      const html = editableContentWrapper.innerHTML; // Lấy nội dung từ wrapper
+      const filePath = fileSelect.value;
+      if (!filePath) {
+        alert("Vui lòng chọn tệp trước khi lưu.");
+        console.log("Không có tệp nào được chọn để lưu.");
+        return;
+      }
+
+      const commitMessage = prompt("Nội dung commit:", `Cập nhật ${filePath}`);
+      if (!commitMessage) {
+        alert("Thiếu thông tin commit.");
+        console.log("Thông điệp commit bị hủy hoặc trống.");
+        return;
+      }
+
+      // Thoát (escape) các ký tự backtick trong nội dung HTML
+      const escapedHtml = html.replace(/`/g, '\\`');
+
+      // Tái tạo toàn bộ HTML của tệp
+      const fullHtmlContent = `
 ${originalHtmlTemplate.doctype}
 ${originalHtmlTemplate.htmlOpen}
 <head>
     ${originalHtmlTemplate.headContent}
 </head>
-${originalHtmlTemplate.bodyOpen}
-    ${updatedContent}
+<body ${originalHtmlTemplate.bodyOpen.match(/<body(.*?)>/i)[1]}>
+    ${originalHtmlTemplate.fixedElementsInBody.join('\n')} <!-- Re-insert fixed elements here -->
+    ${escapedHtml}
     ${originalHtmlTemplate.scriptsInBody}
-${originalHtmlTemplate.bodyClose}
-${originalHtmlTemplate.htmlClose}
+</body>
+</html>
             `.trim(); // Loại bỏ khoảng trắng thừa ở đầu/cuối
 
-            try {
-                alert('Đang lưu nội dung lên GitHub...');
-                const response = await fetch(functionUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        action: 'update_file', // Yêu cầu hành động cập nhật tệp
-                        filePath: selectedFilePath, // Sử dụng đường dẫn tệp được chọn
-                        newContent: fullHtmlContent, // Gửi toàn bộ HTML đã tái tạo
-                        commitMessage: commitMessage
-                    })
-                });
-
-                const result = await response.json();
-
-                if (!response.ok) {
-                    throw new Error(result.error || `Lỗi từ Cloud Function (${response.status}): ${JSON.stringify(result)}`);
-                }
-
-                if (result.success) {
-                    alert(`Nội dung đã được lưu thành công! Commit: ${result.commitUrl}`);
-                    console.log('Commit URL:', result.commitUrl);
-                } else {
-                    alert(`Lưu nội dung thất bại: ${result.error || 'Lỗi không xác định.'}`);
-                    console.error('Lỗi khi lưu:', result.error);
-                }
-            } catch (error) {
-                alert(`Đã xảy ra lỗi khi gọi Cloud Function: ${error.message}`);
-                console.error('Lỗi khi gọi Cloud Function:', error);
-            }
-        }
-
-        // Thêm sự kiện click cho nút tải lại danh sách tệp
-        refreshFilesBtn.addEventListener('click', fetchFileList);
-
-        // Thêm sự kiện change cho menu xổ xuống
-        fileSelect.addEventListener('change', () => {
-            const selectedFilePath = fileSelect.value;
-            if (selectedFilePath) {
-                const fullUrl = baseUrl + selectedFilePath;
-                loadContent(fullUrl); // Tải nội dung của tệp đã chọn
-            } else {
-                quill.setContents([]); // Xóa trình chỉnh sửa nếu không có tệp nào được chọn
-                fileStatusMessage.classList.add('hidden');
-            }
+      try {
+        alert('Đang lưu nội dung lên GitHub...');
+        const res = await fetch(functionUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'update_file',
+            filePath,
+            newContent: fullHtmlContent, // Gửi toàn bộ HTML đã tái tạo
+            commitMessage
+          })
         });
+        const result = await res.json();
+        if (result.success) {
+          alert("✅ Đã lưu! Xem commit:\n" + result.commitUrl);
+          console.log("Nội dung đã lưu thành công. Commit URL:", result.commitUrl); 
+        } else {
+          throw new Error(result.error || "Lỗi không xác định từ Cloud Function.");
+        }
+      } catch (err) {
+        alert("❌ Lỗi khi lưu nội dung:\n" + err.message);
+        console.error("Lỗi khi lưu nội dung:", err); 
+      }
+    }
 
-        // Thêm sự kiện click cho nút lưu
-        saveContentBtn.addEventListener('click', saveContent);
+    // Comment inline
+    function addComment() {
+      console.log("addComment function called."); 
+      const sel = window.getSelection();
+      if (!sel.rangeCount) return;
+      const range = sel.getRangeAt(0);
+      const span = document.createElement('span');
+      const note = prompt("💬 Ghi chú:");
+      if (!note) return;
+      span.className = "comment bg-yellow-200 px-1 rounded"; // Thêm class cho màu nền
+      span.contentEditable = "false";
+      span.title = note;
+      span.textContent = range.toString();
+      span.onclick = (event) => {
+        event.stopPropagation(); // Ngăn chặn sự kiện click lan ra ngoài
+        const action = prompt("📝 Sửa ghi chú hoặc gõ 'xóa' để xoá:", span.title);
+        if (action === 'xóa') span.remove();
+        else if (action) span.title = action;
+      };
+      range.deleteContents();
+      range.insertNode(span);
+      console.log("Ghi chú đã được thêm.");
+    }
 
-        // Tải danh sách tệp khi trang được tải hoàn toàn
-        document.addEventListener('DOMContentLoaded', fetchFileList);
-    
-// Hàm xem trước nội dung
-function showPreview() {
-    const html = quill.root.innerHTML;
-    const previewDiv = document.getElementById('previewContent');
-    previewDiv.innerHTML = html;
-    document.getElementById('previewModal').classList.remove('hidden');
-    document.getElementById('previewModal').classList.add('flex');
-}
-function closePreview() {
-    document.getElementById('previewModal').classList.add('hidden');
-    document.getElementById('previewModal').classList.remove('flex');
-}
+    // Upload image to Firebase
+    document.getElementById('imageInput').addEventListener('change', async (e) => {
+      console.log("Image input change event triggered."); 
+      const file = e.target.files[0];
+      if (!file) return;
 
-</script>
+      alert('Đang tải ảnh lên Firebase Storage...');
+      try {
+        const storageRef = firebase.storage().ref('images/' + Date.now() + '_' + file.name);
+        await storageRef.put(file);
+        const url = await storageRef.getDownloadURL();
+        const img = document.createElement('img');
+        img.src = url;
+        img.alt = 'Ảnh chèn';
+        img.className = "my-4 rounded shadow max-w-full h-auto"; // Thêm responsive image
+        editableContentWrapper.appendChild(img); // Thêm vào wrapper
+        alert('✅ Ảnh đã được tải lên và chèn!');
+        console.log("Ảnh đã tải lên và chèn thành công. URL:", url); 
+      } catch (err) {
+        alert("❌ Lỗi tải ảnh lên Firebase: " + err.message);
+        console.error("Lỗi tải ảnh:", err); 
+      }
+      e.target.value = ""; // Xóa giá trị input để có thể chọn lại cùng một file
+    });
+
+    // Preview functionality
+    function showPreviewDevice(type) {
+      console.log(`showPreviewDevice function called for type: ${type}`); 
+      const wrapper = document.getElementById('previewWrapper');
+      const frame = document.getElementById('previewFrame');
+      let width = "100%";
+      if (type === "tablet") width = "768px";
+      else if (type === "mobile") width = "375px";
+
+      frame.style.width = width;
+
+      // Reconstruct HTML for preview, similar to saveContent but without escaping backticks
+      const previewHtmlContent = `
+<!DOCTYPE html>
+<html ${originalHtmlTemplate.htmlOpen.match(/<html(.*?)>/i)[1]}>
+<head>
+    ${originalHtmlTemplate.headContent}
+    <style>body{font-family: Inter, sans-serif;padding:1rem;}</style>
+</head>
+<body ${originalHtmlTemplate.bodyOpen.match(/<body(.*?)>/i)[1]}>
+    ${originalHtmlTemplate.fixedElementsInBody.join('\n')} <!-- Re-insert fixed elements for preview -->
+    ${editableContentWrapper.innerHTML} <!-- Lấy nội dung từ wrapper -->
+    ${originalHtmlTemplate.scriptsInBody}
+</body>
+</html>
+      `.trim();
+      
+      frame.srcdoc = previewHtmlContent;
+      wrapper.classList.remove('hidden');
+      wrapper.classList.add('flex');
+      console.log("Xem trước đã hiển thị.");
+    }
+
+    function hidePreview() {
+      console.log("hidePreview function called."); 
+      document.getElementById('previewWrapper').classList.add('hidden');
+      document.getElementById('previewWrapper').classList.remove('flex');
+      console.log("Xem trước đã ẩn.");
+    }
+
+    // Save to LocalStorage
+    function saveToLocal() {
+      console.log("saveToLocal function called."); 
+      const html = editableContentWrapper.innerHTML; // Lấy nội dung từ wrapper
+      localStorage.setItem('draftContent', html);
+      alert('✅ Đã lưu tạm nội dung vào trình duyệt.');
+      console.log("Nội dung đã lưu tạm vào LocalStorage."); 
+    }
+
+    // Load content from LocalStorage on DOMContentLoaded
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log("DOMContentLoaded event fired. Calling fetchFileList."); 
+      fetchFileList(); // Tải danh sách tệp khi trang tải
+      const saved = localStorage.getItem('draftContent');
+      // Đảm bảo editableContentWrapper được khởi tạo trước khi cố gắng khôi phục nội dung
+      editableContentWrapper = document.getElementById('editableContentWrapper');
+      if (!editableContentWrapper) {
+          editableContentWrapper = document.createElement('div');
+          editableContentWrapper.id = 'editableContentWrapper';
+          editableContentWrapper.className = 'editable-area';
+          editableContentWrapper.contentEditable = 'true';
+          editableContentContainer.innerHTML = '';
+          editableContentContainer.appendChild(editableContentWrapper);
+          console.log("DOMContentLoaded: Created new editableContentWrapper.");
+      }
+
+      if (saved) {
+        editableContentWrapper.innerHTML = saved;
+        console.log("DOMContentLoaded: Content restored from LocalStorage."); 
+      } else {
+          editableContentWrapper.innerHTML = '<p class="text-gray-500">Chọn một tệp để bắt đầu chỉnh sửa.</p>';
+          console.log("DOMContentLoaded: No saved content, showing initial message.");
+      }
+    });
+
+  </script>
 </body>
 </html>
