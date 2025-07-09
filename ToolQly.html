@@ -134,8 +134,8 @@
                 <img src="https://thiensutinhquang.github.io/Admin/icons/icon-192.png" alt="App Logo" class="h-full w-auto object-contain">
             </div>
             <div class="flex-grow text-center py-2">
-                   <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold text-white">Tool Quản lý Sự kiện Đa năng</h1>
-                   <p class="text-xl sm:text-2xl text-yellow-400 font-semibold mt-1">Gia đình Minh Sư Tịnh Quang</p>
+                    <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold text-white">Tool Quản lý Sự kiện Đa năng</h1>
+                    <p class="text-xl sm:text-2xl text-yellow-400 font-semibold mt-1">Gia đình Minh Sư Tịnh Quang</p>
             </div>
             <div class="flex-shrink-0 w-16 md:w-20"></div> <!-- Spacer to balance the logo -->
         </header>
@@ -173,11 +173,11 @@
             <div id="form-panel" class="bg-gray-800 p-6 rounded-xl shadow-lg lg:col-span-2 self-start lg:sticky top-8 hidden lg:block">
                 <h2 id="form-title" class="text-xl font-semibold mb-6 border-b border-gray-700 pb-4 text-center"></h2>
                 <form id="registrationForm" class="space-y-4"></form>
-                   <div id="form-actions" class="pt-5 space-y-3 border-t border-gray-700 mt-5">
+                    <div id="form-actions" class="pt-5 space-y-3 border-t border-gray-700 mt-5">
                     <button type="button" id="submitBtn" class="btn btn-primary btn-lg w-full shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-150">Thêm vào Báo cáo</button>
                     <div id="edit-actions" class="hidden grid grid-cols-2 gap-3">
-                           <button type="button" id="deleteFromFormBtn" class="btn btn-delete w-full" data-tooltip="Xoá mục đang được chọn">Xoá mục</button>
-                           <button type="button" id="cancelEditBtn" class="btn btn-secondary w-full" data-tooltip="Huỷ chỉnh sửa và quay lại chế độ thêm mới">Huỷ bỏ</button>
+                            <button type="button" id="deleteFromFormBtn" class="btn btn-delete w-full" data-tooltip="Xoá mục đang được chọn">Xoá mục</button>
+                            <button type="button" id="cancelEditBtn" class="btn btn-secondary w-full" data-tooltip="Huỷ chỉnh sửa và quay lại chế độ thêm mới">Huỷ bỏ</button>
                     </div>
                 </div>
             </div>
@@ -189,12 +189,12 @@
             
             <!-- Panel Thống kê: Luôn ẩn trên mobile theo mặc định -->
             <div id="stats-panel" class="bg-gray-800 p-6 rounded-xl shadow-lg flex-col lg:col-span-3 hidden lg:flex">
-                   <div class="flex justify-between items-center mb-4">
-                       <h3 id="chartTitle" class="text-xl font-semibold"></h3>
-                       <div class="flex items-center gap-2">
-                        <label for="chartColumnSelector" class="text-sm">Thống kê theo:</label>
-                        <select id="chartColumnSelector" class="form-select text-sm py-1 px-2 w-40"></select>
-                       </div>
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 id="chartTitle" class="text-xl font-semibold"></h3>
+                        <div class="flex items-center gap-2">
+                         <label for="chartColumnSelector" class="text-sm">Thống kê theo:</label>
+                         <select id="chartColumnSelector" class="form-select text-sm py-1 px-2 w-40"></select>
+                        </div>
                     </div>
                     <div class="bg-gray-700 p-4 rounded-lg h-80"><canvas id="provinceChart"></canvas></div>
             </div>
@@ -340,7 +340,7 @@
             appId: "1:661993196911:web:1dd44289d187bd5ec3ac9a",
             measurementId: "G-C9HM7PZKTD"
         };
-       
+        
         // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
@@ -361,7 +361,7 @@
         let eventData = null;      // Full data of the current event
         let unsubscribeFromEvent = null; // Function to unsubscribe from current event listener
         let unsubscribeFromEventList = null; // Function to unsubscribe from event list listener
-        let user = null;           // Firebase authenticated user object
+        let user = null;            // Firebase authenticated user object
 
         // --- DOM Elements ---
         // Cache DOM elements for better performance and readability
@@ -547,7 +547,7 @@
             const reportBody = sectionEl.querySelector('.report-body');
 
             reportHeaderRow.innerHTML = ''; // Clear existing headers
-            reportBody.innerHTML = '';     // Clear existing body
+            reportBody.innerHTML = '';      // Clear existing body
 
             const { registrations, columns, isTransposed } = section;
             const registrationArray = registrations || []; // Ensure registrations is an array
@@ -618,8 +618,8 @@
             if(!eventSelector) return;
             eventSelector.innerHTML = ''; // Clear existing options
             if (events.length === 0) {
-                   eventSelector.add(new Option("Không có sự kiện nào, hãy tạo mới!", ""));
-                   return;
+                    eventSelector.add(new Option("Không có sự kiện nào, hãy tạo mới!", ""));
+                    return;
             }
             // Sort events by creation time (newest first)
             events.sort((a,b) => b.createdAt - a.createdAt).forEach(event => {
@@ -756,7 +756,7 @@
                         isTransposed: false // Default to non-transposed view
                     }],
                     registrations: null, // Clear old top-level registrations
-                    columns: null        // Clear old top-level columns
+                    columns: null         // Clear old top-level columns
                 };
             }
             return data; // Return data as is if no migration is needed
@@ -842,8 +842,8 @@
                     renderForm(null); // Clear the form
                 }
             }, (error) => {
-                   console.error("Error listening to event:", error);
-                   showToast("Lỗi khi tải dữ liệu sự kiện.", "error");
+                    console.error("Error listening to event:", error);
+                    showToast("Lỗi khi tải dữ liệu sự kiện.", "error");
             });
         }
 
@@ -868,9 +868,9 @@
                 if (events.length === 0 && createIfNeeded) {
                     createNewOnlineEvent(); // Create a new event if none exist
                 } else if (!window.location.hash.substring(1) && events.length > 0) {
-                       // If no event is selected in URL, load the latest one
-                       events.sort((a,b) => b.createdAt - a.createdAt);
-                       window.location.hash = events[0].id;
+                            // If no event is selected in URL, load the latest one
+                            events.sort((a,b) => b.createdAt - a.createdAt);
+                            window.location.hash = events[0].id;
                 }
             }, (error) => {
                 console.error("Error listening to event list:", error);
@@ -1279,19 +1279,22 @@
                         tempSections.push({ id: `sec_${Date.now()}`, title: `Mục mới ${tempSections.length + 1}`, columns: JSON.parse(JSON.stringify(DEFAULT_COLUMNS)), registrations: [], isTransposed: false });
                         renderManageSectionsForm(); // Re-render modal form
                     } else if (button.classList.contains('delete-section-btn')) {
-                           if (tempSections.length <= 1) return showToast("Phải có ít nhất một mục.", "error"); // Prevent deleting last section
+                            if (tempSections.length <= 1) return showToast("Phải có ít nhất một mục.", "error"); // Prevent deleting last section
                         tempSections = tempSections.filter(s => s.id !== button.dataset.sectionId); // Filter out deleted section
                         renderManageSectionsForm(); // Re-render modal form
                     } else if (button.id === 'saveManageSectionsBtn') {
                         // Get new order from sortable list
-                        const newOrderIds = [...manageSectionsModal.querySelectorAll('.manage-sections-item')].map(item => item.dataset.id);
+                        const newOrderIds = sortableSectionsInstance.toArray(); // Get the ordered IDs from Sortable.js
                         const reorderedSections = newOrderIds.map(id => {
                             const originalSection = tempSections.find(s => s.id === id);
                             const input = manageSectionsModal.querySelector(`input[data-section-id="${id}"]`);
                             if (originalSection && input) originalSection.title = input.value.trim() || 'Không tên'; // Update title
                             return originalSection;
                         }).filter(Boolean); // Filter out any null/undefined
-                        await updateEvent({ sections: reorderedSections }); // Await the update
+
+                        // Update the main eventData.sections with the reordered array
+                        eventData.sections = reorderedSections;
+                        await updateEvent({ sections: eventData.sections }); // Await the update
                         manageSectionsModal.classList.add('hidden'); // Hide modal
                         showToast('Đã cập nhật các mục!', 'success');
                     } else if (button.id === 'cancelManageSectionsBtn') {
@@ -1376,7 +1379,11 @@
                             }
                         };
                         
-                        const apiKey = ""; // API key will be provided by Canvas runtime
+                        // API key will be provided by Canvas runtime.
+                        // A 401 error often indicates an issue with the API key itself (e.g., not enabled, invalid, or billing issues)
+                        // or that the Canvas environment is not injecting it as expected.
+                        const apiKey = ""; 
+                        console.log('API Key value before fetch:', apiKey); // Log API key for debugging
                         const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
                         const response = await fetch(apiUrl, {
                             method: 'POST',
@@ -1484,8 +1491,8 @@
 
 
             } catch(e) {
-                   console.error("Error initializing app:", e);
-                   showToast("Đã xảy ra lỗi nghiêm trọng khi khởi tạo ứng dụng. Vui lòng kiểm tra console.", "error");
+                    console.error("Error initializing app:", e);
+                    showToast("Đã xảy ra lỗi nghiêm trọng khi khởi tạo ứng dụng. Vui lòng kiểm tra console.", "error");
             }
         });
 
@@ -1529,7 +1536,7 @@
             if (eventId && eventId !== currentEventId) {
                 await loadEvent(eventId); // Await the async function
             } else if (!eventId && user) {
-                   listenToUserEvents(true); // This function call does not need to be awaited here
+                    listenToUserEvents(true); // This function call does not need to be awaited here
             }
         });
 
@@ -1583,7 +1590,7 @@
                                 <p style="font-size: 18px; margin-bottom: 10px;"><strong>Ngày xuất:</strong> ${new Date().toLocaleDateString('vi-VN')}</p>
                                 ${signerName ? `<p style="font-size: 18px;"><strong>Người ký:</strong> ${signerName}</p>` : ''}
                             </div>
-                    `;
+                        `;
 
                     eventData.sections.forEach(section => {
                         reportHtmlContent += `
