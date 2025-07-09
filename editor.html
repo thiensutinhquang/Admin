@@ -144,7 +144,7 @@
       <div class="flex gap-2">
         <input type="file" id="imageInput" class="hidden" accept="image/*" />
         <button onclick="document.getElementById('imageInput').click()" class="btn btn-success">🖼️ Chèn ảnh từ Firebase</button>
-        <button onclick="addComment()" class="btn btn-warning">💬 Ghi chú</button>
+        <button onclick="addComment()" class="btn btn-warning">� Ghi chú</button>
       </div>
       <div class="flex gap-2">
         <button onclick="saveToLocal()" class="btn btn-secondary">💾 Lưu tạm</button>
@@ -289,79 +289,42 @@
         originalHtmlTemplate.scriptsInBody = '';
         let fixedOffsetHeight = 0;
 
-        // --- Bước 1: Tạo một bản sao của body để thao tác ---
-        const tempBodyDiv = doc.createElement('div'); // Sử dụng một div tạm thời thay vì DocumentFragment để querySelector hoạt động tốt hơn
-        while (doc.body.firstChild) {
-            tempBodyDiv.appendChild(doc.body.firstChild);
-        }
-        console.log("[loadFile] Cloned body content into tempBodyDiv.");
+        let contentToEdit = ''; // This will hold the HTML string for editableContentWrapper
 
-        // --- Bước 2: Loại bỏ và lưu trữ Header, Footer, và Scripts từ tempBodyDiv ---
-        const headerElement = tempBodyDiv.querySelector('header');
-        if (headerElement) {
-            console.log("[loadFile] Found and removing header:", headerElement.outerHTML.substring(0, 200) + "...");
-            originalHtmlTemplate.fixedElementsInBody.push(headerElement.outerHTML);
-            // Tạm thời thêm vào DOM để lấy chiều cao tính toán
-            const tempDivForHeight = document.createElement('div');
-            tempDivForHeight.style.visibility = 'hidden';
-            tempDivForHeight.style.position = 'absolute';
-            document.body.appendChild(tempDivForHeight);
-            tempDivForHeight.appendChild(headerElement.cloneNode(true));
-            fixedOffsetHeight += tempDivForHeight.firstChild.offsetHeight;
-            document.body.removeChild(tempDivForHeight);
-            headerElement.remove();
-        }
+        // Process direct children of doc.body to separate fixed elements from main content
+        const bodyChildren = Array.from(doc.body.children);
+        const mainContentFragment = document.createDocumentFragment();
 
-        const footerElement = tempBodyDiv.querySelector('footer');
-        if (footerElement) {
-            console.log("[loadFile] Found and removing footer:", footerElement.outerHTML.substring(0, 200) + "...");
-            originalHtmlTemplate.fixedElementsInBody.push(footerElement.outerHTML);
-            footerElement.remove();
-        }
-
-        const scriptElements = tempBodyDiv.querySelectorAll('script');
-        scriptElements.forEach(script => {
-            console.log("[loadFile] Found and removing script:", script.outerHTML.substring(0, 100) + "...");
-            originalHtmlTemplate.scriptsInBody += script.outerHTML + '\n';
-            script.remove();
-        });
-
-        // --- Bước 3: Trích xuất nội dung chính từ div.min-h-screen hoặc toàn bộ phần còn lại ---
-        const mainContentWrapperInTemp = tempBodyDiv.querySelector('div.min-h-screen');
-        const contentFragment = document.createDocumentFragment();
-
-        if (mainContentWrapperInTemp) {
-            console.log("[loadFile] Found main content wrapper (div.min-h-screen). Extracting its children.");
-            // Lấy các phần tử con của div.min-h-screen
-            while (mainContentWrapperInTemp.firstChild) {
-                const node = mainContentWrapperInTemp.firstChild;
-                if (node.nodeType === Node.ELEMENT_NODE) {
-                    // Reset margins and paddings for top-level children of the editable area
-                    node.style.setProperty('margin-top', '0px', 'important');
-                    node.style.setProperty('margin-bottom', '0px', 'important');
-                    node.style.setProperty('padding-top', '0px', 'important'); 
-                    node.style.setProperty('padding-bottom', '0px', 'important');
-                }
-                contentFragment.appendChild(node);
-            }
-            mainContentWrapperInTemp.remove(); // Loại bỏ div.min-h-screen sau khi đã lấy nội dung
-        } else {
-            // Nếu không tìm thấy div.min-h-screen, lấy tất cả các phần tử còn lại trong tempBodyDiv
-            console.log("[loadFile] No specific main content wrapper (div.min-h-screen) found. Taking all remaining children from tempBodyDiv.");
-            while (tempBodyDiv.firstChild) {
-                const node = tempBodyDiv.firstChild;
-                if (node.nodeType === Node.ELEMENT_ELEMENT) { // Changed from Node.ELEMENT_NODE to avoid issues with text nodes
-                    node.style.setProperty('margin-top', '0px', 'important');
-                    node.style.setProperty('margin-bottom', '0px', 'important');
-                    node.style.setProperty('padding-top', '0px', 'important');
-                    node.style.setProperty('padding-bottom', '0px', 'important');
-                }
-                contentFragment.appendChild(node);
+        for (const child of bodyChildren) {
+            if (child.tagName === 'HEADER') {
+                console.log("[loadFile] Found and storing header:", child.outerHTML.substring(0, 200) + "...");
+                originalHtmlTemplate.fixedElementsInBody.push(child.outerHTML);
+                // Calculate height for padding
+                const tempDivForHeight = document.createElement('div');
+                tempDivForHeight.style.visibility = 'hidden';
+                tempDivForHeight.style.position = 'absolute';
+                document.body.appendChild(tempDivForHeight);
+                tempDivForHeight.appendChild(child.cloneNode(true));
+                fixedOffsetHeight += tempDivForHeight.firstChild.offsetHeight;
+                document.body.removeChild(tempDivForHeight);
+            } else if (child.tagName === 'SCRIPT') {
+                console.log("[loadFile] Found and storing script:", child.outerHTML.substring(0, 100) + "...");
+                originalHtmlTemplate.scriptsInBody += child.outerHTML + '\n';
+            } else if (child.classList.contains('min-h-screen')) {
+                // This is the main content div that contains all editable sections including the footer
+                console.log("[loadFile] Found main content div (div.min-h-screen). Extracting its innerHTML.");
+                contentToEdit = child.innerHTML; // Get all children of this div
+            } else {
+                // If there are other direct children of body that are not header, script, or main content div,
+                // they are unexpected or should be treated as part of the editable content if mainContentDiv wasn't found.
+                // For gioithieu.html, this block should ideally not be hit for content.
+                console.warn("[loadFile] Unexpected direct body child encountered:", child.tagName, child.outerHTML.substring(0, 100));
+                // If mainContentDiv was not found, we would append its outerHTML to contentToEdit here.
+                // But since we expect min-h-screen to exist, this is mostly for debugging unexpected structures.
             }
         }
 
-        // Áp dụng padding cho editableContentContainer dựa trên chiều cao của header đã loại bỏ
-        // Thêm một khoảng đệm nhỏ (ví dụ: 20px) để đảm bảo không bị chồng chéo
+        // Apply padding to the editable container based on fixed elements' height
         editableContentContainer.style.paddingTop = `${fixedOffsetHeight + 20}px`; 
         console.log(`[loadFile] Calculated padding-top for editableContentContainer: ${fixedOffsetHeight + 20}px`);
 
@@ -380,14 +343,20 @@
             console.log("[loadFile] Cleared existing editableContentWrapper.");
         }
 
-        // Thêm nội dung đã xử lý vào editableContentWrapper
-        if (contentFragment.hasChildNodes()) {
-            editableContentWrapper.appendChild(contentFragment);
-            console.log("[loadFile] Appended processed content to editableContentWrapper.");
-        } else {
-            editableContentWrapper.innerHTML = '<p class="text-gray-500">Nội dung bài giảng trống hoặc không có phần có thể chỉnh sửa.</p>';
-            console.log("[loadFile] No content remaining after processing, showing fallback message.");
-        }
+        // Set the extracted content to the wrapper
+        editableContentWrapper.innerHTML = contentToEdit;
+        console.log("[loadFile] Set extracted content to editableContentWrapper.");
+
+        // Reset margins and paddings for top-level children within the wrapper
+        Array.from(editableContentWrapper.children).forEach(node => {
+            if (node.nodeType === Node.ELEMENT_NODE) {
+                node.style.setProperty('margin-top', '0px', 'important');
+                node.style.setProperty('margin-bottom', '0px', 'important');
+                node.style.setProperty('padding-top', '0px', 'important'); 
+                node.style.setProperty('padding-bottom', '0px', 'important');
+            }
+        });
+        console.log("[loadFile] Reset margins/paddings for top-level children in editableContentWrapper.");
 
         // Thêm onerror cho các thẻ ảnh để hiển thị placeholder nếu ảnh gốc lỗi
         Array.from(editableContentWrapper.querySelectorAll('img')).forEach(img => {
@@ -418,7 +387,7 @@
 
       } catch (err) {
         alert("❌ Lỗi tải nội dung: " + err.message);
-        console.error("[loadFile] Error loading content:", err); 
+        console.error("Lỗi tải nội dung:", err); 
         editableContentContainer.innerHTML = '<p class="text-red-500">Không thể tải nội dung.</p>';
         fileStatusMessage.textContent = `Lỗi tải nội dung từ ${baseUrl + file}.`;
         fileStatusMessage.classList.remove('hidden');
@@ -460,7 +429,9 @@ ${originalHtmlTemplate.htmlOpen}
 </head>
 <body ${originalHtmlTemplate.bodyOpen.match(/<body(.*?)>/i)[1]}>
     ${originalHtmlTemplate.fixedElementsInBody.join('\n')} <!-- Re-insert fixed elements here -->
-    ${escapedHtml}
+    <div class="min-h-screen p-4"> <!-- Re-wrap the editable content in its original container -->
+        ${escapedHtml}
+    </div>
     ${originalHtmlTemplate.scriptsInBody}
 </body>
 </html>
@@ -561,7 +532,9 @@ ${originalHtmlTemplate.htmlOpen}
 </head>
 <body ${originalHtmlTemplate.bodyOpen.match(/<body(.*?)>/i)[1]}>
     ${originalHtmlTemplate.fixedElementsInBody.join('\n')} <!-- Re-insert fixed elements for preview -->
-    ${editableContentWrapper.innerHTML} <!-- Lấy nội dung từ wrapper -->
+    <div class="min-h-screen p-4"> <!-- Re-wrap the editable content in its original container -->
+        ${editableContentWrapper.innerHTML} <!-- Lấy nội dung từ wrapper -->
+    </div>
     ${originalHtmlTemplate.scriptsInBody}
 </body>
 </html>
@@ -618,3 +591,4 @@ ${originalHtmlTemplate.htmlOpen}
   </script>
 </body>
 </html>
+�
