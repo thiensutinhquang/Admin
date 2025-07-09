@@ -38,16 +38,19 @@
     <div class="max-w-4xl w-full bg-white p-6 sm:p-8 rounded-xl shadow-lg">
         <h1 class="text-3xl font-bold text-gray-800 mb-6 text-center">Trình Chỉnh Sửa Nội Dung GiaoLy</h1>
 
-        <!-- Phần nhập URL và tải nội dung -->
+        <!-- Phần chọn URL từ menu xổ xuống và tải nội dung -->
         <div class="mb-6">
-            <label for="urlInput" class="block text-gray-700 text-sm font-medium mb-2">
-                URL Bài Đăng GitHub Pages (.html):
+            <label for="fileSelect" class="block text-gray-700 text-sm font-medium mb-2">
+                Chọn Bài Đăng GitHub Pages (.html):
             </label>
             <div class="flex flex-col sm:flex-row gap-3">
-                <input type="text" id="urlInput" placeholder="Ví dụ: https://thiensutinhquang.github.io/GiaoLy/ten-bai-viet.html"
-                       class="flex-grow p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm">
-                <button id="loadContentBtn" class="btn btn-secondary whitespace-nowrap">Tải Nội Dung</button>
+                <select id="fileSelect"
+                        class="flex-grow p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm">
+                    <option value="">-- Đang tải danh sách tệp --</option>
+                </select>
+                <button id="refreshFilesBtn" class="btn btn-secondary whitespace-nowrap">Tải Lại Danh Sách Tệp</button>
             </div>
+            <p id="fileStatusMessage" class="mt-2 text-sm text-green-600 hidden">Đã chọn link đó có kết nối.</p>
         </div>
 
         <!-- Phần chỉnh sửa nội dung -->
@@ -68,8 +71,6 @@
 
     <!-- Firebase SDKs (chỉ cần firebase-app.js nếu không dùng callable functions) -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <!-- Không cần firebase-functions.js nữa vì chúng ta dùng HTTP Function -->
-    <!-- <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-functions.js"></script> -->
     <script>
         // Cấu hình Firebase của bạn
         // Bạn có thể tìm thấy cấu hình này trong Firebase Console -> Project settings -> General -> Your apps
@@ -85,65 +86,99 @@
 
         // Khởi tạo Firebase
         firebase.initializeApp(firebaseConfig);
-        // Không cần const functions = firebase.functions(); nữa cho HTTP function
-        // Nếu bạn đang phát triển cục bộ với Firebase Emulators, bỏ comment dòng dưới đây:
-        // functions.useEmulator("localhost", 5001);
 
         // Lấy các phần tử DOM
-        const urlInput = document.getElementById('urlInput');
-        const loadContentBtn = document.getElementById('loadContentBtn');
+        const fileSelect = document.getElementById('fileSelect');
+        const refreshFilesBtn = document.getElementById('refreshFilesBtn');
         const contentEditor = document.getElementById('contentEditor');
         const saveContentBtn = document.getElementById('saveContentBtn');
+        const fileStatusMessage = document.getElementById('fileStatusMessage');
 
-        // Hàm tải nội dung từ URL GitHub Pages
-        async function loadContent() {
-            const url = urlInput.value.trim();
-            if (!url) {
-                alert('Vui lòng nhập URL bài đăng.');
-                return;
-            }
+        // URL cơ sở của GitHub Pages của bạn
+        const baseUrl = 'https://thiensutinhquang.github.io/GiaoLy/';
+        // URL của HTTP Cloud Function của bạn
+        const functionUrl = 'https://us-central1-giaoly-editor.cloudfunctions.net/updateGitHubContent';
 
-            // Kiểm tra xem URL có phải là từ GitHub Pages của bạn không
-            const baseUrl = 'https://thiensutinhquang.github.io/GiaoLy/';
-            if (!url.startsWith(baseUrl)) {
-                alert('URL không hợp lệ. Vui lòng nhập URL từ thư mục GiaoLy của bạn.');
-                return;
-            }
+        // Hàm tải danh sách tệp từ Cloud Function
+        async function fetchFileList() {
+            fileSelect.innerHTML = '<option value="">Đang tải danh sách tệp...</option>';
+            fileSelect.disabled = true;
+            refreshFilesBtn.disabled = true;
+            fileStatusMessage.classList.add('hidden'); // Ẩn thông báo trạng thái
 
             try {
-                alert('Đang tải nội dung...');
-                const response = await fetch(url);
+                const response = await fetch(functionUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        action: 'list_files' // Yêu cầu hành động liệt kê tệp
+                    })
+                });
+
+                const result = await response.json();
+
+                if (!response.ok || !result.success) {
+                    throw new Error(result.error || `Lỗi khi tải danh sách tệp (${response.status}): ${JSON.stringify(result)}`);
+                }
+
+                // Xóa các tùy chọn cũ và thêm tùy chọn mặc định
+                fileSelect.innerHTML = '<option value="">-- Chọn một tệp --</option>';
+                result.files.forEach(file => {
+                    const option = document.createElement('option');
+                    option.value = file; // Giá trị là đường dẫn tệp (ví dụ: "gioithieu.html")
+                    option.textContent = file; // Hiển thị tên tệp
+                    fileSelect.appendChild(option);
+                });
+                alert('Danh sách tệp đã tải thành công!');
+
+            } catch (error) {
+                alert(`Không thể tải danh sách tệp: ${error.message}`);
+                console.error('Lỗi khi tải danh sách tệp:', error);
+                fileSelect.innerHTML = '<option value="">Lỗi tải tệp</option>';
+            } finally {
+                fileSelect.disabled = false;
+                refreshFilesBtn.disabled = false;
+            }
+        }
+
+        // Hàm tải nội dung từ URL GitHub Pages (đã điều chỉnh để nhận URL trực tiếp)
+        async function loadContent(fullUrl) {
+            contentEditor.value = 'Đang tải nội dung...'; // Hiển thị trạng thái tải
+            try {
+                const response = await fetch(fullUrl);
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 const content = await response.text();
                 contentEditor.value = content;
-                alert('Nội dung đã tải thành công!');
+                fileStatusMessage.textContent = `Đã chọn link: ${fullUrl}. Nội dung đã được tải.`;
+                fileStatusMessage.classList.remove('hidden');
+                fileStatusMessage.classList.remove('text-red-600'); // Đảm bảo màu xanh
+                fileStatusMessage.classList.add('text-green-600');
             } catch (error) {
-                alert(`Không thể tải nội dung: ${error.message}. Vui lòng kiểm tra URL.`);
+                alert(`Không thể tải nội dung từ ${fullUrl}: ${error.message}. Vui lòng kiểm tra URL.`);
                 console.error('Lỗi khi tải nội dung:', error);
+                contentEditor.value = ''; // Xóa nội dung nếu tải thất bại
+                fileStatusMessage.textContent = `Lỗi tải nội dung từ ${fullUrl}.`;
+                fileStatusMessage.classList.remove('hidden');
+                fileStatusMessage.classList.remove('text-green-600');
+                fileStatusMessage.classList.add('text-red-600');
             }
         }
 
-        // Hàm lưu nội dung bằng cách gọi Cloud Function (HTTP Function)
+        // Hàm lưu nội dung bằng cách gọi Cloud Function
         async function saveContent() {
             const updatedContent = contentEditor.value;
-            const url = urlInput.value.trim();
+            const selectedFilePath = fileSelect.value; // Lấy đường dẫn tệp được chọn
 
-            if (!url) {
-                alert('Vui lòng nhập URL bài đăng trước khi lưu.');
+            if (!selectedFilePath) {
+                alert('Vui lòng chọn một tệp từ danh sách trước khi lưu.');
                 return;
             }
 
-            const baseUrl = 'https://thiensutinhquang.github.io/GiaoLy/';
-            if (!url.startsWith(baseUrl)) {
-                alert('URL không hợp lệ. Vui lòng nhập URL từ thư mục GiaoLy của bạn.');
-                return;
-            }
-            // Lấy phần đường dẫn tương đối của tệp (ví dụ: 'ten-bai-viet.html')
-            const filePath = url.substring(baseUrl.length);
-
-            const commitMessage = prompt('Nhập thông điệp commit (ví dụ: Cập nhật bài hanhoanchaodon.html):', `Cập nhật ${filePath}`);
+            const commitMessage = prompt('Nhập thông điệp commit (ví dụ: Cập nhật bài hanhoanchaodon.html):', `Cập nhật ${selectedFilePath}`);
             if (!commitMessage) {
                 alert('Cần có thông điệp commit để lưu.');
                 return;
@@ -151,27 +186,22 @@
 
             try {
                 alert('Đang lưu nội dung lên GitHub...');
-                // URL của HTTP Cloud Function của bạn
-                // Thay 'giaoly-editor' bằng Project ID Firebase của bạn
-                const functionUrl = 'https://us-central1-giaoly-editor.cloudfunctions.net/updateGitHubContent';
-
                 const response = await fetch(functionUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
-                        filePath: filePath,
+                        action: 'update_file', // Yêu cầu hành động cập nhật tệp
+                        filePath: selectedFilePath, // Sử dụng đường dẫn tệp được chọn
                         newContent: updatedContent,
                         commitMessage: commitMessage
                     })
                 });
 
-                // Luôn cố gắng đọc phản hồi dưới dạng JSON, ngay cả khi response.ok là false
                 const result = await response.json();
 
                 if (!response.ok) {
-                    // Nếu phản hồi không OK, và có lỗi trong JSON, hiển thị lỗi đó
                     throw new Error(result.error || `Lỗi từ Cloud Function (${response.status}): ${JSON.stringify(result)}`);
                 }
 
@@ -179,24 +209,35 @@
                     alert(`Nội dung đã được lưu thành công! Commit: ${result.commitUrl}`);
                     console.log('Commit URL:', result.commitUrl);
                 } else {
-                    // Trường hợp hiếm khi response.ok là true nhưng success là false
                     alert(`Lưu nội dung thất bại: ${result.error || 'Lỗi không xác định.'}`);
                     console.error('Lỗi khi lưu:', result.error);
                 }
             } catch (error) {
-                // Xử lý lỗi khi gọi Cloud Function (ví dụ: mạng, function không tồn tại, hoặc lỗi JSON)
                 alert(`Đã xảy ra lỗi khi gọi Cloud Function: ${error.message}`);
                 console.error('Lỗi khi gọi Cloud Function:', error);
             }
         }
 
-        // Thêm sự kiện click cho các nút
-        loadContentBtn.addEventListener('click', loadContent);
+        // Thêm sự kiện click cho nút tải lại danh sách tệp
+        refreshFilesBtn.addEventListener('click', fetchFileList);
+
+        // Thêm sự kiện change cho menu xổ xuống
+        fileSelect.addEventListener('change', () => {
+            const selectedFilePath = fileSelect.value;
+            if (selectedFilePath) {
+                const fullUrl = baseUrl + selectedFilePath;
+                loadContent(fullUrl); // Tải nội dung của tệp đã chọn
+            } else {
+                contentEditor.value = ''; // Xóa trình chỉnh sửa nếu không có tệp nào được chọn
+                fileStatusMessage.classList.add('hidden');
+            }
+        });
+
+        // Thêm sự kiện click cho nút lưu
         saveContentBtn.addEventListener('click', saveContent);
 
-        // Tải nội dung mẫu khi trang tải (tùy chọn)
-        // urlInput.value = 'https://thiensutinhquang.github.io/GiaoLy/index.html'; // Thay bằng URL mẫu của bạn
-        // loadContent();
+        // Tải danh sách tệp khi trang được tải hoàn toàn
+        document.addEventListener('DOMContentLoaded', fetchFileList);
     </script>
 </body>
 </html>
