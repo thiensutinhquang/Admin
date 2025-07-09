@@ -32,6 +32,10 @@
             @apply bg-red-600 text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-75;
         }
     </style>
+
+<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+<script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+
 </head>
 <body class="p-4 sm:p-6 md:p-8 flex flex-col items-center">
 
@@ -58,39 +62,92 @@
             <label for="contentEditor" class="block text-gray-700 text-sm font-medium mb-2">
                 Nội Dung Bài Đăng:
             </label>
-            <textarea id="contentEditor"
-                      class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm"
-                      placeholder="Nội dung bài viết sẽ xuất hiện ở đây..."></textarea>
+            <div id="contentEditor" class="h-[500px] bg-white border border-gray-300 rounded-lg p-4 overflow-auto"></div>
         </div>
 
         <!-- Nút lưu nội dung -->
         <div class="text-center">
-            <button id="saveContentBtn" class="btn btn-primary">Lưu Nội Dung Lên GitHub</button>
+            <div class="flex flex-col sm:flex-row justify-center gap-4"><button onclick="showPreview()" class="btn btn-secondary">Xem Trước</button><button id="saveContentBtn" class="btn btn-primary">Lưu Nội Dung Lên GitHub</button></div>
         </div>
     </div>
 
-    <!-- Firebase SDKs (chỉ cần firebase-app.js nếu không dùng callable functions) -->
+<!-- Modal xem trước -->
+<div id="previewModal" class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center z-50">
+    <div class="bg-white max-w-3xl w-full rounded-lg shadow-lg p-6 relative">
+        <h2 class="text-2xl font-bold mb-4">Xem Trước Bài Đăng</h2>
+        <div id="previewContent" class="prose max-w-none max-h-[60vh] overflow-auto"></div>
+        <button onclick="closePreview()" class="btn btn-secondary mt-4">Đóng</button>
+    </div>
+</div>
+
+
+    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script> <!-- Đã thêm Firebase Storage SDK -->
     <script>
         // Cấu hình Firebase của bạn
         // Bạn có thể tìm thấy cấu hình này trong Firebase Console -> Project settings -> General -> Your apps
         // Vui lòng thay thế các giá trị YOUR_... bằng thông tin dự án của bạn
         const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_AUTH_DOMAIN",
-            projectId: "giaoly-editor", // Đảm bảo đây là ID dự án Firebase của bạn
-            storageBucket: "YOUR_STORAGE_BUCKET",
-            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-            appId: "YOUR_APP_ID"
+            apiKey: "AIzaSyAYDG6sVKYbLBzO_iQGwoK9FTH8deJVo3s",
+            authDomain: "giaoly-editor.firebaseapp.com",
+            projectId: "giaoly-editor",
+            storageBucket: "giaoly-editor.appspot.com", // Đã sửa đúng
+            messagingSenderId: "62184116846",
+            appId: "1:62184116846:web:5bd50b4f8a433a066bcc7f",
+            measurementId: "G-56PKNCYV6D" // measurementId vẫn được giữ lại theo yêu cầu
         };
 
         // Khởi tạo Firebase
         firebase.initializeApp(firebaseConfig);
 
+        // Khởi tạo trình soạn thảo Quill với đầy đủ tính năng và tiếng Việt
+        const quill = new Quill('#contentEditor', {
+            theme: 'snow',
+            placeholder: 'Nhập nội dung bài viết tại đây...',
+            modules: {
+                toolbar: {
+                    container: [
+                        [{ header: [1, 2, 3, false] }],
+                        ['bold', 'italic', 'underline', 'strike'],
+                        ['blockquote', 'code-block'],
+                        [{ list: 'ordered' }, { list: 'bullet' }],
+                        [{ script: 'sub' }, { script: 'super' }],
+                        [{ indent: '-1' }, { indent: '+1' }],
+                        [{ direction: 'rtl' }],
+                        [{ size: ['small', false, 'large', 'huge'] }],
+                        [{ color: [] }, { background: [] }],
+                        [{ font: [] }],
+                        [{ align: [] }],
+                        ['link', 'image', 'video'],
+                        ['clean']
+                    ],
+                    handlers: {
+                        image: function () {
+                            const input = document.createElement('input');
+                            input.setAttribute('type', 'file');
+                            input.setAttribute('accept', 'image/*');
+                            input.click();
+                            input.onchange = async () => {
+                                const file = input.files[0];
+                                if (file) {
+                                    // Lấy tham chiếu đến Firebase Storage
+                                    const storageRef = firebase.storage().ref('images/' + Date.now() + '_' + file.name);
+                                    await storageRef.put(file);
+                                    const url = await storageRef.getDownloadURL();
+                                    const range = quill.getSelection();
+                                    quill.insertEmbed(range.index, 'image', url);
+                                }
+                            };
+                        }
+                    }
+                }
+            }
+        });
+
         // Lấy các phần tử DOM
         const fileSelect = document.getElementById('fileSelect');
         const refreshFilesBtn = document.getElementById('refreshFilesBtn');
-        const contentEditor = document.getElementById('contentEditor');
         const saveContentBtn = document.getElementById('saveContentBtn');
         const fileStatusMessage = document.getElementById('fileStatusMessage');
 
@@ -99,11 +156,23 @@
         // URL của HTTP Cloud Function của bạn
         const functionUrl = 'https://us-central1-giaoly-editor.cloudfunctions.net/updateGitHubContent';
 
+        // Biến toàn cục để lưu trữ cấu trúc HTML gốc của tệp được tải
+        let originalHtmlTemplate = {
+            doctype: '<!DOCTYPE html>',
+            htmlOpen: '<html lang="vi">',
+            headContent: '',
+            bodyOpen: '<body>',
+            bodyClose: '</body>',
+            htmlClose: '</html>',
+            scriptsInBody: '' // Sẽ lưu trữ các script ở cuối body
+        };
+
         // Hàm tải danh sách tệp từ Cloud Function
         async function fetchFileList() {
             fileSelect.innerHTML = '<option value="">Đang tải danh sách tệp...</option>';
             fileSelect.disabled = true;
             refreshFilesBtn.disabled = true;
+            contentEditor.style.pointerEvents = 'none'; // Vô hiệu hóa Quill khi đang tải
             fileStatusMessage.classList.add('hidden'); // Ẩn thông báo trạng thái
 
             try {
@@ -140,37 +209,67 @@
             } finally {
                 fileSelect.disabled = false;
                 refreshFilesBtn.disabled = false;
+                contentEditor.style.pointerEvents = 'auto'; // Kích hoạt lại Quill
             }
         }
 
-        // Hàm tải nội dung từ URL GitHub Pages (đã điều chỉnh để nhận URL trực tiếp)
+        // Hàm tải nội dung từ URL GitHub Pages và chuẩn bị cho Quill
         async function loadContent(fullUrl) {
-            contentEditor.value = 'Đang tải nội dung...'; // Hiển thị trạng thái tải
+            quill.setContents([]); // Xóa nội dung hiện tại của Quill
+            quill.clipboard.dangerouslyPasteHTML(0, 'Đang tải nội dung...'); 
+            contentEditor.style.pointerEvents = 'none'; // Vô hiệu hóa Quill khi đang tải
+            
             try {
                 const response = await fetch(fullUrl);
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 const content = await response.text();
-                contentEditor.value = content;
+
+                // Sử dụng DOMParser để phân tích cú pháp HTML
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(content, 'text/html');
+
+                // Lưu trữ nội dung <head>
+                originalHtmlTemplate.headContent = doc.head.innerHTML;
+
+                // Lấy nội dung body và loại bỏ các script
+                const bodyClone = doc.body.cloneNode(true);
+                let scripts = [];
+                // Lặp ngược để tránh vấn đề với chỉ số khi xóa phần tử
+                for (let i = bodyClone.children.length - 1; i >= 0; i--) {
+                    const child = bodyClone.children[i];
+                    // Kiểm tra nếu là thẻ <script>
+                    if (child.tagName === 'SCRIPT') {
+                        scripts.unshift(child.outerHTML); // Thêm vào đầu mảng để giữ đúng thứ tự
+                        bodyClone.removeChild(child); // Xóa script khỏi bodyClone
+                    }
+                }
+                originalHtmlTemplate.scriptsInBody = scripts.join('\n'); // Lưu các script đã loại bỏ
+
+                // Cập nhật nội dung Quill với HTML đã làm sạch
+                quill.clipboard.dangerouslyPasteHTML(0, bodyClone.innerHTML); 
+
                 fileStatusMessage.textContent = `Đã chọn link: ${fullUrl}. Nội dung đã được tải.`;
                 fileStatusMessage.classList.remove('hidden');
-                fileStatusMessage.classList.remove('text-red-600'); // Đảm bảo màu xanh
+                fileStatusMessage.classList.remove('text-red-600');
                 fileStatusMessage.classList.add('text-green-600');
             } catch (error) {
                 alert(`Không thể tải nội dung từ ${fullUrl}: ${error.message}. Vui lòng kiểm tra URL.`);
                 console.error('Lỗi khi tải nội dung:', error);
-                contentEditor.value = ''; // Xóa nội dung nếu tải thất bại
+                quill.setContents([]); // Xóa nội dung nếu tải thất bại
                 fileStatusMessage.textContent = `Lỗi tải nội dung từ ${fullUrl}.`;
                 fileStatusMessage.classList.remove('hidden');
                 fileStatusMessage.classList.remove('text-green-600');
                 fileStatusMessage.classList.add('text-red-600');
+            } finally {
+                contentEditor.style.pointerEvents = 'auto'; // Kích hoạt lại Quill
             }
         }
 
         // Hàm lưu nội dung bằng cách gọi Cloud Function
         async function saveContent() {
-            const updatedContent = contentEditor.value;
+            const updatedContent = quill.root.innerHTML; // Lấy nội dung HTML từ Quill
             const selectedFilePath = fileSelect.value; // Lấy đường dẫn tệp được chọn
 
             if (!selectedFilePath) {
@@ -184,6 +283,20 @@
                 return;
             }
 
+            // Tái tạo toàn bộ HTML của tệp
+            const fullHtmlContent = `
+${originalHtmlTemplate.doctype}
+${originalHtmlTemplate.htmlOpen}
+<head>
+    ${originalHtmlTemplate.headContent}
+</head>
+${originalHtmlTemplate.bodyOpen}
+    ${updatedContent}
+    ${originalHtmlTemplate.scriptsInBody}
+${originalHtmlTemplate.bodyClose}
+${originalHtmlTemplate.htmlClose}
+            `.trim(); // Loại bỏ khoảng trắng thừa ở đầu/cuối
+
             try {
                 alert('Đang lưu nội dung lên GitHub...');
                 const response = await fetch(functionUrl, {
@@ -194,7 +307,7 @@
                     body: JSON.stringify({
                         action: 'update_file', // Yêu cầu hành động cập nhật tệp
                         filePath: selectedFilePath, // Sử dụng đường dẫn tệp được chọn
-                        newContent: updatedContent,
+                        newContent: fullHtmlContent, // Gửi toàn bộ HTML đã tái tạo
                         commitMessage: commitMessage
                     })
                 });
@@ -228,7 +341,7 @@
                 const fullUrl = baseUrl + selectedFilePath;
                 loadContent(fullUrl); // Tải nội dung của tệp đã chọn
             } else {
-                contentEditor.value = ''; // Xóa trình chỉnh sửa nếu không có tệp nào được chọn
+                quill.setContents([]); // Xóa trình chỉnh sửa nếu không có tệp nào được chọn
                 fileStatusMessage.classList.add('hidden');
             }
         });
@@ -238,6 +351,20 @@
 
         // Tải danh sách tệp khi trang được tải hoàn toàn
         document.addEventListener('DOMContentLoaded', fetchFileList);
-    </script>
+    
+// Hàm xem trước nội dung
+function showPreview() {
+    const html = quill.root.innerHTML;
+    const previewDiv = document.getElementById('previewContent');
+    previewDiv.innerHTML = html;
+    document.getElementById('previewModal').classList.remove('hidden');
+    document.getElementById('previewModal').classList.add('flex');
+}
+function closePreview() {
+    document.getElementById('previewModal').classList.add('hidden');
+    document.getElementById('previewModal').classList.remove('flex');
+}
+
+</script>
 </body>
 </html>
