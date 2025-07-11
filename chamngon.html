@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Giới Luật</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700,900&family=Open+Sans:wght@400,600,700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      background-color: #F8F5EE;
+      font-family: 'Open Sans', sans-serif;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+    .poster-container {
+      width: 100%;
+      max-width: 1200px; /* Adjust max-width for a good square view */
+    }
+    .poster {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1 / 1; /* Enforce a square aspect ratio */
+      background: linear-gradient(135deg, #FFFBF5 0%, #FDF6E3 100%);
+      padding: 30px 40px;
+      border-radius: 25px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
+      border: 1px solid rgba(0, 0, 0, 0.05);
+      display: flex;
+      flex-direction: column;
+    }
+    .poster-header {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .logo {
+      width: 90px;
+      height: 90px;
+      margin-right: 25px;
+      border-radius: 15px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+    .poster h1 {
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 900;
+      text-align: center;
+      font-size: 3.5rem;
+      color: #2D201A;
+      text-shadow: 4px 4px 12px rgba(0, 0, 0, 0.2);
+      letter-spacing: 4px;
+      line-height: 1.2;
+    }
+    .line-border {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      right: 20px;
+      bottom: 20px;
+      border: 2px solid rgba(0,0,0,0.08);
+      border-radius: 20px;
+      pointer-events: none;
+      z-index: 1;
+    }
+    .subtitle {
+      text-align: center;
+      font-size: 1.5rem;
+      margin-top: 20px;
+      color: #5A4C40;
+      font-weight: 700;
+    }
+    /* Main Grid Container */
+    .inner-grid {
+        display: grid;
+        grid-template-columns: repeat(12, 1fr); /* 12 columns */
+        gap: 10px; 
+        background: rgba(245, 235, 220, 0.4);
+        padding: 10px;
+        border-radius: 15px;
+        border: 1px solid rgba(0,0,0,0.08);
+        box-shadow: inset 0 2px 10px rgba(0,0,0,0.05);
+        flex-grow: 1;
+    }
+    .sub-column {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+    /* Styling for each card */
+    .precept-card {
+      position: relative;
+      background-color: #FFFFFF;
+      padding: 0;
+      border-radius: 12px;
+      box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+      border: 1px solid rgba(0, 0, 0, 0.07);
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      overflow: hidden; /* Important to contain child border-radius */
+    }
+    .card-header {
+      display: flex;
+      align-items: center;
+      padding: 5px 8px;
+      background-color: #FBBF24; /* Yellow background */
+    }
+    .bullet {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: #A93226; /* Red bullet */
+      box-shadow: none;
+      flex-shrink: 0;
+      margin-right: 5px;
+    }
+    .precept-number {
+      flex-grow: 1;
+      text-align: center;
+      font-weight: 700;
+      font-size: 0.7rem;
+      color: #FFFFFF; /* White text */
+      font-family: 'Montserrat', sans-serif;
+    }
+    .card-body {
+      border: none;
+      background-color: #0284C7; /* Blue background */
+      padding: 8px;
+      flex-grow: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: none;
+    }
+    .text-content {
+      font-weight: 700; /* Changed to bold */
+      font-size: 0.7rem;
+      line-height: 1.3;
+      color: #FFFFFF; /* White text */
+      width: 100%;
+      text-align: center; /* Center align text */
+      overflow-wrap: break-word;
+    }
+
+    .export-button-container {
+      text-align: center;
+      margin-top: 40px;
+    }
+    #exportBtn {
+      background-color: #27AE60;
+      color: white;
+      padding: 15px 40px;
+      border: none;
+      border-radius: 15px;
+      cursor: pointer;
+      font-size: 1.2rem;
+      transition: all 0.3s ease;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+    }
+    #exportBtn:hover {
+      background-color: #229954;
+      transform: translateY(-5px);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+    }
+    .loading-indicator {
+      display: none;
+      margin-top: 15px;
+      font-size: 1rem;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <div class="poster-container">
+    <div id="contentToExport" class="poster">
+      <div class="line-border"></div>
+      <div class="poster-header">
+        <img src="https://raw.githubusercontent.com/thiensutinhquang/Admin/main/icons/icon.png" alt="Logo Tịnh Quang" class="logo" crossorigin="anonymous">
+        <h1>GIỚI LUẬT</h1>
+      </div>
+      <div class="inner-grid">
+        <div id="vi-col-1" class="sub-column"></div>
+        <div id="vi-col-2" class="sub-column"></div>
+        <div id="vi-col-3" class="sub-column"></div>
+        <div id="vi-col-4" class="sub-column"></div>
+        <div id="vi-col-5" class="sub-column"></div>
+        <div id="vi-col-6" class="sub-column"></div>
+        <div id="vi-col-7" class="sub-column"></div>
+        <div id="vi-col-8" class="sub-column"></div>
+        <div id="vi-col-9" class="sub-column"></div>
+        <div id="vi-col-10" class="sub-column"></div>
+        <div id="vi-col-11" class="sub-column"></div>
+        <div id="vi-col-12" class="sub-column"></div>
+      </div>
+      <p class="subtitle">Theo Minh Sư Tịnh Quang truyền dạy</p>
+    </div>
+  </div>
+
+  <div class="export-button-container">
+    <button id="exportBtn">Xuất ra JPG</button>
+    <div id="loadingMessage" class="loading-indicator">Đang tạo ảnh... Vui lòng chờ.</div>
+  </div>
+
+  <script>
+    const data = [
+        { vi: "Tu là sửa mình chứ không sửa người" }, { vi: "Nhìn lỗi mình để sửa, thấy lỗi người để học" },
+        { vi: "Không bao giờ tự cho mình hay hơn người khác" }, { vi: "Sai thì nhận và sửa ngay, không đổ thừa hoàn cảnh" },
+        { vi: "Thấy sai sửa liền, đừng để kéo dài thành thói quen" }, { vi: "Không làm khổ mình, khổ người và khổ chúng sinh" },
+        { vi: "Không sát sanh, không hại người hại vật" }, { vi: "Không trộm cắp, lường gạt, vay không trả" },
+        { vi: "Không tà dâm, không phá hoại gia đình người" }, { vi: "Không nói dối, không nói lời hai lưỡi" },
+        { vi: "Không nói lời ác, không chửi rủa" }, { vi: "Không nói thêu dệt, nói vô ích" },
+        { vi: "Không nghiện ngập, say sưa, hút chích" }, { vi: "Không mê tín, tin bậy, tà pháp" },
+        { vi: "Không xem bói toán, chọn ngày giờ mê tín" }, { vi: "Không tin hướng nào xấu, tuổi nào xung" },
+        { vi: "Không tin thầy tà, pháp tà chia rẽ người" }, { vi: "Tin nhân quả, thiện ác báo ứng" },
+        { vi: "Tin Thượng Đế là nguồn ban sự sống" }, { vi: "Tin Thượng Đế không chỉ trên trời mà trong ta, gần ta" },
+        { vi: "Tin Thượng Đế là tình thương yêu, ánh sáng, chí thiện" }, { vi: "Tin Thượng Đế toàn năng, toàn giác, thông suốt" },
+        { vi: "Tin Thượng Đế ở trong ta, tu càng sáng càng hiện rõ" }, { vi: "Hỏi Thượng Đế trong lòng mọi điều mình muốn hỏi" },
+        { vi: "Sống biết ơn Thượng Đế luôn hiện diện trong và ngoài ta" }, { vi: "Càng thương yêu và biết ơn nhiều, Thượng Đế càng hiện rõ" },
+        { vi: "Giữ giới để tâm an, thân khỏe, trí sáng" }, { vi: "Ăn uống trong chánh niệm, biết ơn thực phẩm" },
+        { vi: "Biết ơn người nấu, người làm ra thức ăn" }, { vi: "Ăn uống đúng giờ, điều độ, không tham lam" },
+        { vi: "Không lãng phí thức ăn, không chê bai" }, { vi: "Không ăn uống xa hoa, phí phạm" },
+        { vi: "Không uống rượu bia, chất say hại thân" }, { vi: "Không nói chuyện vô ích trong bữa ăn" },
+        { vi: "Ăn chậm, nhai kỹ, nuốt an" }, { vi: "Thương yêu cha mẹ, ông bà, tổ tiên" },
+        { vi: "Hiếu thảo, phụng dưỡng cha mẹ lúc bệnh già" }, { vi: "Không làm cha mẹ buồn phiền, lo lắng" },
+        { vi: "Tôn trọng anh chị em, đoàn kết gia đình" }, { vi: "Thương yêu vợ chồng, chung thủy, không phản bội" },
+        { vi: "Chăm sóc, dạy dỗ con cái đạo đức" }, { vi: "Giữ gìn hạnh phúc gia đình" },
+        { vi: "Tôn trọng, giúp đỡ bà con, lối xóm" }, { vi: "Tôn kính Tam Bảo" },
+        { vi: "Không phê bình, chia rẽ các tôn giáo" }, { vi: "Không tranh luận đạo nào hơn" },
+        { vi: "Biết ơn chư Phật, Thánh hiền, Tổ tiên" }, { vi: "Không chê bai kinh sách, pháp môn" },
+        { vi: "Không so đo công đức mình với người" }, { vi: "Không khoe khoang việc thiện mình làm" },
+        { vi: "Làm việc thiện âm thầm, khiêm hạ" }, { vi: "Giúp đỡ người hoạn nạn, khổ đau" },
+        { vi: "Thăm viếng người bệnh, an ủi" }, { vi: "Chia sẻ thức ăn, vật dụng với người cần" },
+        { vi: "Không bỏ rơi người già yếu, neo đơn" }, { vi: "Không tham lam, ích kỷ" },
+        { vi: "Không ganh tỵ, đố kỵ" }, { vi: "Không nóng giận, thù hận" },
+        { vi: "Không oán trách, đổ lỗi" }, { vi: "Không thù dai, nuôi hận" },
+        { vi: "Không lừa dối, hại người" }, { vi: "Không khinh người nghèo hèn" },
+        { vi: "Không tự cao, kiêu ngạo" }, { vi: "Không xem thường ai" },
+        { vi: "Không gây chia rẽ, bè phái" }, { vi: "Không xúi giục người làm ác" },
+        { vi: "Không theo bạn xấu, bè xấu" }, { vi: "Không cờ bạc, đỏ đen" },
+        { vi: "Không phá hoại tài sản công cộng" }, { vi: "Không phung phí tiền bạc" },
+        { vi: "Không ỷ quyền thế hiếp đáp người" }, { vi: "Không nói xấu sau lưng" },
+        { vi: "Không phán xét, chỉ trích vô cớ" }, { vi: "Không mắng chửi người già trẻ" },
+        { vi: "Không chọc ghẹo, xúc phạm người khác" }, { vi: "Không gây ồn ào, mất trật tự" },
+        { vi: "Không xâm hại môi trường sống" }, { vi: "Sống đúng pháp luật, lệ làng, phong tục tốt đẹp" },
+        { vi: "Tôn trọng đất nước, luật pháp" }, { vi: "Tôn trọng phong tục, tín ngưỡng tốt" },
+        { vi: "Nhập gia tùy tục, không gây chia rẽ" }
+    ];
+
+    const columns = [
+        document.getElementById('vi-col-1'),
+        document.getElementById('vi-col-2'),
+        document.getElementById('vi-col-3'),
+        document.getElementById('vi-col-4'),
+        document.getElementById('vi-col-5'),
+        document.getElementById('vi-col-6'),
+        document.getElementById('vi-col-7'),
+        document.getElementById('vi-col-8'),
+        document.getElementById('vi-col-9'),
+        document.getElementById('vi-col-10'),
+        document.getElementById('vi-col-11'),
+        document.getElementById('vi-col-12')
+    ];
+    
+    const itemsPerColumn = Math.ceil(data.length / columns.length);
+
+    data.forEach((item, index) => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'precept-card';
+        wrapper.innerHTML = `
+            <div class="card-header">
+                <span class="bullet"></span>
+                <span class="precept-number">CÂU ${index + 1}</span>
+            </div>
+            <div class="card-body">
+                <div class="text-content">${item.vi}</div>
+            </div>
+        `;
+        
+        const columnIndex = Math.floor(index / itemsPerColumn);
+        columns[columnIndex].appendChild(wrapper);
+    });
+
+    document.getElementById('exportBtn').addEventListener('click', function() {
+        const content = document.getElementById('contentToExport');
+        const loadingMessage = document.getElementById('loadingMessage');
+        const exportButton = this;
+
+        loadingMessage.style.display = 'block';
+        exportButton.disabled = true;
+
+        html2canvas(content, { 
+            scale: 2,
+            backgroundColor: null,
+            useCORS: true // Important for external images
+        }).then(function(canvas) {
+            loadingMessage.style.display = 'none';
+            exportButton.disabled = false;
+
+            const imgData = canvas.toDataURL('image/jpeg', 0.98);
+            const link = document.createElement('a');
+            link.href = imgData;
+            link.download = 'gioi_luat_vuong.jpg';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }).catch(function(error) {
+            console.error('Lỗi khi tạo ảnh:', error);
+            loadingMessage.textContent = 'Có lỗi xảy ra khi tạo ảnh. Vui lòng thử lại.';
+            loadingMessage.style.color = 'red';
+            exportButton.disabled = false;
+        });
+    });
+  </script>
+</body>
+</html>
