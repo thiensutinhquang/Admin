@@ -167,7 +167,7 @@
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="mr-2" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg>
                         Xuất file
                     </button>
-                    <button id="geminiSuggestBtn" class="btn bg-purple-600 hover:bg-purple-700 text-white w-full sm:w-auto" data-tooltip="Dùng AI để gợi ý các mục đăng ký dựa trên chủ đề sự kiện">✨ Gợi ý mục</button>
+                    <button id="geminiSuggestBtn" class="btn bg-purple-600 hover:bg-purple-700 text-white w-full sm:w-auto" data-tooltip="Dùng AI để gợi ý các mục đăng ký dựa trên chủ đề sự kiện">✨ Trợ lý Sự kiện</button>
                     <button id="manageSectionsBtn" class="btn btn-secondary w-full sm:w-auto" data-tooltip="Quản lý các mục báo cáo">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" class="mr-1"><path d="M1 2.5A1.5 1.5 0 0 1 2.5 1h3A1.5 1.5 0 0 1 7 2.5v3A1.5 1.5 0 0 1 5.5 7h-3A1.5 1.5 0 0 1 1 5.5v-3zm8 0A1.5 1.5 0 0 1 10.5 1h3A1.5 1.5 0 0 1 15 2.5v3A1.5 1.5 0 0 1 13.5 7h-3A1.5 1.5 0 0 1 9 5.5v-3zm-8 8A1.5 1.5 0 0 1 2.5 9h3A1.5 1.5 0 0 1 7 10.5v3A1.5 1.5 0 0 1 5.5 15h-3A1.5 1.5 0 0 1 1 13.5v-3zm8 0A1.5 1.5 0 0 1 10.5 9h3a1.5 1.5 0 0 1 1.5 1.5v3a1.5 1.5 0 0 1-1.5 1.5h-3A1.5 1.5 0 0 1 9 13.5v-3z"/></svg>
                         Quản lý Mục
@@ -306,25 +306,73 @@
     <!-- Gemini AI Suggestion Modal -->
     <div id="geminiSuggestModal" class="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50 hidden">
         <div class="bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-2xl mx-4 flex flex-col">
-            <h3 class="text-xl font-bold text-white mb-4 flex items-center gap-2">✨ Trợ lý Sáng tạo AI</h3>
+            <h3 class="text-xl font-bold text-white mb-4 flex items-center gap-2">✨ Trợ lý Sự kiện</h3>
             <div class="mb-4">
-                <label for="geminiSectionSelector" class="block mb-2 text-sm text-gray-300">Chọn mục để thêm gợi ý:</label>
-                <select id="geminiSectionSelector" class="form-select"></select>
+                <label for="geminiPrompt" class="block mb-2 text-sm text-gray-300">Nhập chủ đề hoặc ý tưởng cho sự kiện của bạn:</label>
+                <textarea id="geminiPrompt" class="form-textarea w-full" rows="2" placeholder="Ví dụ: Văn nghệ mừng lễ Vu Lan báo hiếu..."></textarea>
             </div>
-            <p class="text-gray-400 mb-4">Mô tả chủ đề sự kiện, AI sẽ tự động điền đầy đủ thông tin vào các cột tương ứng trong bảng của bạn.</p>
-            <textarea id="geminiPrompt" class="form-textarea w-full" rows="3" placeholder="Ví dụ: Văn nghệ mừng lễ Vu Lan báo hiếu..."></textarea>
-            <div class="flex gap-4 mt-4">
-                <button id="getGeminiSuggestionsBtn" class="btn btn-primary w-full">Tạo gợi ý</button>
-                <button id="resetGeminiSuggestionsBtn" class="btn btn-secondary w-full hidden">Tạo lại từ đầu</button>
+             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label for="guestCountInput" class="block mb-2 text-sm text-gray-300">Số lượng khách (ước tính)</label>
+                    <input type="number" id="guestCountInput" class="form-input" placeholder="50">
+                </div>
+                <div>
+                    <label for="geminiActionSelector" class="block mb-2 text-sm text-gray-300">Chọn hành động của AI:</label>
+                    <select id="geminiActionSelector" class="form-select">
+                        <option value="description">Viết Mô tả Sự kiện</option>
+                        <option value="theme_ideas">Gợi ý Chủ đề</option>
+                        <option value="invitation">Soạn Thư mời</option>
+                        <option value="social_posts">Soạn Bài đăng Mạng xã hội</option>
+                        <option value="risks">Phân tích Rủi ro</option>
+                        <option value="budget">Gợi ý Ngân sách</option>
+                        <option value="agenda">Tạo Lịch trình</option>
+                        <option value="mc_script">Tạo Kịch bản MC</option>
+                        <option value="menu_suggestions">Gợi ý Thực đơn</option>
+                        <option value="thank_you_note">Tạo Lời cảm ơn</option>
+                        <option value="vendor_suggestions">Gợi ý Nhà cung cấp</option>
+                        <option value="activity_ideas">Ý tưởng Hoạt động</option>
+                        <option value="faq">Tạo FAQ</option>
+                        <option value="survey_questions">Tạo Câu hỏi Khảo sát</option>
+                        <option value="items">Gợi ý Hạng mục</option>
+                    </select>
+                </div>
             </div>
+            
+            <button id="generateGeminiContentBtn" class="btn btn-primary w-full">Tạo nội dung ✨</button>
+
             <div id="gemini-loading" class="text-center my-4 hidden">
                 <p class="text-purple-400">AI đang suy nghĩ, vui lòng chờ trong giây lát...</p>
                 <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500 mx-auto mt-2"></div>
             </div>
-            <div id="geminiSuggestionsContainer" class="mt-6 max-h-64 overflow-y-auto space-y-3 pr-2"></div>
+
+            <div id="geminiResultContainer" class="mt-4 p-3 bg-gray-900 rounded-lg border border-gray-700 text-gray-300 min-h-[100px] max-h-64 overflow-y-auto hidden"></div>
+            
+            <div id="geminiSuggestionsWrapper" class="hidden mt-4">
+                <label for="geminiSectionSelector" class="block mb-2 text-sm text-gray-300">Chọn mục để thêm các gợi ý vào:</label>
+                <select id="geminiSectionSelector" class="form-select mb-4"></select>
+            </div>
+
             <div class="flex justify-end gap-4 mt-6 border-t border-gray-700 pt-4">
                 <button id="cancelGeminiSuggestBtn" type="button" class="btn btn-secondary">Đóng</button>
                 <button id="addSuggestionsBtn" type="button" class="btn btn-save hidden">Thêm các mục đã chọn</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gemini AI Task Suggestion Modal -->
+    <div id="taskSuggestModal" class="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50 hidden">
+        <div class="bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-lg mx-4 flex flex-col">
+            <h3 class="text-xl font-bold text-white mb-2 flex items-center gap-2">✨ Gợi ý Công việc con</h3>
+            <p class="text-gray-400 mb-4">AI sẽ đề xuất các công việc nhỏ hơn cho mục: <strong id="taskSuggestItemName" class="text-yellow-300"></strong></p>
+            <button id="getTaskSuggestionsBtn" class="btn btn-primary w-full">Tạo gợi ý công việc</button>
+            <div id="task-suggest-loading" class="text-center my-4 hidden">
+                <p class="text-purple-400">AI đang suy nghĩ, vui lòng chờ...</p>
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500 mx-auto mt-2"></div>
+            </div>
+            <div id="taskSuggestionsContainer" class="mt-6 max-h-64 overflow-y-auto space-y-2 pr-2"></div>
+            <div class="flex justify-end gap-4 mt-6 border-t border-gray-700 pt-4">
+                <button id="cancelTaskSuggestBtn" type="button" class="btn btn-secondary">Đóng</button>
+                <button id="addTasksToNotesBtn" type="button" class="btn btn-save hidden">Thêm vào Ghi chú</button>
             </div>
         </div>
     </div>
@@ -381,8 +429,11 @@
             manageSectionsModal, manageColsModal, exportOptionsModal,
             shareModal, shareLinkInput, copyShareLinkBtn, closeShareModalBtn,
             eventSelector, deleteSelectedEventBtn, newListBtn, renameListBtn, shareListBtn,
-            geminiSuggestModal, geminiSuggestBtn, getGeminiSuggestionsBtn, resetGeminiSuggestionsBtn, geminiPrompt, 
-            geminiSuggestionsContainer, geminiLoading, cancelGeminiSuggestBtn, addSuggestionsBtn, geminiSectionSelector,
+            geminiSuggestModal, geminiSuggestBtn, generateGeminiContentBtn, geminiPrompt, 
+            geminiResultContainer, geminiLoading, cancelGeminiSuggestBtn, addSuggestionsBtn, geminiSectionSelector,
+            geminiSuggestionsWrapper, geminiActionSelector, guestCountInput,
+            taskSuggestModal, taskSuggestItemName, getTaskSuggestionsBtn, taskSuggestLoading,
+            taskSuggestionsContainer, cancelTaskSuggestBtn, addTasksToNotesBtn,
             cancelEditBtn, deleteFromFormBtn, exportBtn;
 
         // Local State
@@ -396,6 +447,8 @@
         let tempColumns = [];
         let sortableSectionsInstance = null;
         let sortableColsInstance = null;
+        let currentRegIdForTasks = null;
+        let currentSectionIdForTasks = null;
         
         // --- UTILS ---
         const capitalizeFirst = str => !str ? '' : str.charAt(0).toUpperCase() + str.slice(1);
@@ -634,7 +687,7 @@
 
                 bodyHtml += `<tr><td class="font-semibold bg-gray-700/50 text-left p-2">Hành động</td>`;
                 registrationArray.forEach(reg => {
-                    bodyHtml += `<td><button class="btn btn-delete text-xs" data-id="${reg.id}" data-section-id="${section.id}" data-tooltip="Xoá mục này">Xoá</button></td>`;
+                    bodyHtml += `<td><div class="flex items-center justify-center gap-1"><button class="btn btn-delete text-xs p-1" data-id="${reg.id}" data-section-id="${section.id}" data-tooltip="Xoá mục này">Xoá</button><button class="btn bg-purple-600 hover:bg-purple-700 text-white text-xs p-1 suggest-tasks-btn" data-id="${reg.id}" data-section-id="${section.id}" data-tooltip="Gợi ý công việc con">✨</button></div></td>`;
                 });
                 bodyHtml += `</tr>`;
                 reportBody.innerHTML = bodyHtml;
@@ -655,7 +708,7 @@
                         tr.innerHTML = `
                             <td class="font-medium">${index + 1}</td>
                             ${columns.map(c => `<td data-col-id="${c.id}" data-section-id="${section.id}" data-reg-id="${reg.id}" style="white-space: pre-wrap;">${reg.values[c.id] || ''}</td>`).join('')}
-                            <td><div class="flex items-center justify-center space-x-2"><button class="btn btn-delete text-xs" data-id="${reg.id}" data-section-id="${section.id}" data-tooltip="Xoá mục này">Xoá</button></div></td>
+                            <td><div class="flex items-center justify-center space-x-2"><button class="btn btn-delete text-xs" data-id="${reg.id}" data-section-id="${section.id}" data-tooltip="Xoá mục này">Xoá</button><button class="btn bg-purple-600 hover:bg-purple-700 text-white text-xs p-1 suggest-tasks-btn" data-id="${reg.id}" data-section-id="${section.id}" data-tooltip="Gợi ý công việc con">✨</button></div></td>
                         `;
                         fragment.appendChild(tr);
                     });
@@ -983,15 +1036,31 @@
             renameListBtn = document.getElementById('renameListBtn');
             shareListBtn = document.getElementById('shareListBtn');
             exportBtn = document.getElementById('exportBtn');
+            
+            // Gemini Suggestion Modal Elements
+            geminiSuggestModal = document.getElementById('geminiSuggestModal');
             geminiSuggestBtn = document.getElementById('geminiSuggestBtn');
-            getGeminiSuggestionsBtn = document.getElementById('getGeminiSuggestionsBtn');
-            resetGeminiSuggestionsBtn = document.getElementById('resetGeminiSuggestionsBtn');
+            generateGeminiContentBtn = document.getElementById('generateGeminiContentBtn');
             geminiPrompt = document.getElementById('geminiPrompt');
-            geminiSuggestionsContainer = document.getElementById('geminiSuggestionsContainer');
+            geminiResultContainer = document.getElementById('geminiResultContainer');
             geminiLoading = document.getElementById('gemini-loading');
             cancelGeminiSuggestBtn = document.getElementById('cancelGeminiSuggestBtn');
             addSuggestionsBtn = document.getElementById('addSuggestionsBtn');
             geminiSectionSelector = document.getElementById('geminiSectionSelector');
+            geminiSuggestionsWrapper = document.getElementById('geminiSuggestionsWrapper');
+            geminiActionSelector = document.getElementById('geminiActionSelector');
+            guestCountInput = document.getElementById('guestCountInput');
+
+
+            // Gemini Task Suggestion Modal Elements
+            taskSuggestModal = document.getElementById('taskSuggestModal');
+            taskSuggestItemName = document.getElementById('taskSuggestItemName');
+            getTaskSuggestionsBtn = document.getElementById('getTaskSuggestionsBtn');
+            taskSuggestLoading = document.getElementById('task-suggest-loading');
+            taskSuggestionsContainer = document.getElementById('taskSuggestionsContainer');
+            cancelTaskSuggestBtn = document.getElementById('cancelTaskSuggestBtn');
+            addTasksToNotesBtn = document.getElementById('addTasksToNotesBtn');
+
 
             try {
                 await initializeAppLogic();
@@ -1063,6 +1132,25 @@
                         return;
                     }
 
+                    // Handle suggest tasks button
+                    const suggestTasksButton = target.closest('.suggest-tasks-btn');
+                    if (suggestTasksButton) {
+                        currentRegIdForTasks = suggestTasksButton.dataset.id;
+                        currentSectionIdForTasks = suggestTasksButton.dataset.sectionId;
+                        const section = eventData.sections.find(s => s.id === currentSectionIdForTasks);
+                        const registration = section?.registrations.find(r => r.id === currentRegIdForTasks);
+                        if (registration && section) {
+                            const nameCol = section.columns[0];
+                            const itemName = registration.values[nameCol.id] || "Mục không tên";
+                            taskSuggestItemName.textContent = itemName;
+                            taskSuggestModal.classList.remove('hidden');
+                            taskSuggestionsContainer.innerHTML = '';
+                            addTasksToNotesBtn.classList.add('hidden');
+                        }
+                        return;
+                    }
+
+
                     // Handle click on a row or transposed header for form editing
                     const editableRowOrHeader = target.closest('tr[data-reg-id], th[data-reg-id]');
                     if (editableRowOrHeader && !target.closest('button')) {
@@ -1112,8 +1200,10 @@
                 });
                 geminiSuggestBtn.addEventListener('click', () => {
                     if (!eventData || !eventData.sections || eventData.sections.length === 0) return showToast("Vui lòng tạo ít nhất một mục báo cáo trước.", "error");
-                    geminiSectionSelector.innerHTML = eventData.sections.map(s => `<option value="${s.id}">${s.title}</option>`).join('');
                     geminiSuggestModal.classList.remove('hidden');
+                    geminiSuggestionsWrapper.classList.add('hidden');
+                    geminiResultContainer.classList.add('hidden');
+                    addSuggestionsBtn.classList.add('hidden');
                 });
                 deleteSelectedEventBtn.addEventListener('click', () => {
                     if (!currentEventId || !eventData) return showToast("Vui lòng chọn một sự kiện để xoá.", "error");
@@ -1167,11 +1257,29 @@
                 });
 
                 // --- OTHER LISTENERS (MODALS, ETC.) ---
-                document.getElementById('confirmBtn').addEventListener('click', () => {
-                    if (typeof confirmAction === 'function') {
-                        const input = document.getElementById('modalInput');
-                        const value = input.parentElement.classList.contains('hidden') ? true : input.value;
-                        confirmAction(value);
+                document.getElementById('confirmBtn').addEventListener('click', (event) => {
+                    if (typeof confirmAction !== 'function') {
+                        return;
+                    }
+                
+                    const button = event.currentTarget; 
+                    const confirmModal = button.closest('#confirmModal');
+                
+                    if (!confirmModal) {
+                        console.error("Could not find parent modal for confirm button.");
+                        confirmAction(true); // Fallback
+                        return;
+                    }
+                
+                    const inputWrapper = confirmModal.querySelector('#modal-input-wrapper');
+                    const input = confirmModal.querySelector('#modalInput');
+                    
+                    const isPromptVisible = inputWrapper && getComputedStyle(inputWrapper).display !== 'none';
+                
+                    if (isPromptVisible) {
+                        confirmAction(input ? input.value : '');
+                    } else {
+                        confirmAction(true);
                     }
                 });
                 document.getElementById('cancelBtn').addEventListener('click', hideConfirmModal);
@@ -1274,101 +1382,235 @@
                     }
                 });
 
-                // --- GEMINI AI & EXPORT LISTENERS (Unchanged) ---
+                // --- GEMINI AI LISTENERS ---
                 cancelGeminiSuggestBtn.addEventListener('click', () => geminiSuggestModal.classList.add('hidden'));
-                getGeminiSuggestionsBtn.addEventListener('click', async () => {
+
+                generateGeminiContentBtn.addEventListener('click', () => {
+                    const actionType = geminiActionSelector.value;
+                    handleGeminiRequest(actionType);
+                });
+
+                geminiActionSelector.addEventListener('change', (e) => {
+                    const needsSectionSelector = e.target.value === 'items';
+                    geminiSuggestionsWrapper.classList.toggle('hidden', !needsSectionSelector);
+                    if (needsSectionSelector) {
+                         geminiSectionSelector.innerHTML = eventData.sections.map(s => `<option value="${s.id}">${s.title}</option>`).join('');
+                    }
+                    geminiResultContainer.classList.add('hidden');
+                    addSuggestionsBtn.classList.add('hidden');
+                });
+
+                const handleGeminiRequest = async (actionType) => {
                     const userPrompt = geminiPrompt.value.trim();
                     if (!userPrompt) return showToast('Vui lòng nhập chủ đề sự kiện.', 'error');
-
-                    const selectedSectionId = geminiSectionSelector.value;
-                    const section = eventData.sections.find(s => s.id === selectedSectionId);
-                    if (!section) return showToast('Không tìm thấy mục đã chọn.', 'error');
+                    
+                    const guestCount = guestCountInput.value || 50;
 
                     geminiLoading.classList.remove('hidden');
-                    getGeminiSuggestionsBtn.disabled = true;
-                    resetGeminiSuggestionsBtn.classList.add('hidden');
+                    geminiResultContainer.classList.add('hidden');
                     addSuggestionsBtn.classList.add('hidden');
-                    geminiSuggestionsContainer.innerHTML = '';
+                    geminiResultContainer.innerHTML = '';
+
+                    // Show section selector only if needed
+                    const needsSectionSelector = actionType === 'items';
+                    geminiSuggestionsWrapper.classList.toggle('hidden', !needsSectionSelector);
+                    if(needsSectionSelector) {
+                         geminiSectionSelector.innerHTML = eventData.sections.map(s => `<option value="${s.id}">${s.title}</option>`).join('');
+                    }
 
                     try {
-                        const columnNames = section.columns.map(c => `"${c.label}"`).join(', ');
-                        const fullPrompt = `Với chủ đề sự kiện là "${userPrompt}", hãy tạo 5 gợi ý nội dung cho một bảng báo cáo có các cột sau: ${columnNames}. Trả lời bằng một mảng JSON hợp lệ, trong đó mỗi đối tượng có các khóa (key) là ID cột tương ứng: ${section.columns.map(c => `"${c.id}"`).join(', ')}. Chỉ trả về mảng JSON, không có bất kỳ văn bản giải thích nào khác.`;
-                        
-                        const schemaProperties = {};
-                        section.columns.forEach(col => { schemaProperties[col.id] = { type: "STRING" }; });
-
-                        const payload = {
-                            contents: [{ role: "user", parts: [{ text: fullPrompt }] }],
-                            generationConfig: {
-                                responseMimeType: "application/json",
-                                responseSchema: { type: "ARRAY", items: { type: "OBJECT", properties: schemaProperties } }
-                            }
-                        };
-                        
+                        let fullPrompt, payload;
                         const apiKey = "";
                         const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+                        switch (actionType) {
+                            case 'description':
+                                fullPrompt = `Viết một đoạn mô tả ngắn gọn, hấp dẫn và sáng tạo cho một sự kiện có chủ đề: "${userPrompt}". Đoạn mô tả này nên phù hợp để dùng làm thông báo. Trả lời bằng tiếng Việt.`;
+                                payload = { contents: [{ role: "user", parts: [{ text: fullPrompt }] }] };
+                                break;
+                            case 'theme_ideas':
+                                fullPrompt = `Dựa trên ý tưởng ban đầu là "${userPrompt}", hãy gợi ý 3 chủ đề sự kiện độc đáo và sáng tạo. Với mỗi chủ đề, cung cấp một mô tả ngắn gọn. Trả lời bằng tiếng Việt.`;
+                                payload = { contents: [{ role: "user", parts: [{ text: fullPrompt }] }] };
+                                break;
+                            case 'menu_suggestions':
+                                fullPrompt = `Dựa trên sự kiện có chủ đề "${userPrompt}" cho khoảng ${guestCount} khách, hãy gợi ý một thực đơn mẫu bao gồm món khai vị, món chính, và món tráng miệng. Trả lời bằng tiếng Việt.`;
+                                payload = { contents: [{ role: "user", parts: [{ text: fullPrompt }] }] };
+                                break;
+                            case 'mc_script':
+                                fullPrompt = `Tạo một kịch bản dẫn chương trình (run-of-show) chi tiết cho một sự kiện có chủ đề "${userPrompt}". Kịch bản nên bao gồm các mốc thời gian chính, hoạt động, và lời dẫn gợi ý cho MC. Trả lời bằng tiếng Việt.`;
+                                payload = { contents: [{ role: "user", parts: [{ text: fullPrompt }] }] };
+                                break;
+                             case 'survey_questions':
+                                fullPrompt = `Tạo một danh sách 5 câu hỏi khảo sát để thu thập phản hồi từ khách tham dự sau sự kiện có chủ đề "${userPrompt}". Các câu hỏi nên bao gồm cả câu hỏi trắc nghiệm và câu hỏi mở. Trả lời bằng tiếng Việt.`;
+                                payload = { contents: [{ role: "user", parts: [{ text: fullPrompt }] }] };
+                                break;
+                            case 'invitation':
+                                fullPrompt = `Viết một email mời thân thiện và trang trọng cho sự kiện có chủ đề "${userPrompt}". Bao gồm các placeholder như [Tên khách mời], [Ngày], [Thời gian], [Địa điểm], và [Link RSVP]. Trả lời bằng tiếng Việt.`;
+                                payload = { contents: [{ role: "user", parts: [{ text: fullPrompt }] }] };
+                                break;
+                            case 'social_posts':
+                                fullPrompt = `Soạn 2 bài đăng mạng xã hội (một ngắn, một dài) để quảng bá sự kiện có chủ đề "${userPrompt}". Bao gồm các hashtag phù hợp. Trả lời bằng tiếng Việt.`;
+                                payload = { contents: [{ role: "user", parts: [{ text: fullPrompt }] }] };
+                                break;
+                            case 'thank_you_note':
+                                fullPrompt = `Soạn một email cảm ơn mẫu để gửi cho những người tham dự sau sự kiện có chủ đề "${userPrompt}". Trả lời bằng tiếng Việt.`;
+                                payload = { contents: [{ role: "user", parts: [{ text: fullPrompt }] }] };
+                                break;
+                            case 'risks':
+                                fullPrompt = `Đối với một sự kiện có chủ đề "${userPrompt}", hãy xác định 5 rủi ro tiềm ẩn và đề xuất một chiến lược giảm thiểu đơn giản cho mỗi rủi ro. Trả về kết quả dưới dạng một mảng JSON gồm các đối tượng, mỗi đối tượng có khóa "risk" và "mitigation".`;
+                                payload = {
+                                    contents: [{ role: "user", parts: [{ text: fullPrompt }] }],
+                                    generationConfig: {
+                                        responseMimeType: "application/json",
+                                        responseSchema: { type: "ARRAY", items: { type: "OBJECT", properties: { risk: { type: "STRING" }, mitigation: { type: "STRING" } } } }
+                                    }
+                                };
+                                break;
+                            case 'budget':
+                                fullPrompt = `Dựa trên chủ đề sự kiện "${userPrompt}" với khoảng ${guestCount} khách, hãy tạo một bảng phân bổ ngân sách mẫu. Trả về dưới dạng mảng JSON các đối tượng, mỗi đối tượng có khóa "item" (hạng mục), "description" (mô tả), và "percentage" (tỷ lệ % dưới dạng chuỗi, ví dụ: "25%").`;
+                                payload = {
+                                    contents: [{ role: "user", parts: [{ text: fullPrompt }] }],
+                                    generationConfig: {
+                                        responseMimeType: "application/json",
+                                        responseSchema: { type: "ARRAY", items: { type: "OBJECT", properties: { item: { type: "STRING" }, description: { type: "STRING" }, percentage: { type: "STRING" } } } }
+                                    }
+                                };
+                                break;
+                             case 'agenda':
+                                fullPrompt = `Dựa trên chủ đề sự kiện "${userPrompt}" với khoảng ${guestCount} khách và kéo dài khoảng 4 tiếng, hãy tạo một lịch trình chi tiết theo từng mốc thời gian. Trả lời bằng tiếng Việt.`;
+                                payload = { contents: [{ role: "user", parts: [{ text: fullPrompt }] }] };
+                                break;
+                            case 'vendor_suggestions':
+                                fullPrompt = `Cho một sự kiện với chủ đề "${userPrompt}", hãy gợi ý 5 loại nhà cung cấp hoặc dịch vụ cần thiết. Với mỗi loại, đưa ra một mô tả ngắn gọn về vai trò của họ. Trả về dưới dạng mảng JSON, mỗi đối tượng có khóa "vendor_type" và "description".`;
+                                payload = {
+                                    contents: [{ role: "user", parts: [{ text: fullPrompt }] }],
+                                    generationConfig: {
+                                        responseMimeType: "application/json",
+                                        responseSchema: { type: "ARRAY", items: { type: "OBJECT", properties: { vendor_type: { type: "STRING" }, description: { type: "STRING" } } } }
+                                    }
+                                };
+                                break;
+                            case 'activity_ideas':
+                                fullPrompt = `Cho một sự kiện với chủ đề "${userPrompt}" và khoảng ${guestCount} khách, hãy gợi ý 3 ý tưởng hoạt động hoặc trò chơi icebreaker để tăng tương tác. Mô tả ngắn gọn mỗi ý tưởng. Trả lời bằng tiếng Việt.`;
+                                payload = { contents: [{ role: "user", parts: [{ text: fullPrompt }] }] };
+                                break;
+                            case 'faq':
+                                fullPrompt = `Dựa trên sự kiện có chủ đề "${userPrompt}", hãy tạo một danh sách 5 câu hỏi thường gặp (FAQ) và câu trả lời tương ứng cho người tham dự. Trả về dưới dạng một mảng JSON, mỗi đối tượng có khóa "question" và "answer".`;
+                                payload = {
+                                    contents: [{ role: "user", parts: [{ text: fullPrompt }] }],
+                                    generationConfig: {
+                                        responseMimeType: "application/json",
+                                        responseSchema: { type: "ARRAY", items: { type: "OBJECT", properties: { question: { type: "STRING" }, answer: { type: "STRING" } } } }
+                                    }
+                                };
+                                break;
+                            case 'items':
+                                const selectedSectionId = geminiSectionSelector.value;
+                                const section = eventData.sections.find(s => s.id === selectedSectionId);
+                                if (!section) throw new Error("Mục đã chọn không hợp lệ.");
+                                
+                                if (section.columns.length === 1) {
+                                    fullPrompt = `Với chủ đề sự kiện là "${userPrompt}", hãy tạo một danh sách 5 hạng mục hoặc công việc liên quan. Trả lời dưới dạng một mảng JSON chỉ chứa các chuỗi.`;
+                                    payload = {
+                                        contents: [{ role: "user", parts: [{ text: fullPrompt }] }],
+                                        generationConfig: {
+                                            responseMimeType: "application/json",
+                                            responseSchema: { type: "ARRAY", items: { type: "STRING" } }
+                                        }
+                                    };
+                                } else {
+                                    const columnNames = section.columns.map(c => `"${c.label}"`).join(', ');
+                                    fullPrompt = `Với chủ đề sự kiện là "${userPrompt}", hãy tạo 5 gợi ý nội dung cho một bảng báo cáo có các cột sau: ${columnNames}. Trả lời bằng một mảng JSON hợp lệ, trong đó mỗi đối tượng có các khóa (key) là ID cột tương ứng: ${section.columns.map(c => `"${c.id}"`).join(', ')}. Chỉ trả về mảng JSON.`;
+                                    const schemaProperties = {};
+                                    section.columns.forEach(col => { schemaProperties[col.id] = { type: "STRING" }; });
+                                    payload = {
+                                        contents: [{ role: "user", parts: [{ text: fullPrompt }] }],
+                                        generationConfig: {
+                                            responseMimeType: "application/json",
+                                            responseSchema: { type: "ARRAY", items: { type: "OBJECT", properties: schemaProperties } }
+                                        }
+                                    };
+                                }
+                                break;
+                        }
+
                         const response = await fetch(apiUrl, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify(payload)
                         });
-
-                        if (!response.ok) {
-                            throw new Error(`Lỗi API: ${response.status} ${response.statusText}`);
-                        }
+                        if (!response.ok) throw new Error(`Lỗi API: ${response.status} ${response.statusText}`);
                         
                         const result = await response.json();
-                        let rawText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                        const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                        if (!text) throw new Error("Không nhận được phản hồi hợp lệ từ AI.");
 
-                        if (typeof rawText !== 'string' || rawText.trim() === '') {
-                            console.error("API did not return valid text.", result);
-                            throw new Error("AI không trả về phản hồi văn bản hợp lệ. Vui lòng thử lại.");
+                        geminiResultContainer.classList.remove('hidden');
+                        if (['description', 'invitation', 'agenda', 'social_posts', 'thank_you_note', 'activity_ideas', 'theme_ideas', 'menu_suggestions', 'mc_script', 'survey_questions'].includes(actionType)) {
+                            geminiResultContainer.innerHTML = `<pre class="whitespace-pre-wrap text-sm">${text}</pre>`;
+                        } else if (actionType === 'risks') {
+                            const risks = JSON.parse(text);
+                            geminiResultContainer.innerHTML = risks.map(r => `<div class="p-2 border-b border-gray-700"><strong class="text-red-400">Rủi ro:</strong> ${r.risk}<br><strong class="text-green-400">Giải pháp:</strong> ${r.mitigation}</div>`).join('');
+                        } else if (actionType === 'budget') {
+                            const budgetItems = JSON.parse(text);
+                            let tableHtml = '<table class="w-full text-sm"><thead><tr class="border-b border-gray-600"><th class="text-left p-2">Hạng mục</th><th class="text-left p-2">Mô tả</th><th class="text-right p-2">Tỷ lệ</th></tr></thead><tbody>';
+                            tableHtml += budgetItems.map(b => `<tr><td class="p-2">${b.item}</td><td class="p-2 text-gray-400">${b.description}</td><td class="text-right p-2 font-mono">${b.percentage}</td></tr>`).join('');
+                            tableHtml += '</tbody></table>';
+                            geminiResultContainer.innerHTML = tableHtml;
+                        } else if (actionType === 'vendor_suggestions') {
+                             const vendors = JSON.parse(text);
+                            geminiResultContainer.innerHTML = vendors.map(v => `<div class="p-2 border-b border-gray-700"><strong class="text-blue-400">${v.vendor_type}:</strong> ${v.description}</div>`).join('');
+                        } else if (actionType === 'faq') {
+                            const faqs = JSON.parse(text);
+                            geminiResultContainer.innerHTML = faqs.map(f => `<div class="p-2 border-b border-gray-700"><strong class="text-yellow-400">Hỏi:</strong> ${f.question}<br><strong class="text-gray-300">Đáp:</strong> ${f.answer}</div>`).join('');
+                        } else if (actionType === 'items') {
+                            const suggestions = JSON.parse(text);
+                            const selectedSectionId = geminiSectionSelector.value;
+                            const section = eventData.sections.find(s => s.id === selectedSectionId);
+                            
+                            if (section.columns.length === 1) {
+                                geminiResultContainer.innerHTML = suggestions.map((s, index) => `
+                                    <label for="suggestion-${index}" class="flex items-center p-2 bg-gray-800 rounded-lg hover:bg-gray-700 cursor-pointer">
+                                        <input type="checkbox" id="suggestion-${index}" class="mr-3 h-4 w-4 rounded border-gray-500 text-purple-600 focus:ring-purple-500" checked>
+                                        <span class="flex-1">${s}</span>
+                                    </label>
+                                `).join('');
+                                geminiResultContainer.querySelectorAll('input[type="checkbox"]').forEach((checkbox, index) => {
+                                    checkbox.dataset.suggestion = suggestions[index];
+                                });
+                            } else {
+                                geminiResultContainer.innerHTML = suggestions.map((s, index) => `
+                                    <label for="suggestion-${index}" class="flex items-start p-3 bg-gray-800 rounded-lg hover:bg-gray-700 cursor-pointer">
+                                        <input type="checkbox" id="suggestion-${index}" class="mt-1 mr-3 h-4 w-4 rounded border-gray-500 text-purple-600 focus:ring-purple-500" checked>
+                                        <div class="flex-1">
+                                            ${section.columns.map(c => `<p><strong class="font-semibold text-purple-300">${c.label}:</strong> ${s[c.id] || ''}</p>`).join('')}
+                                        </div>
+                                    </label>
+                                `).join('');
+                                geminiResultContainer.querySelectorAll('input[type="checkbox"]').forEach((checkbox, index) => {
+                                    checkbox.dataset.suggestion = JSON.stringify(suggestions[index]);
+                                });
+                            }
+                            addSuggestionsBtn.classList.remove('hidden');
                         }
-
-                        let suggestions;
-                        try {
-                            suggestions = JSON.parse(rawText);
-                        } catch (e) {
-                            console.error("Failed to parse AI response as JSON:", rawText);
-                            throw new Error("Phản hồi của AI không phải là định dạng JSON hợp lệ.");
-                        }
-
-                        if (!Array.isArray(suggestions)) {
-                            console.error("AI response is not an array:", suggestions);
-                            throw new Error("Phản hồi của AI không phải là một danh sách (mảng).");
-                        }
-
-                        geminiSuggestionsContainer.innerHTML = suggestions.map((s, index) => `
-                            <label for="suggestion-${index}" class="flex items-start p-3 bg-gray-700 rounded-lg hover:bg-gray-600 cursor-pointer">
-                                <input type="checkbox" id="suggestion-${index}" class="mt-1 mr-3 h-4 w-4 rounded border-gray-500 text-purple-600 focus:ring-purple-500" checked>
-                                <div class="flex-1">
-                                    ${section.columns.map(c => `<p><strong class="font-semibold text-purple-300">${c.label}:</strong> ${s[c.id] || ''}</p>`).join('')}
-                                </div>
-                            </label>
-                        `).join('');
-                        
-                        geminiSuggestionsContainer.querySelectorAll('input[type="checkbox"]').forEach((checkbox, index) => {
-                            checkbox.dataset.suggestion = JSON.stringify(suggestions[index]);
-                        });
-
-                        addSuggestionsBtn.classList.remove('hidden');
-
                     } catch (error) {
-                        console.error("Gemini AI Error:", error);
+                        console.error(`Gemini AI Error (${actionType}):`, error);
                         showToast(error.message || "Không thể tạo gợi ý. Vui lòng thử lại.", "error");
-                        geminiSuggestionsContainer.innerHTML = `<p class="text-red-400 text-center">${error.message}</p>`;
                     } finally {
                         geminiLoading.classList.add('hidden');
-                        getGeminiSuggestionsBtn.disabled = false;
-                        resetGeminiSuggestionsBtn.classList.remove('hidden');
                     }
-                });
+                };
+                
                 addSuggestionsBtn.addEventListener('click', async () => {
                     const selectedSectionId = geminiSectionSelector.value;
                     const sectionIndex = eventData.sections.findIndex(s => s.id === selectedSectionId);
                     if (sectionIndex === -1) return;
 
-                    const checkedBoxes = geminiSuggestionsContainer.querySelectorAll('input:checked');
+                    const section = eventData.sections[sectionIndex];
+                    const isSingleColumn = section.columns.length === 1;
+                    const singleColumnId = isSingleColumn ? section.columns[0].id : null;
+
+                    const checkedBoxes = geminiResultContainer.querySelectorAll('input:checked');
                     if (checkedBoxes.length === 0) return showToast('Vui lòng chọn ít nhất một gợi ý.', 'error');
 
                     const newRegistrationsBatch = [];
@@ -1377,8 +1619,13 @@
                     checkedBoxes.forEach(box => {
                         if (parsingError) return;
                         try {
-                            const suggestionData = JSON.parse(box.dataset.suggestion);
-                            const newRegistration = { id: `reg_${Date.now()}_${Math.random()}`, values: suggestionData };
+                            let values = {};
+                            if (isSingleColumn) {
+                                values[singleColumnId] = box.dataset.suggestion;
+                            } else {
+                                values = JSON.parse(box.dataset.suggestion);
+                            }
+                            const newRegistration = { id: `reg_${Date.now()}_${Math.random()}`, values: values };
                             newRegistrationsBatch.push(newRegistration);
                         } catch (e) {
                             console.error("Failed to parse suggestion data from checkbox:", box.dataset.suggestion, e);
@@ -1397,16 +1644,95 @@
                     await updateEvent({ sections: eventData.sections });
                     showToast(`${checkedBoxes.length} gợi ý đã được thêm!`, 'success');
                     geminiSuggestModal.classList.add('hidden');
-                    resetGeminiSuggestionsBtn.click();
                 });
-                resetGeminiSuggestionsBtn.addEventListener('click', () => {
-                    geminiPrompt.value = '';
-                    geminiSuggestionsContainer.innerHTML = '';
-                    addSuggestionsBtn.classList.add('hidden');
-                    resetGeminiSuggestionsBtn.classList.add('hidden');
-                    getGeminiSuggestionsBtn.classList.remove('hidden');
-                    getGeminiSuggestionsBtn.disabled = false;
+
+                // --- Task Suggestion Modal Listeners ---
+                cancelTaskSuggestBtn.addEventListener('click', () => taskSuggestModal.classList.add('hidden'));
+                
+                getTaskSuggestionsBtn.addEventListener('click', async () => {
+                    if (!currentRegIdForTasks || !currentSectionIdForTasks) return;
+
+                    taskSuggestLoading.classList.remove('hidden');
+                    getTaskSuggestionsBtn.disabled = true;
+                    addTasksToNotesBtn.classList.add('hidden');
+                    taskSuggestionsContainer.innerHTML = '';
+
+                    try {
+                        const section = eventData.sections.find(s => s.id === currentSectionIdForTasks);
+                        const registration = section?.registrations.find(r => r.id === currentRegIdForTasks);
+                        if (!section || !registration) throw new Error("Không tìm thấy mục gốc.");
+                        
+                        const nameCol = section.columns[0];
+                        const itemName = registration.values[nameCol.id] || "Mục không tên";
+
+                        const prompt = `Đối với mục sự kiện có tên "${itemName}", hãy chia nhỏ nó thành một danh sách các công việc con đơn giản, có thể thực hiện được. Trả về kết quả dưới dạng một mảng JSON chứa các chuỗi. Ví dụ: đối với "Chuẩn bị một chương trình đố vui", đầu ra có thể là ["Viết 10 câu hỏi", "Tạo đáp án", "Chuẩn bị slide", "Tìm người dẫn chương trình"]. Bây giờ, hãy làm điều này cho mục: "${itemName}". Chỉ trả về mảng JSON.`;
+
+                        const payload = {
+                            contents: [{ role: "user", parts: [{ text: prompt }] }],
+                            generationConfig: {
+                                responseMimeType: "application/json",
+                                responseSchema: { type: "ARRAY", items: { type: "STRING" } }
+                            }
+                        };
+                        const apiKey = "";
+                        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+                        const response = await fetch(apiUrl, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+                        if (!response.ok) throw new Error(`Lỗi API: ${response.status}`);
+                        
+                        const result = await response.json();
+                        const tasks = JSON.parse(result.candidates?.[0]?.content?.parts?.[0]?.text);
+
+                        if (Array.isArray(tasks)) {
+                             taskSuggestionsContainer.innerHTML = tasks.map((task, index) => `
+                                <label for="task-suggestion-${index}" class="flex items-center p-2 bg-gray-700 rounded-lg hover:bg-gray-600 cursor-pointer">
+                                    <input type="checkbox" id="task-suggestion-${index}" data-task="${task}" class="mr-3 h-4 w-4 rounded border-gray-500 text-purple-600 focus:ring-purple-500" checked>
+                                    <span class="flex-1">${task}</span>
+                                </label>
+                            `).join('');
+                            addTasksToNotesBtn.classList.remove('hidden');
+                        } else {
+                            throw new Error("AI không trả về danh sách công việc hợp lệ.");
+                        }
+
+                    } catch (error) {
+                        console.error("Gemini Task Suggestion Error:", error);
+                        showToast(error.message, "error");
+                    } finally {
+                        taskSuggestLoading.classList.add('hidden');
+                        getTaskSuggestionsBtn.disabled = false;
+                    }
                 });
+
+                addTasksToNotesBtn.addEventListener('click', async () => {
+                    const checkedTasks = [...taskSuggestionsContainer.querySelectorAll('input:checked')].map(cb => cb.dataset.task);
+                    if (checkedTasks.length === 0) return showToast("Vui lòng chọn ít nhất một công việc.", "error");
+
+                    const sectionIndex = eventData.sections.findIndex(s => s.id === currentSectionIdForTasks);
+                    const regIndex = eventData.sections[sectionIndex]?.registrations.findIndex(r => r.id === currentRegIdForTasks);
+                    if (sectionIndex === -1 || regIndex === -1) return;
+
+                    const notesColId = 'col_notes';
+                    const section = eventData.sections[sectionIndex];
+                    if (!section.columns.some(c => c.id === notesColId)) {
+                        return showToast('Mục này không có cột "Ghi chú".', 'error');
+                    }
+
+                    const registration = section.registrations[regIndex];
+                    const existingNotes = registration.values[notesColId] || '';
+                    const newNotes = checkedTasks.map(task => `- ${task}`).join('\n');
+                    const updatedNotes = existingNotes ? `${existingNotes}\n\nCông việc con (AI):\n${newNotes}` : `Công việc con (AI):\n${newNotes}`;
+                    registration.values[notesColId] = updatedNotes;
+
+                    await updateEvent({ sections: eventData.sections });
+                    showToast("Đã thêm công việc vào ghi chú!", "success");
+                    taskSuggestModal.classList.add('hidden');
+                });
+
+                // --- EXPORT LISTENERS (Unchanged) ---
                 document.getElementById('cancelExportBtn').addEventListener('click', () => exportOptionsModal.classList.add('hidden'));
                 document.getElementById('logoUploader').addEventListener('change', (e) => {
                     const file = e.target.files[0];
