@@ -3,15 +3,17 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Giới Luật</title>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700,900&family=Open+Sans:wght@400,600,700&display=swap" rel="stylesheet">
+  <title>Sống Chân Thiện Mỹ</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@600;700&family=Montserrat:wght@900&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
     body {
       margin: 0;
-      background-color: #F8F5EE;
-      font-family: 'Open Sans', sans-serif;
+      background-color: #333; /* Dark background to make poster pop */
+      font-family: 'Be Vietnam Pro', sans-serif;
       display: flex;
       flex-direction: column;
       justify-content: center;
@@ -22,17 +24,16 @@
     }
     .poster-container {
       width: 100%;
-      max-width: 1200px; /* Adjust max-width for a good square view */
+      max-width: 1200px;
     }
     .poster {
       position: relative;
       width: 100%;
-      aspect-ratio: 1 / 1; /* Enforce a square aspect ratio */
-      background: linear-gradient(135deg, #FFFBF5 0%, #FDF6E3 100%);
+      aspect-ratio: 1 / 1;
+      background: linear-gradient(135deg, #FEE2E2 0%, #FECACA 100%); /* Light Red Background */
       padding: 30px 40px;
       border-radius: 25px;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
-      border: 1px solid rgba(0, 0, 0, 0.05);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
       display: flex;
       flex-direction: column;
     }
@@ -47,15 +48,16 @@
       height: 90px;
       margin-right: 25px;
       border-radius: 15px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+      background-color: white;
+      padding: 5px;
     }
     .poster h1 {
       font-family: 'Montserrat', sans-serif;
       font-weight: 900;
       text-align: center;
       font-size: 3.5rem;
-      color: #2D201A;
-      text-shadow: 4px 4px 12px rgba(0, 0, 0, 0.2);
+      color: #2D201A; /* Dark Text */
+      text-shadow: 2px 2px 8px rgba(255, 255, 255, 0.3);
       letter-spacing: 4px;
       line-height: 1.2;
     }
@@ -65,7 +67,7 @@
       left: 20px;
       right: 20px;
       bottom: 20px;
-      border: 2px solid rgba(0,0,0,0.08);
+      border: 2px solid rgba(239, 68, 68, 0.3); /* Soft red border */
       border-radius: 20px;
       pointer-events: none;
       z-index: 1;
@@ -74,19 +76,15 @@
       text-align: center;
       font-size: 1.5rem;
       margin-top: 20px;
-      color: #5A4C40;
+      color: #2D201A; /* Dark Text */
       font-weight: 700;
     }
     /* Main Grid Container */
     .inner-grid {
         display: grid;
-        grid-template-columns: repeat(12, 1fr); /* 12 columns */
+        grid-template-columns: repeat(12, 1fr);
         gap: 10px; 
-        background: rgba(245, 235, 220, 0.4);
         padding: 10px;
-        border-radius: 15px;
-        border: 1px solid rgba(0,0,0,0.08);
-        box-shadow: inset 0 2px 10px rgba(0,0,0,0.05);
         flex-grow: 1;
     }
     .sub-column {
@@ -96,57 +94,52 @@
     }
     /* Styling for each card */
     .precept-card {
-      position: relative;
-      background-color: #FFFFFF;
-      padding: 0;
-      border-radius: 12px;
-      box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
-      border: 1px solid rgba(0, 0, 0, 0.07);
       display: flex;
       flex-direction: column;
       height: 100%;
-      overflow: hidden; /* Important to contain child border-radius */
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+      border: 1px solid rgba(0, 0, 0, 0.07);
     }
     .card-header {
-      display: flex;
-      align-items: center;
+      position: relative;
+      background-color: #4C1D95; /* Dark Purple background */
       padding: 5px 8px;
-      background-color: #FBBF24; /* Yellow background */
+      text-align: center;
     }
     .bullet {
+      position: absolute;
+      left: 8px;
+      top: 50%;
+      transform: translateY(-50%);
       width: 8px;
       height: 8px;
       border-radius: 50%;
-      background-color: #A93226; /* Red bullet */
-      box-shadow: none;
-      flex-shrink: 0;
-      margin-right: 5px;
+      background-color: #B87333; /* Bronze color */
     }
     .precept-number {
-      flex-grow: 1;
-      text-align: center;
       font-weight: 700;
       font-size: 0.7rem;
       color: #FFFFFF; /* White text */
       font-family: 'Montserrat', sans-serif;
     }
     .card-body {
-      border: none;
-      background-color: #0284C7; /* Blue background */
-      padding: 8px;
+      background-color: #DC2626; /* Vibrant Red background */
+      color: #FFFFFF; /* White text */
+      padding: 6px; /* Reduced padding */
       flex-grow: 1;
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       justify-content: center;
-      box-shadow: none;
     }
     .text-content {
-      font-weight: 700; /* Changed to bold */
-      font-size: 0.7rem;
-      line-height: 1.3;
-      color: #FFFFFF; /* White text */
+      font-weight: 700;
+      font-size: 0.65rem; /* Reduced font size */
+      line-height: 1.25; /* Adjusted line height */
+      color: inherit;
       width: 100%;
-      text-align: center; /* Center align text */
+      text-align: center;
       overflow-wrap: break-word;
     }
 
@@ -184,7 +177,7 @@
       <div class="line-border"></div>
       <div class="poster-header">
         <img src="https://raw.githubusercontent.com/thiensutinhquang/Admin/main/icons/icon.png" alt="Logo Tịnh Quang" class="logo" crossorigin="anonymous">
-        <h1>GIỚI LUẬT</h1>
+        <h1>Sống Chân Thiện Mỹ</h1>
       </div>
       <div class="inner-grid">
         <div id="vi-col-1" class="sub-column"></div>
@@ -307,7 +300,7 @@
             const imgData = canvas.toDataURL('image/jpeg', 0.98);
             const link = document.createElement('a');
             link.href = imgData;
-            link.download = 'gioi_luat_vuong.jpg';
+            link.download = 'song_chan_thien_my.jpg';
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
