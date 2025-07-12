@@ -10,8 +10,8 @@
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            /* Subtle background gradient */
-            background: linear-gradient(to bottom right, #f0f4f8, #e2e8f0);
+            /* Enhanced subtle background gradient */
+            background: linear-gradient(to bottom right, #eef2f5, #e0e6eb);
             display: flex;
             justify-content: center;
             align-items: center;
@@ -22,13 +22,15 @@
         .container {
             background-color: #ffffff;
             padding: 40px; /* Increased padding */
-            border-radius: 20px; /* More rounded corners */
-            /* Softer, more modern shadow */
-            box-shadow: 0 15px 30px -10px rgba(0, 0, 0, 0.15), 0 5px 15px -5px rgba(0, 0, 0, 0.08);
+            border-radius: 30px; /* More rounded corners to match the image */
+            /* More pronounced, layered shadow for depth and glow effect */
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), /* Existing depth shadow */
+                        0 10px 20px -5px rgba(0, 0, 0, 0.1), /* Existing depth shadow */
+                        0 0 40px 10px rgba(0, 200, 200, 0.2); /* Soft teal/cyan glow */
             max-width: 650px; /* Slightly wider container */
             width: 100%;
             text-align: center;
-            border: 1px solid #d1d5db; /* Subtle border */
+            border: 1px solid #cfd8dc; /* Slightly more defined subtle border */
         }
         textarea {
             resize: vertical;
@@ -37,8 +39,16 @@
         }
         textarea:focus {
             border-color: #6366f1; /* Indigo focus ring */
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3); /* Custom focus ring */
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.4); /* Custom focus ring, slightly thicker */
         }
+        textarea.input-active {
+            animation: inputGlow 0.5s ease-out; /* Subtle glow on input change */
+        }
+        @keyframes inputGlow {
+            0% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.2); }
+            100% { box-shadow: 0 0 0 4px rgba(99, 102, 241, 0); }
+        }
+
         .button-primary {
             background-color: #4f46e5; /* Indigo 600 */
             color: #ffffff;
@@ -47,7 +57,7 @@
             font-weight: 600;
             font-size: 1.125rem; /* text-lg */
             transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out, box-shadow 0.2s ease-in-out;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15); /* Slightly stronger shadow */
             display: flex; /* Flex for icon and text */
             align-items: center;
             justify-content: center;
@@ -55,12 +65,12 @@
         }
         .button-primary:hover {
             background-color: #4338ca; /* Indigo 700 */
-            transform: translateY(-2px); /* Slightly more pronounced lift */
-            box-shadow: 0 8px 12px rgba(0, 0, 0, 0.2); /* More prominent shadow on hover */
+            transform: translateY(-3px); /* More pronounced lift */
+            box-shadow: 0 12px 20px rgba(0, 0, 0, 0.3); /* Even more prominent shadow on hover */
         }
         .button-primary:active {
             transform: translateY(0);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
         }
 
         .button-secondary {
@@ -71,7 +81,7 @@
             font-weight: 600;
             font-size: 1.125rem;
             transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out, box-shadow 0.2s ease-in-out;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
             display: flex; /* Flex for icon and text */
             align-items: center;
             justify-content: center;
@@ -79,12 +89,12 @@
         }
         .button-secondary:hover {
             background-color: #059669; /* Emerald 600 */
-            transform: translateY(-2px);
-            box-shadow: 0 8px 12px rgba(0, 0, 0, 0.2);
+            transform: translateY(-3px);
+            box-shadow: 0 12px 20px rgba(0, 0, 0, 0.3);
         }
         .button-secondary:active {
             transform: translateY(0);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
         }
 
         .button-tertiary { /* For clear button */
@@ -94,7 +104,8 @@
             border-radius: 8px;
             font-weight: 500;
             font-size: 0.9rem;
-            transition: background-color 0.2s ease-in-out;
+            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             display: flex; /* Flex for icon and text */
             align-items: center;
             justify-content: center;
@@ -102,17 +113,103 @@
         }
         .button-tertiary:hover {
             background-color: #dc2626; /* Red 600 */
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
         }
+        .button-tertiary:active {
+            transform: translateY(0);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .button-paste { /* For paste button */
+            background-color: #f97316; /* Orange 500 */
+            color: #ffffff;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+        .button-paste:hover {
+            background-color: #ea580c; /* Orange 600 */
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+        }
+        .button-paste:active {
+            transform: translateY(0);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .button-reset { /* For reset button */
+            background-color: #6b7280; /* Gray 500 */
+            color: #ffffff;
+            padding: 12px 24px; /* Slightly larger */
+            border-radius: 12px; /* More rounded */
+            font-weight: 600; /* Bolder */
+            font-size: 1.05rem; /* Slightly larger */
+            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out, box-shadow 0.2s ease-in-out;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px; /* More space */
+        }
+        .button-reset:hover {
+            background-color: #4b5563; /* Gray 600 */
+            transform: translateY(-2px);
+            box-shadow: 0 8px 12px rgba(0, 0, 0, 0.2);
+        }
+        .button-reset:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .button-view-link { /* New button for viewing link */
+            background-color: #3b82f6; /* Blue 500 */
+            color: #ffffff;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            margin-top: 10px; /* Space from currentLink display */
+            margin-left: auto; /* Align to right */
+            margin-right: auto; /* Align to right */
+        }
+        .button-view-link:hover {
+            background-color: #2563eb; /* Blue 600 */
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+        }
+        .button-view-link:active {
+            transform: translateY(0);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
 
         /* Styling for the copy confirmation message */
         .copy-message {
             opacity: 0;
             transition: opacity 0.4s ease-in-out, transform 0.4s ease-in-out; /* Added transform transition */
-            padding: 8px 16px;
-            border-radius: 8px;
-            margin-top: 10px;
-            display: inline-block; /* To make padding and border visible */
-            transform: translateY(10px); /* Start slightly below */
+            padding: 10px 20px; /* Increased padding */
+            border-radius: 10px; /* More rounded */
+            margin-top: 15px; /* More space */
+            display: flex; /* Use flex for icon and text */
+            align-items: center;
+            justify-content: center;
+            gap: 10px; /* More space between icon and text */
+            transform: translateY(15px); /* Start slightly further below */
+            font-size: 1rem; /* Slightly larger font */
         }
         .copy-message.show {
             opacity: 1;
@@ -134,18 +231,79 @@
             background-color: #f8fafc; /* Lighter gray */
             border: 1px solid #e2e8f0; /* Light border */
             box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05); /* Inner shadow */
-            transition: border-color 0.2s, box-shadow 0.2s; /* Smooth transition */
+            transition: all 0.3s ease-in-out; /* Smooth transition for all properties */
+            display: flex; /* Use flex for icon and text */
+            align-items: center;
+            justify-content: center;
+            gap: 10px; /* More space between icon and text */
+            min-height: 80px; /* Ensure consistent height */
+            font-size: 1.1rem; /* Slightly larger font */
+            font-weight: 500; /* Slightly bolder */
+            word-break: break-all; /* Ensure long links break correctly */
+            position: relative; /* For tooltip positioning */
         }
         #currentLink.completed-state {
             background-color: #ecfdf5; /* Light green for completion */
             border-color: #34d399; /* Green border */
             color: #065f46; /* Darker green text */
             font-weight: 600;
+            box-shadow: 0 0 0 2px rgba(52, 211, 153, 0.5); /* Green glow */
+        }
+        #currentLink.no-links-state {
+            background-color: #e0f2fe; /* Light blue for no links */
+            border-color: #93c5fd; /* Blue border */
+            color: #1e40af; /* Darker blue text */
+            font-weight: 500;
+            font-style: italic;
+            box-shadow: 0 0 0 2px rgba(147, 197, 253, 0.5); /* Blue glow */
         }
         #currentLink:hover {
             border-color: #93c5fd; /* Light blue on hover */
-            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.08), 0 0 0 2px rgba(147, 197, 253, 0.5); /* Subtle outer glow */
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.08), 0 0 0 3px rgba(147, 197, 253, 0.6); /* More prominent outer glow */
         }
+        #currentLink svg {
+            flex-shrink: 0; /* Prevent icon from shrinking */
+        }
+
+        /* Tooltip styles */
+        #currentLink[data-tooltip]:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%; /* Position above the element */
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #333;
+            color: #fff;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            z-index: 10;
+            margin-bottom: 10px; /* Space between element and tooltip */
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        #currentLink[data-tooltip]:hover::before {
+            content: '';
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%) translateY(10px); /* Position below tooltip, slightly offset */
+            border-width: 5px;
+            border-style: solid;
+            border-color: #333 transparent transparent transparent;
+            z-index: 11;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        #currentLink[data-tooltip]:hover::after,
+        #currentLink[data-tooltip]:hover::before {
+            opacity: 1;
+            visibility: visible;
+        }
+
 
         /* Instructions section */
         .instructions {
@@ -196,6 +354,12 @@
             box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.03); /* Subtle inner shadow */
             animation: fadeIn 0.5s ease-out; /* Fade in animation for summary */
         }
+        #summaryOutput.error-state {
+            background-color: #fef2f2; /* Light red for error */
+            border-color: #fca5a5; /* Red 300 border */
+            color: #991b1b; /* Red 800 text */
+            font-weight: 500;
+        }
         .loader {
             border: 4px solid #f3f3f3;
             border-top: 4px solid #4f46e5;
@@ -220,6 +384,28 @@
             transform: none;
             box-shadow: none;
         }
+        /* Prompt suggestion buttons */
+        .prompt-suggestion-btn {
+            border: 1px solid #cbd5e0; /* Light gray border */
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05); /* Subtle shadow */
+            transition: background-color 0.2s, border-color 0.2s, box-shadow 0.2s;
+        }
+        .prompt-suggestion-btn:hover {
+            background-color: #e2e8f0; /* Slightly darker gray on hover */
+            border-color: #a0aec0; /* Darker border on hover */
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        /* Loading text animation */
+        .loading-text::after {
+            content: '...';
+            animation: ellipsis 1s infinite;
+        }
+        @keyframes ellipsis {
+            0% { content: ''; }
+            33% { content: '.'; }
+            66% { content: '..'; }
+            100% { content: '...'; }
+        }
     </style>
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen p-5">
@@ -236,16 +422,30 @@
                     id="linkInput"
                     class="w-full p-4 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 text-gray-800 shadow-sm"
                     placeholder="Ví dụ:&#x0A;https://www.youtube.com/watch?v=video1&#x0A;https://youtu.be/video2&#x0A;https://www.youtube.com/watch?v=another_video"
+                    aria-label="Dán danh sách liên kết YouTube"
                 ></textarea>
-                <button
-                    id="clearLinksBtn"
-                    class="button-tertiary absolute top-3 right-3"
-                    title="Xóa tất cả liên kết"
-                >
-                    <!-- Trash Can SVG Icon -->
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash-2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
-                    Xóa
-                </button>
+                <div class="absolute top-3 right-3 flex gap-2">
+                    <button
+                        id="pasteLinksBtn"
+                        class="button-paste"
+                        title="Dán liên kết từ khay nhớ tạm"
+                        aria-label="Dán liên kết từ khay nhớ tạm"
+                    >
+                        <!-- Paste SVG Icon -->
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-clipboard-paste"><path d="M10 5H8a2 2 0 0 0-2 2v12c0 1.1.9 2 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><path d="M8 8H6a2 2 0 0 0-2 2v12c0 1.1.9 2 2 2h10a2 2 0 0 0 2-2v-2"/><path d="M16 5h-2a2 2 0 0 0-2 2v12c0 1.1.9 2 2 2h2"/><path d="M14 2v4"/><path d="M10 2v4"/><circle cx="12" cy="9" r="2"/><path d="m16 16-4 4-4-4"/></svg>
+                        <span id="pasteButtonText">Dán</span>
+                    </button>
+                    <button
+                        id="clearLinksBtn"
+                        class="button-tertiary"
+                        title="Xóa tất cả liên kết"
+                        aria-label="Xóa tất cả liên kết"
+                    >
+                        <!-- Trash Can SVG Icon -->
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash-2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+                        Xóa
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -254,9 +454,12 @@
             <button
                 id="copyLinkBtn"
                 class="button-primary w-full sm:w-auto flex-grow"
+                aria-label="Sao chép liên kết hiện tại"
             >
-                <!-- Copy SVG Icon -->
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-copy"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                <span id="copyLinkIconContainer">
+                    <!-- Copy SVG Icon -->
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-copy"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                </span>
                 <span id="copyButtonText">Sao chép Liên kết</span>
             </button>
             <!-- Initial Link count display, with colored number -->
@@ -273,15 +476,30 @@
                 Chưa có liên kết nào được hiển thị.
             </p>
 
+            <!-- View Original Link Button -->
+            <button
+                id="viewOriginalLinkBtn"
+                class="button-view-link hidden"
+                title="Mở liên kết hiện tại trong tab mới"
+                aria-label="Mở liên kết hiện tại"
+            >
+                <!-- External Link SVG Icon -->
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-external-link"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/></svg>
+                Xem Liên kết Gốc
+            </button>
+
             <!-- Copy Confirmation Message -->
             <p id="copyConfirmationMessage" class="copy-message font-medium text-center mb-4">
-                <!-- Message will be displayed here -->
+                <!-- Icon for message -->
+                <svg id="messageIcon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check-circle"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>
+                <span id="messageText"></span>
             </p>
 
             <!-- LLM Feature Button -->
             <button
                 id="summarizeVideoBtn"
                 class="button-secondary w-full py-3 px-6 rounded-lg font-semibold text-lg hover:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-opacity-50 shadow-md mb-6"
+                aria-label="Tóm tắt video hiện tại bằng AI"
             >
                 <!-- Sparkle SVG Icon -->
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sparkles"><path d="M9.9 10.8c.3.9.9 1.6 1.6 1.6H22l-2.7-2.7c-.7-.7-1.6-1.2-2.5-1.4"/><path d="M14.2 2.2c-.3.9-.9 1.6-1.6 1.6H2l2.7 2.7c.7.7 1.6 1.2 2.5 1.4"/><path d="M10.8 14.2c.9-.3 1.6-.9 1.6-1.6V2L9.9 4.7c-.7.7-1.2 1.6-1.4 2.5"/><path d="M2.2 9.9c.9.3 1.6.9 1.6 1.6V22l2.7-2.7c.7-.7 1.2-1.6 1.4-2.5"/></svg>
@@ -294,16 +512,16 @@
                 
                 <!-- Prompt Suggestions -->
                 <div class="flex flex-wrap gap-2 mb-4">
-                    <button class="prompt-suggestion-btn bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-sm hover:bg-gray-300 transition-colors">
+                    <button class="prompt-suggestion-btn bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-sm hover:bg-gray-300 transition-colors" title="Điền gợi ý: Tóm tắt ngắn gọn video" aria-label="Gợi ý: Tóm tắt ngắn">
                         Tóm tắt ngắn
                     </button>
-                    <button class="prompt-suggestion-btn bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-sm hover:bg-gray-300 transition-colors">
+                    <button class="prompt-suggestion-btn bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-sm hover:bg-gray-300 transition-colors" title="Điền gợi ý: Liệt kê các điểm chính của video" aria-label="Gợi ý: Các điểm chính">
                         Các điểm chính
                     </button>
-                    <button class="prompt-suggestion-btn bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-sm hover:bg-gray-300 transition-colors">
+                    <button class="prompt-suggestion-btn bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-sm hover:bg-gray-300 transition-colors" title="Điền gợi ý: Tạo 3 câu hỏi thường gặp (FAQ) và câu trả lời ngắn gọn" aria-label="Gợi ý: Tạo FAQ">
                         Tạo FAQ
                     </button>
-                    <button class="prompt-suggestion-btn bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-sm hover:bg-gray-300 transition-colors">
+                    <button class="prompt-suggestion-btn bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-sm hover:bg-gray-300 transition-colors" title="Điền gợi ý: Viết một đoạn mô tả video" aria-label="Gợi ý: Viết mô tả video">
                         Viết mô tả video
                     </button>
                 </div>
@@ -316,28 +534,34 @@
                     class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-800 mb-4"
                     placeholder="Ví dụ: Tóm tắt nội dung chính của video này."
                     rows="3"
+                    aria-label="Ô nhập yêu cầu tóm tắt"
                 ></textarea>
                 <button
                     id="generateSummaryBtn"
                     class="button-primary bg-indigo-500 hover:bg-indigo-600 focus:ring-indigo-500 py-2 px-5 text-base rounded-lg shadow-sm mb-4"
+                    aria-label="Tạo tóm tắt từ yêu cầu"
                 >
                     Tạo Tóm tắt
                 </button>
-                <div id="summaryLoader" class="hidden loader my-4"></div>
-                <div id="summaryOutput" class="mb-4">
+                <div id="summaryLoader" class="hidden loader my-4" role="status" aria-label="Đang tạo tóm tắt"></div>
+                <div id="summaryOutput" class="mb-4" aria-live="polite">
                     <!-- Summary will be displayed here -->
                 </div>
                 <button
                     id="copySummaryBtn"
                     class="button-secondary bg-blue-500 hover:bg-blue-600 focus:ring-blue-500 py-2 px-5 text-base rounded-lg shadow-sm mb-4 hidden"
+                    aria-label="Sao chép tóm tắt đã tạo"
                 >
-                    <!-- Copy SVG Icon -->
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-copy"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                    <span id="copySummaryIconContainer">
+                        <!-- Copy SVG Icon -->
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-copy"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                    </span>
                     <span id="copySummaryButtonText">Sao chép Tóm tắt</span>
                 </button>
                 <button
                     id="closeSummaryBtn"
                     class="bg-gray-300 text-gray-800 py-2 px-5 rounded-lg hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 text-base shadow-sm"
+                    aria-label="Đóng phần tóm tắt"
                 >
                     Đóng
                 </button>
@@ -365,19 +589,37 @@
                 </ol>
             </div>
         </div>
+        <div class="mt-8 text-center">
+            <button
+                id="resetAppBtn"
+                class="button-reset"
+                title="Đặt lại toàn bộ ứng dụng về trạng thái ban đầu"
+                aria-label="Đặt lại ứng dụng"
+            >
+                <!-- Refresh CCW SVG Icon -->
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-refresh-ccw"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.76 2.75L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.76-2.75L21 16"/><path d="M21 21v-5h-5"/></svg>
+                Đặt lại Ứng dụng
+            </button>
+        </div>
     </div>
 
     <script>
         // Get references to DOM elements
         const linkInput = document.getElementById('linkInput');
-        const clearLinksBtn = document.getElementById('clearLinksBtn'); // New clear button
+        const clearLinksBtn = document.getElementById('clearLinksBtn');
+        const pasteLinksBtn = document.getElementById('pasteLinksBtn');
+        const pasteButtonText = document.getElementById('pasteButtonText');
         const initialLinkCountElement = document.getElementById('initialLinkCount');
         const linkDisplayArea = document.getElementById('linkDisplayArea');
         const currentLinkElement = document.getElementById('currentLink');
         const copyLinkBtn = document.getElementById('copyLinkBtn');
-        const copyButtonText = document.getElementById('copyButtonText'); // Span for copy button text
+        const copyButtonText = document.getElementById('copyButtonText');
+        const copyLinkIconContainer = document.getElementById('copyLinkIconContainer');
         const linkCountElement = document.getElementById('linkCount');
         const copyConfirmationMessage = document.getElementById('copyConfirmationMessage');
+        const messageText = document.getElementById('messageText');
+        const messageIcon = document.getElementById('messageIcon');
+        const viewOriginalLinkBtn = document.getElementById('viewOriginalLinkBtn');
 
         // LLM Feature Elements
         const summarizeVideoBtn = document.getElementById('summarizeVideoBtn');
@@ -387,62 +629,103 @@
         const summaryLoader = document.getElementById('summaryLoader');
         const summaryOutput = document.getElementById('summaryOutput');
         const closeSummaryBtn = document.getElementById('closeSummaryBtn');
-        const copySummaryBtn = document.getElementById('copySummaryBtn'); // New copy summary button
-        const copySummaryButtonText = document.getElementById('copySummaryButtonText'); // Span for copy summary button text
-        const promptSuggestionButtons = document.querySelectorAll('.prompt-suggestion-btn'); // New prompt suggestion buttons
+        const copySummaryBtn = document.getElementById('copySummaryBtn');
+        const copySummaryButtonText = document.getElementById('copySummaryButtonText');
+        const copySummaryIconContainer = document.getElementById('copySummaryIconContainer');
+        const promptSuggestionButtons = document.querySelectorAll('.prompt-suggestion-btn');
 
-        let links = []; // Array to store processed links
-        let messageTimeout; // To store the timeout ID for hiding the message
-        let copyButtonTimeout; // To store the timeout ID for copy button text change
-        let copySummaryButtonTimeout; // To store the timeout ID for copy summary button text change
+        // Reset Button
+        const resetAppBtn = document.getElementById('resetAppBtn');
+
+        let links = [];
+        let messageTimeout;
+        let copyButtonTimeout;
+        let copySummaryButtonTimeout;
+        let pasteButtonTimeout;
+        let inputGlowTimeout;
+
+        // Regex for basic YouTube URL validation
+        const youtubeUrlRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/(watch\?v=|embed\/|v\/|)([\w-]{11})(.*)?$/;
+
+        // SVG Icons (defined once for reusability)
+        const copyIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-copy"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>`;
+        const checkIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check"><path d="M20 6 9 17l-5-5"/></svg>`;
+        const errorIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x-circle"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></circle></svg>`;
+        const successMessageIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check-circle"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>`;
+        const errorMessageIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x-circle"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></circle></svg>`;
+        const clipboardPlusIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-clipboard-plus text-blue-600"><path d="M10 5H8a2 2 0 0 0-2 2v12c0 1.1.9 2 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><path d="M14 2v4"/><path d="M10 2v4"/><path d="M12 17v-6"/><path d="M9 14h6"/></svg>`;
+        const externalLinkIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-external-link"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/></svg>`;
+
 
         // Function to show a temporary message within the app
         function showTemporaryMessage(message, isError = false) {
-            // Clear any existing timeout to prevent messages from overlapping
             if (messageTimeout) {
                 clearTimeout(messageTimeout);
             }
 
-            copyConfirmationMessage.textContent = message;
-            // Remove all color classes first
+            messageText.textContent = message;
             copyConfirmationMessage.classList.remove('success', 'error'); 
-            // Add appropriate color and show class
             copyConfirmationMessage.classList.add(isError ? 'error' : 'success', 'show'); 
+            
+            messageIcon.innerHTML = isError ? errorMessageIconSvg : successMessageIconSvg;
+            messageIcon.classList.remove(isError ? 'text-green-600' : 'text-red-600');
+            messageIcon.classList.add(isError ? 'text-red-600' : 'text-green-600');
 
-            // Hide the message after 3 seconds
             messageTimeout = setTimeout(() => {
                 copyConfirmationMessage.classList.remove('show');
-                copyConfirmationMessage.textContent = ''; // Clear text after hiding
-            }, 3000); // Message visible for 3 seconds
+                messageText.textContent = '';
+            }, 3000);
         }
 
         // Function to display the current link and update count
         function displayCurrentLink() {
-            // Update the internal 'links' array from the textarea content
             const rawInput = linkInput.value;
             links = rawInput.split('\n')
                             .map(link => link.trim())
-                            .filter(link => link !== '');
+                            .filter(link => link !== '' && youtubeUrlRegex.test(link));
+
+            const allInputLines = rawInput.split('\n').map(link => link.trim()).filter(link => link !== '');
+            if (allInputLines.length > links.length) {
+                showTemporaryMessage(`Đã bỏ qua ${allInputLines.length - links.length} liên kết không phải YouTube hợp lệ.`, true);
+            }
 
             if (links.length === 0) {
-                currentLinkElement.textContent = 'Đã xử lý tất cả liên kết!';
-                currentLinkElement.classList.add('completed-state'); // Add completion state class
+                currentLinkElement.innerHTML = `${successMessageIconSvg} Đã xử lý tất cả liên kết!`;
+                currentLinkElement.classList.add('completed-state');
+                currentLinkElement.classList.remove('no-links-state');
+                currentLinkElement.removeAttribute('data-tooltip'); // Remove tooltip
                 linkCountElement.innerHTML = `Còn lại: <span class="text-purple-700">0</span> liên kết.`;
-                showTemporaryMessage('Bạn đã xử lý tất cả các liên kết.');
-                copyLinkBtn.disabled = true; // Disable copy button if no links
-                summarizeVideoBtn.disabled = true; // Disable summarize button if no links
-                summarySection.classList.add('hidden'); // Hide summary section if no links
-                summaryOutput.textContent = ''; // Clear summary output
-                summaryPromptInput.value = ''; // Clear summary prompt
-                copySummaryBtn.classList.add('hidden'); // Hide copy summary button
+                copyLinkBtn.disabled = true;
+                summarizeVideoBtn.disabled = true;
+                viewOriginalLinkBtn.classList.add('hidden');
+                summarySection.classList.add('hidden');
+                summaryOutput.textContent = '';
+                summaryPromptInput.value = '';
+                copySummaryBtn.classList.add('hidden');
+                return;
+            } else if (linkInput.value.trim() === '' || links.length === 0) {
+                currentLinkElement.innerHTML = `${clipboardPlusIconSvg} Dán liên kết YouTube của bạn vào đây để bắt đầu!`;
+                currentLinkElement.classList.add('no-links-state');
+                currentLinkElement.classList.remove('completed-state');
+                currentLinkElement.removeAttribute('data-tooltip'); // Remove tooltip
+                linkCountElement.innerHTML = `Còn lại: <span class="text-purple-700">0</span> liên kết.`;
+                copyLinkBtn.disabled = true;
+                summarizeVideoBtn.disabled = true;
+                viewOriginalLinkBtn.classList.add('hidden');
+                summarySection.classList.add('hidden');
+                summaryOutput.textContent = '';
+                summaryPromptInput.value = '';
+                copySummaryBtn.classList.add('hidden');
                 return;
             }
 
-            currentLinkElement.textContent = links[0]; // Always display the first link in the remaining list
-            currentLinkElement.classList.remove('completed-state'); // Remove completion state class
+            currentLinkElement.textContent = links[0];
+            currentLinkElement.setAttribute('data-tooltip', links[0]); // Add tooltip with full URL
+            currentLinkElement.classList.remove('completed-state', 'no-links-state');
             linkCountElement.innerHTML = `Còn lại: <span class="text-purple-700">${links.length}</span> liên kết.`;
-            copyLinkBtn.disabled = false; // Enable copy button if there are links
-            summarizeVideoBtn.disabled = false; // Enable summarize button if there are links
+            copyLinkBtn.disabled = false;
+            summarizeVideoBtn.disabled = false;
+            viewOriginalLinkBtn.classList.remove('hidden');
         }
 
         // Function to update the initial link count display
@@ -450,31 +733,92 @@
             const rawInput = linkInput.value;
             const currentLinks = rawInput.split('\n')
                                         .map(link => link.trim())
-                                        .filter(link => link !== '');
+                                        .filter(link => link !== '' && youtubeUrlRegex.test(link));
             initialLinkCountElement.innerHTML = `Bạn đang có: <span class="text-purple-700">${currentLinks.length}</span> liên kết.`;
             
-            // Also update the main display area's current link and remaining count
             displayCurrentLink();
         }
 
         // Event listener for input changes in the textarea
-        linkInput.addEventListener('input', updateInitialLinkCount);
+        linkInput.addEventListener('input', () => {
+            updateInitialLinkCount();
+            linkInput.classList.remove('input-active');
+            void linkInput.offsetWidth;
+            linkInput.classList.add('input-active');
+        });
+
+        // Event listener for the "Paste Links" button
+        pasteLinksBtn.addEventListener('click', async () => {
+            try {
+                const clipboardText = await navigator.clipboard.readText();
+                if (clipboardText) {
+                    linkInput.value = (linkInput.value ? linkInput.value + '\n' : '') + clipboardText;
+                    updateInitialLinkCount();
+                    showTemporaryMessage('Đã dán liên kết từ khay nhớ tạm!');
+
+                    pasteButtonText.textContent = 'Đã Dán!';
+                    pasteLinksBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+                    pasteLinksBtn.classList.remove('bg-orange-500', 'hover:bg-orange-600');
+
+                    if (pasteButtonTimeout) {
+                        clearTimeout(pasteButtonTimeout);
+                    }
+                    pasteButtonTimeout = setTimeout(() => {
+                        pasteButtonText.textContent = 'Dán';
+                        pasteLinksBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+                        pasteLinksBtn.classList.add('bg-orange-500', 'hover:bg-orange-600');
+                    }, 1500);
+
+                    linkInput.classList.remove('input-active');
+                    void linkInput.offsetWidth;
+                    linkInput.classList.add('input-active');
+
+                } else {
+                    showTemporaryMessage('Khay nhớ tạm trống hoặc không có văn bản.', true);
+                    pasteButtonText.textContent = 'Lỗi Dán!'; // Specific error feedback for paste
+                    pasteLinksBtn.classList.add('bg-red-500', 'hover:bg-red-600');
+                    pasteLinksBtn.classList.remove('bg-orange-500', 'hover:bg-orange-600');
+                    if (pasteButtonTimeout) {
+                        clearTimeout(pasteButtonTimeout);
+                    }
+                    pasteButtonTimeout = setTimeout(() => {
+                        pasteButtonText.textContent = 'Dán';
+                        pasteLinksBtn.classList.remove('bg-red-500', 'hover:bg-red-600');
+                        pasteLinksBtn.classList.add('bg-orange-500', 'hover:bg-orange-600');
+                    }, 1500);
+                }
+            } catch (err) {
+                console.error('Lỗi khi đọc khay nhớ tạm:', err);
+                showTemporaryMessage('Không thể đọc khay nhớ tạm. Vui lòng dán thủ công.', true);
+                pasteButtonText.textContent = 'Lỗi Dán!'; // Specific error feedback for paste
+                pasteLinksBtn.classList.add('bg-red-500', 'hover:bg-red-600');
+                pasteLinksBtn.classList.remove('bg-orange-500', 'hover:bg-orange-600');
+                if (pasteButtonTimeout) {
+                    clearTimeout(pasteButtonTimeout);
+                }
+                pasteButtonTimeout = setTimeout(() => {
+                    pasteButtonText.textContent = 'Dán';
+                    pasteLinksBtn.classList.remove('bg-red-500', 'hover:bg-red-600');
+                    pasteLinksBtn.classList.add('bg-orange-500', 'hover:bg-orange-600');
+                }, 1500);
+            }
+        });
 
         // Event listener for the "Clear Links" button
         clearLinksBtn.addEventListener('click', () => {
-            linkInput.value = ''; // Clear the textarea
-            updateInitialLinkCount(); // Update counts and display
+            linkInput.value = '';
+            updateInitialLinkCount();
             showTemporaryMessage('Đã xóa tất cả liên kết khỏi danh sách.');
-            summarySection.classList.add('hidden'); // Hide summary section if open
-            summaryOutput.textContent = ''; // Clear summary output
-            summaryPromptInput.value = ''; // Clear summary prompt
-            copySummaryBtn.classList.add('hidden'); // Hide copy summary button
+            summarySection.classList.add('hidden');
+            summaryOutput.textContent = '';
+            summaryPromptInput.value = '';
+            copySummaryBtn.classList.add('hidden');
         });
 
         // Event listener for the "Copy Link" button
         copyLinkBtn.addEventListener('click', () => {
             if (links.length > 0) {
-                const linkToCopy = links[0]; // Always copy the first link
+                const linkToCopy = links[0];
 
                 const textArea = document.createElement('textarea');
                 textArea.value = linkToCopy;
@@ -484,8 +828,8 @@
                     document.execCommand('copy');
                     showTemporaryMessage('Đã sao chép liên kết vào khay nhớ tạm!');
 
-                    // Visual feedback on button
                     copyButtonText.textContent = 'Đã Sao Chép!';
+                    copyLinkIconContainer.innerHTML = checkIconSvg;
                     copyLinkBtn.classList.add('bg-green-500', 'hover:bg-green-600');
                     copyLinkBtn.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
 
@@ -494,37 +838,44 @@
                     }
                     copyButtonTimeout = setTimeout(() => {
                         copyButtonText.textContent = 'Sao chép Liên kết';
+                        copyLinkIconContainer.innerHTML = copyIconSvg;
                         copyLinkBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
                         copyLinkBtn.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
-                    }, 1500); // Revert after 1.5 seconds
+                    }, 1500);
 
-
-                    // Remove the copied link from the array
-                    links.shift(); // Removes the first element from the array
-                    
-                    // Update the textarea with the remaining links
+                    links.shift();
                     linkInput.value = links.join('\n'); 
-                    
-                    updateInitialLinkCount(); // Update both counters and display
+                    updateInitialLinkCount();
                 } catch (err) {
                     console.error('Không thể sao chép liên kết: ', err);
-                    showTemporaryMessage('Không thể sao chép liên kết. Vui lòng sao chép thủ công.', true); // Show error
+                    showTemporaryMessage('Không thể sao chép liên kết. Vui lòng sao chép thủ công.', true);
+                } finally {
+                    document.body.removeChild(textArea);
                 }
-                document.body.removeChild(textArea);
             } else {
                 showTemporaryMessage('Không có liên kết nào để sao chép.', true);
             }
         });
 
+        // Event listener for "View Original Link" button
+        viewOriginalLinkBtn.addEventListener('click', () => {
+            if (currentLinkElement.textContent && youtubeUrlRegex.test(currentLinkElement.textContent)) {
+                window.open(currentLinkElement.textContent, '_blank');
+            } else {
+                showTemporaryMessage('Không có liên kết hợp lệ để xem.', true);
+            }
+        });
+
+
         // Event listener for the "Summarize Video" button
         summarizeVideoBtn.addEventListener('click', () => {
             if (links.length > 0) {
                 summarySection.classList.remove('hidden');
-                summaryOutput.textContent = ''; // Clear previous summary
-                copySummaryBtn.classList.add('hidden'); // Hide copy summary button initially
-                // Pre-fill with a more generic prompt for better initial experience
+                summaryOutput.textContent = '';
+                summaryOutput.classList.remove('error-state');
+                copySummaryBtn.classList.add('hidden');
                 summaryPromptInput.value = `Tóm tắt video YouTube này: ${links[0]}.`;
-                summaryPromptInput.focus(); // Focus on the prompt input
+                summaryPromptInput.focus();
             } else {
                 showTemporaryMessage('Không có liên kết nào để tóm tắt.', true);
                 summarySection.classList.add('hidden');
@@ -549,7 +900,6 @@
             });
         });
 
-
         // Event listener for the "Generate Summary" button
         generateSummaryBtn.addEventListener('click', async () => {
             const prompt = summaryPromptInput.value.trim();
@@ -558,11 +908,15 @@
                 return;
             }
 
-            summaryOutput.textContent = ''; // Clear previous output
-            summaryLoader.classList.remove('hidden'); // Show loader
-            generateSummaryBtn.disabled = true; // Disable button during processing
-            copyLinkBtn.disabled = true; // Temporarily disable copy button during LLM call
-            copySummaryBtn.classList.add('hidden'); // Hide copy summary button during generation
+            summaryOutput.textContent = 'Đang tạo tóm tắt...';
+            summaryOutput.classList.add('loading-text');
+            summaryOutput.classList.remove('error-state');
+            summaryLoader.classList.remove('hidden');
+            generateSummaryBtn.disabled = true;
+            copyLinkBtn.disabled = true;
+            summarizeVideoBtn.disabled = true;
+            viewOriginalLinkBtn.disabled = true;
+            copySummaryBtn.classList.add('hidden');
 
             try {
                 let chatHistory = [];
@@ -585,20 +939,25 @@
                     const text = result.candidates[0].content.parts[0].text;
                     summaryOutput.textContent = text;
                     showTemporaryMessage('Tóm tắt đã được tạo thành công!');
-                    copySummaryBtn.classList.remove('hidden'); // Show copy summary button
+                    copySummaryBtn.classList.remove('hidden');
                 } else {
                     summaryOutput.textContent = 'Không thể tạo tóm tắt. Cấu trúc phản hồi không mong muốn.';
+                    summaryOutput.classList.add('error-state');
                     showTemporaryMessage('Lỗi khi tạo tóm tắt.', true);
                 }
             } catch (error) {
                 console.error('Lỗi khi gọi API Gemini:', error);
                 summaryOutput.textContent = 'Đã xảy ra lỗi khi kết nối với AI. Vui lòng kiểm tra kết nối mạng và thử lại.';
+                summaryOutput.classList.add('error-state');
                 showTemporaryMessage('Lỗi kết nối AI.', true);
             } finally {
-                summaryLoader.classList.add('hidden'); // Hide loader
-                generateSummaryBtn.disabled = false; // Enable button
-                if (links.length > 0) { // Only re-enable if there are still links
-                    copyLinkBtn.disabled = false; 
+                summaryLoader.classList.add('hidden');
+                summaryOutput.classList.remove('loading-text');
+                generateSummaryBtn.disabled = false;
+                if (links.length > 0) {
+                    copyLinkBtn.disabled = false;
+                    summarizeVideoBtn.disabled = false;
+                    viewOriginalLinkBtn.disabled = false;
                 }
             }
         });
@@ -606,7 +965,7 @@
         // Event listener for the "Copy Summary" button
         copySummaryBtn.addEventListener('click', () => {
             const summaryText = summaryOutput.textContent;
-            if (summaryText) {
+            if (summaryText && summaryText !== 'Đang tạo tóm tắt...') {
                 const textArea = document.createElement('textarea');
                 textArea.value = summaryText;
                 document.body.appendChild(textArea);
@@ -615,8 +974,8 @@
                     document.execCommand('copy');
                     showTemporaryMessage('Đã sao chép tóm tắt vào khay nhớ tạm!');
 
-                    // Visual feedback on button
                     copySummaryButtonText.textContent = 'Đã Sao Chép!';
+                    copySummaryIconContainer.innerHTML = checkIconSvg;
                     copySummaryBtn.classList.add('bg-green-500', 'hover:bg-green-600');
                     copySummaryBtn.classList.remove('bg-blue-500', 'hover:bg-blue-600');
 
@@ -625,15 +984,17 @@
                     }
                     copySummaryButtonTimeout = setTimeout(() => {
                         copySummaryButtonText.textContent = 'Sao chép Tóm tắt';
+                        copySummaryIconContainer.innerHTML = copyIconSvg;
                         copySummaryBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
                         copySummaryBtn.classList.add('bg-blue-500', 'hover:bg-blue-600');
-                    }, 1500); // Revert after 1.5 seconds
+                    }, 1500);
 
                 } catch (err) {
                     console.error('Không thể sao chép tóm tắt: ', err);
                     showTemporaryMessage('Không thể sao chép tóm tắt. Vui lòng sao chép thủ công.', true);
+                } finally {
+                    document.body.removeChild(textArea);
                 }
-                document.body.removeChild(textArea);
             } else {
                 showTemporaryMessage('Không có tóm tắt nào để sao chép.', true);
             }
@@ -642,13 +1003,37 @@
         // Event listener for the "Close Summary" button
         closeSummaryBtn.addEventListener('click', () => {
             summarySection.classList.add('hidden');
-            summaryOutput.textContent = ''; // Clear output when closing
-            summaryPromptInput.value = ''; // Clear prompt input
-            copySummaryBtn.classList.add('hidden'); // Hide copy summary button
+            summaryOutput.textContent = '';
+            summaryOutput.classList.remove('error-state');
+            summaryPromptInput.value = '';
+            copySummaryBtn.classList.add('hidden');
+        });
+
+        // Event listener for the "Reset App" button
+        resetAppBtn.addEventListener('click', () => {
+            linkInput.value = '';
+            updateInitialLinkCount();
+            showTemporaryMessage('Ứng dụng đã được đặt lại.');
+            summarySection.classList.add('hidden');
+            summaryOutput.textContent = '';
+            summaryOutput.classList.remove('error-state');
+            summaryPromptInput.value = '';
+            copySummaryBtn.classList.add('hidden');
+            // Reset copy button visual state
+            copyButtonText.textContent = 'Sao chép Liên kết';
+            copyLinkIconContainer.innerHTML = copyIconSvg;
+            copyLinkBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+            copyLinkBtn.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
+            // Reset paste button visual state
+            pasteButtonText.textContent = 'Dán';
+            pasteLinksBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+            pasteLinksBtn.classList.add('bg-orange-500', 'hover:bg-orange-600');
+            // Hide view original link button on reset
+            viewOriginalLinkBtn.classList.add('hidden');
         });
 
         // Initial display state and count update on page load
-        updateInitialLinkCount(); // Call on load to show initial count (0)
+        updateInitialLinkCount();
     </script>
 </body>
 </html>
