@@ -114,21 +114,21 @@
             position: absolute;
             left: -9999px; /* Move off-screen */
             top: -9999px;
-            width: 100%; /* Ensure it takes full width for capture */
-            box-sizing: border-box; /* Include padding in width */
-            background-color: white; /* Ensure white background for print */
-            color: black; /* Ensure black text for print */
-            z-index: -1; /* Keep it behind everything else */
-            padding: 20px; /* Add some default padding */
+            width: auto; /* Width will be set dynamically */
+            box-sizing: border-box; 
+            background-color: white; 
+            color: black;
+            z-index: -1; 
+            padding: 20px; 
         }
         #printable-report.visible-for-capture {
-            position: static; /* Bring it back to normal flow for capture */
+            position: static; 
             left: 0;
             top: 0;
-            z-index: 9998; /* Bring it above other content temporarily */
-            background-color: white; /* Ensure white background */
-            color: black; /* Ensure black text */
-            display: block !important; /* Override hidden */
+            z-index: 9998; 
+            background-color: white;
+            color: black;
+            display: inline-block !important; /* Important for width calculation */
         }
     </style>
 </head>
@@ -307,38 +307,64 @@
     <div id="geminiSuggestModal" class="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50 hidden">
         <div class="bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-2xl mx-4 flex flex-col">
             <h3 class="text-xl font-bold text-white mb-4 flex items-center gap-2">✨ Trợ lý Sự kiện</h3>
-            <div class="mb-4">
-                <label for="geminiPrompt" class="block mb-2 text-sm text-gray-300">Nhập chủ đề hoặc ý tưởng cho sự kiện của bạn:</label>
-                <textarea id="geminiPrompt" class="form-textarea w-full" rows="2" placeholder="Ví dụ: Văn nghệ mừng lễ Vu Lan báo hiếu..."></textarea>
-            </div>
-             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-                <div>
-                    <label for="guestCountInput" class="block mb-2 text-sm text-gray-300">Số lượng khách (ước tính)</label>
-                    <input type="number" id="guestCountInput" class="form-input" placeholder="50">
+            
+            <div id="geminiStandardInputs">
+                <div class="mb-4">
+                    <label for="geminiPrompt" class="block mb-2 text-sm text-gray-300">Nhập chủ đề hoặc ý tưởng cho sự kiện của bạn:</label>
+                    <textarea id="geminiPrompt" class="form-textarea w-full" rows="2" placeholder="Ví dụ: Văn nghệ mừng lễ Vu Lan báo hiếu..."></textarea>
                 </div>
-                <div>
-                    <label for="geminiActionSelector" class="block mb-2 text-sm text-gray-300">Chọn hành động của AI:</label>
-                    <select id="geminiActionSelector" class="form-select">
-                        <option value="description">Viết Mô tả Sự kiện</option>
+                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                    <div id="guestCountWrapper">
+                        <label for="guestCountInput" class="block mb-2 text-sm text-gray-300">Số lượng khách (ước tính)</label>
+                        <input type="number" id="guestCountInput" class="form-input" placeholder="50">
+                    </div>
+                </div>
+            </div>
+
+            <div id="geminiFeedbackWrapper" class="hidden mb-4">
+                 <label for="geminiFeedbackInput" class="block mb-2 text-sm text-gray-300">Dán các phản hồi của người tham dự vào đây:</label>
+                 <textarea id="geminiFeedbackInput" class="form-textarea w-full" rows="5" placeholder="Ví dụ: Sự kiện rất tuyệt! Âm thanh hơi nhỏ. Thức ăn ngon..."></textarea>
+            </div>
+
+            <div>
+                <label for="geminiActionSelector" class="block mb-2 text-sm text-gray-300">Chọn hành động của AI:</label>
+                <select id="geminiActionSelector" class="form-select">
+                    <optgroup label="Lập kế hoạch & Sáng tạo">
                         <option value="theme_ideas">Gợi ý Chủ đề</option>
-                        <option value="invitation">Soạn Thư mời</option>
-                        <option value="social_posts">Soạn Bài đăng Mạng xã hội</option>
-                        <option value="risks">Phân tích Rủi ro</option>
-                        <option value="budget">Gợi ý Ngân sách</option>
+                        <option value="name_suggestions">Gợi ý Tên Sự kiện</option>
+                        <option value="description">Viết Mô tả Sự kiện</option>
+                        <option value="target_audience">Xác định Đối tượng Mục tiêu</option>
+                        <option value="activity_ideas">Ý tưởng Hoạt động</option>
+                        <option value="menu_suggestions">Gợi ý Thực đơn</option>
+                        <option value="decoration_ideas">Gợi ý Trang trí</option>
+                        <option value="vendor_suggestions">Gợi ý Nhà cung cấp</option>
+                    </optgroup>
+                    <optgroup label="Thực thi & Quản lý">
                         <option value="agenda">Tạo Lịch trình</option>
                         <option value="mc_script">Tạo Kịch bản MC</option>
-                        <option value="menu_suggestions">Gợi ý Thực đơn</option>
-                        <option value="thank_you_note">Tạo Lời cảm ơn</option>
-                        <option value="vendor_suggestions">Gợi ý Nhà cung cấp</option>
-                        <option value="activity_ideas">Ý tưởng Hoạt động</option>
-                        <option value="faq">Tạo FAQ</option>
-                        <option value="survey_questions">Tạo Câu hỏi Khảo sát</option>
+                        <option value="risks">Phân tích Rủi ro</option>
+                        <option value="crisis_script">Kịch bản Khủng hoảng</option>
+                        <option value="budget">Gợi ý Ngân sách</option>
                         <option value="items">Gợi ý Hạng mục</option>
-                    </select>
-                </div>
+                    </optgroup>
+                     <optgroup label="Truyền thông & Quan hệ">
+                        <option value="promotion_plan">Lập Kế hoạch Quảng bá</option>
+                        <option value="invitation">Soạn Thư mời</option>
+                        <option value="sponsor_email">Soạn Email cho Nhà tài trợ</option>
+                        <option value="speaker_email">Soạn Email cho Diễn giả</option>
+                        <option value="social_posts">Soạn Bài đăng Mạng xã hội</option>
+                        <option value="press_release">Soạn Thông cáo Báo chí</option>
+                    </optgroup>
+                    <optgroup label="Sau Sự kiện">
+                        <option value="thank_you_note">Tạo Lời cảm ơn</option>
+                        <option value="survey_questions">Tạo Câu hỏi Khảo sát</option>
+                        <option value="analyze_feedback">Phân tích Phản hồi</option>
+                        <option value="post_event_report">Viết Báo cáo Tổng kết</option>
+                    </optgroup>
+                </select>
             </div>
             
-            <button id="generateGeminiContentBtn" class="btn btn-primary w-full">Tạo nội dung ✨</button>
+            <button id="generateGeminiContentBtn" class="btn btn-primary w-full mt-4">Tạo nội dung ✨</button>
 
             <div id="gemini-loading" class="text-center my-4 hidden">
                 <p class="text-purple-400">AI đang suy nghĩ, vui lòng chờ trong giây lát...</p>
@@ -431,7 +457,7 @@
             eventSelector, deleteSelectedEventBtn, newListBtn, renameListBtn, shareListBtn,
             geminiSuggestModal, geminiSuggestBtn, generateGeminiContentBtn, geminiPrompt, 
             geminiResultContainer, geminiLoading, cancelGeminiSuggestBtn, addSuggestionsBtn, geminiSectionSelector,
-            geminiSuggestionsWrapper, geminiActionSelector, guestCountInput,
+            geminiSuggestionsWrapper, geminiActionSelector, guestCountInput, geminiStandardInputs, geminiFeedbackWrapper, geminiFeedbackInput,
             taskSuggestModal, taskSuggestItemName, getTaskSuggestionsBtn, taskSuggestLoading,
             taskSuggestionsContainer, cancelTaskSuggestBtn, addTasksToNotesBtn,
             cancelEditBtn, deleteFromFormBtn, exportBtn;
@@ -968,7 +994,12 @@
                 <div class="flex items-center gap-3 p-2 bg-gray-700 rounded-lg manage-sections-item" data-id="${sec.id}">
                     <svg class="w-5 h-5 text-gray-400 cursor-grab drag-handle flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v12a1 1 0 11-2 0V4a1 1 0 011-1zM4 9a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1z" clip-rule="evenodd" /></svg>
                     <input type="text" value="${sec.title}" data-section-id="${sec.id}" class="form-input flex-grow text-sm py-1">
-                    <button data-section-id="${sec.id}" class="btn btn-delete p-2 delete-section-btn" data-tooltip="Xoá mục này"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="pointer-events-none"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>
+                    <button data-section-id="${sec.id}" class="btn btn-secondary p-2 copy-section-btn" data-tooltip="Sao chép mục này">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-copy" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M4 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V2Zm2-1a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H6ZM2 5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-1h-1v1a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h1V5H2Z"/></svg>
+                    </button>
+                    <button data-section-id="${sec.id}" class="btn btn-delete p-2 delete-section-btn" data-tooltip="Xoá mục này">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="pointer-events-none"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    </button>
                 </div>`).join('');
         };
         
@@ -1050,6 +1081,9 @@
             geminiSuggestionsWrapper = document.getElementById('geminiSuggestionsWrapper');
             geminiActionSelector = document.getElementById('geminiActionSelector');
             guestCountInput = document.getElementById('guestCountInput');
+            geminiStandardInputs = document.getElementById('geminiStandardInputs');
+            geminiFeedbackWrapper = document.getElementById('geminiFeedbackWrapper');
+            geminiFeedbackInput = document.getElementById('geminiFeedbackInput');
 
 
             // Gemini Task Suggestion Modal Elements
@@ -1327,6 +1361,24 @@
                     if (button.id === 'addNewSectionBtn') {
                         tempSections.push({ id: `sec_${Date.now()}`, title: `Mục mới ${tempSections.length + 1}`, columns: JSON.parse(JSON.stringify(DEFAULT_COLUMNS)), registrations: [], isTransposed: false });
                         renderManageSectionsForm();
+                    } else if (button.classList.contains('copy-section-btn')) {
+                        const sectionId = button.dataset.sectionId;
+                        const sectionIndex = tempSections.findIndex(s => s.id === sectionId);
+                        if (sectionIndex > -1) {
+                            const originalSection = tempSections[sectionIndex];
+                            const newSection = JSON.parse(JSON.stringify(originalSection)); // Deep copy
+                            newSection.id = `sec_${Date.now()}`; // New unique ID
+                            newSection.title = `${originalSection.title} (Bản sao)`;
+                            // Give new IDs to all registrations within the copied section
+                            if (newSection.registrations) {
+                                newSection.registrations = newSection.registrations.map(reg => {
+                                    reg.id = `reg_${Date.now()}_${Math.random()}`;
+                                    return reg;
+                                });
+                            }
+                            tempSections.splice(sectionIndex + 1, 0, newSection);
+                            renderManageSectionsForm();
+                        }
                     } else if (button.classList.contains('delete-section-btn')) {
                         if (tempSections.length <= 1) return showToast("Phải có ít nhất một mục.", "error");
                         tempSections = tempSections.filter(s => s.id !== button.dataset.sectionId);
@@ -1391,8 +1443,16 @@
                 });
 
                 geminiActionSelector.addEventListener('change', (e) => {
-                    const needsSectionSelector = e.target.value === 'items';
+                    const action = e.target.value;
+                    const needsSectionSelector = action === 'items';
+                    const needsGuestCount = ['budget', 'agenda', 'activity_ideas', 'menu_suggestions', 'promotion_plan'].includes(action);
+                    const needsFeedbackInput = action === 'analyze_feedback';
+                    
                     geminiSuggestionsWrapper.classList.toggle('hidden', !needsSectionSelector);
+                    guestCountInput.parentElement.classList.toggle('hidden', !needsGuestCount);
+                    geminiStandardInputs.classList.toggle('hidden', needsFeedbackInput);
+                    geminiFeedbackWrapper.classList.toggle('hidden', !needsFeedbackInput);
+
                     if (needsSectionSelector) {
                          geminiSectionSelector.innerHTML = eventData.sections.map(s => `<option value="${s.id}">${s.title}</option>`).join('');
                     }
@@ -1402,7 +1462,14 @@
 
                 const handleGeminiRequest = async (actionType) => {
                     const userPrompt = geminiPrompt.value.trim();
-                    if (!userPrompt) return showToast('Vui lòng nhập chủ đề sự kiện.', 'error');
+                    const feedbackText = geminiFeedbackInput.value.trim();
+
+                    if (actionType !== 'analyze_feedback' && !userPrompt) {
+                         return showToast('Vui lòng nhập chủ đề sự kiện.', 'error');
+                    }
+                    if (actionType === 'analyze_feedback' && !feedbackText) {
+                         return showToast('Vui lòng dán nội dung phản hồi vào ô.', 'error');
+                    }
                     
                     const guestCount = guestCountInput.value || 50;
 
@@ -1432,6 +1499,22 @@
                                 fullPrompt = `Dựa trên ý tưởng ban đầu là "${userPrompt}", hãy gợi ý 3 chủ đề sự kiện độc đáo và sáng tạo. Với mỗi chủ đề, cung cấp một mô tả ngắn gọn. Trả lời bằng tiếng Việt.`;
                                 payload = { contents: [{ role: "user", parts: [{ text: fullPrompt }] }] };
                                 break;
+                            case 'name_suggestions':
+                                fullPrompt = `Dựa trên chủ đề sự kiện là "${userPrompt}", hãy gợi ý 5 cái tên sự kiện thật hấp dẫn và sáng tạo. Trả lời bằng tiếng Việt.`;
+                                payload = { contents: [{ role: "user", parts: [{ text: fullPrompt }] }] };
+                                break;
+                            case 'target_audience':
+                                fullPrompt = `Đối với một sự kiện có chủ đề "${userPrompt}", hãy phác thảo chân dung đối tượng khách mời mục tiêu. Mô tả các đặc điểm chính và lý do họ sẽ quan tâm đến sự kiện này. Trả lời bằng tiếng Việt.`;
+                                payload = { contents: [{ role: "user", parts: [{ text: fullPrompt }] }] };
+                                break;
+                            case 'press_release':
+                                fullPrompt = `Soạn một bản thông cáo báo chí cho sự kiện có chủ đề "${userPrompt}". Bao gồm tiêu đề, tóm tắt, trích dẫn, và thông tin liên hệ. Trả lời bằng tiếng Việt.`;
+                                payload = { contents: [{ role: "user", parts: [{ text: fullPrompt }] }] };
+                                break;
+                            case 'post_event_report':
+                                fullPrompt = `Tạo một dàn ý cho báo cáo tổng kết sau sự kiện có chủ đề "${userPrompt}". Bao gồm các mục như tóm tắt, phân tích số liệu, những điểm thành công, những điểm cần cải thiện, và đề xuất cho lần sau. Trả lời bằng tiếng Việt.`;
+                                payload = { contents: [{ role: "user", parts: [{ text: fullPrompt }] }] };
+                                break;
                             case 'menu_suggestions':
                                 fullPrompt = `Dựa trên sự kiện có chủ đề "${userPrompt}" cho khoảng ${guestCount} khách, hãy gợi ý một thực đơn mẫu bao gồm món khai vị, món chính, và món tráng miệng. Trả lời bằng tiếng Việt.`;
                                 payload = { contents: [{ role: "user", parts: [{ text: fullPrompt }] }] };
@@ -1454,6 +1537,18 @@
                                 break;
                             case 'thank_you_note':
                                 fullPrompt = `Soạn một email cảm ơn mẫu để gửi cho những người tham dự sau sự kiện có chủ đề "${userPrompt}". Trả lời bằng tiếng Việt.`;
+                                payload = { contents: [{ role: "user", parts: [{ text: fullPrompt }] }] };
+                                break;
+                            case 'promotion_plan':
+                                fullPrompt = `Tạo một kế hoạch quảng bá chi tiết theo từng giai đoạn (trước, trong, và sau sự kiện) cho một sự kiện có chủ đề "${userPrompt}" với khoảng ${guestCount} khách. Kế hoạch nên bao gồm các kênh và hoạt động cụ thể. Trả lời bằng tiếng Việt.`;
+                                payload = { contents: [{ role: "user", parts: [{ text: fullPrompt }] }] };
+                                break;
+                            case 'sponsor_email':
+                                fullPrompt = `Soạn một email chuyên nghiệp để kêu gọi tài trợ cho sự kiện có chủ đề "${userPrompt}". Email cần nêu bật được lợi ích cho nhà tài trợ. Bao gồm các placeholder như [Tên Nhà tài trợ] và [Tên người liên hệ]. Trả lời bằng tiếng Việt.`;
+                                payload = { contents: [{ role: "user", parts: [{ text: fullPrompt }] }] };
+                                break;
+                             case 'analyze_feedback':
+                                fullPrompt = `Hãy phân tích khối văn bản phản hồi từ người tham dự sự kiện sau đây. Tóm tắt các điểm chính, xác định các chủ đề tích cực và tiêu cực, và đưa ra 3 đề xuất cải thiện cụ thể. Phản hồi: "${feedbackText}"`;
                                 payload = { contents: [{ role: "user", parts: [{ text: fullPrompt }] }] };
                                 break;
                             case 'risks':
@@ -1546,7 +1641,7 @@
                         if (!text) throw new Error("Không nhận được phản hồi hợp lệ từ AI.");
 
                         geminiResultContainer.classList.remove('hidden');
-                        if (['description', 'invitation', 'agenda', 'social_posts', 'thank_you_note', 'activity_ideas', 'theme_ideas', 'menu_suggestions', 'mc_script', 'survey_questions'].includes(actionType)) {
+                        if (['description', 'invitation', 'agenda', 'social_posts', 'thank_you_note', 'activity_ideas', 'theme_ideas', 'menu_suggestions', 'mc_script', 'survey_questions', 'name_suggestions', 'target_audience', 'press_release', 'post_event_report', 'analyze_feedback', 'sponsor_email', 'promotion_plan'].includes(actionType)) {
                             geminiResultContainer.innerHTML = `<pre class="whitespace-pre-wrap text-sm">${text}</pre>`;
                         } else if (actionType === 'risks') {
                             const risks = JSON.parse(text);
@@ -1813,46 +1908,87 @@
 
             try {
                 if (type === 'jpg' || type === 'pdf') {
-                    let reportHtmlContent = `
-                        <div style="background-color: #0000FF; color: #FFFFFF; padding: 40px; font-family: 'Inter', sans-serif; min-height: 100vh; box-sizing: border-box;">
-                            <div style="text-align: center; margin-bottom: 40px;">
-                                <img src="${logoSrc}" style="height: 100px; margin: 0 auto 20px; display: block; border-radius: 8px;">
-                                <h1 style="font-size: 32px; font-weight: bold; margin-bottom: 10px;">${eventName}</h1>
-                                <p style="font-size: 24px; color: #facc15;">Gia đình Minh Sư Tịnh Quang</p>
-                            </div>
-                            <div style="margin-bottom: 40px;">
-                                <p style="font-size: 18px; margin-bottom: 10px;"><strong>Ngày xuất:</strong> ${new Date().toLocaleDateString('vi-VN')}</p>
-                                ${signerName ? `<p style="font-size: 18px;"><strong>Người ký:</strong> ${signerName}</p>` : ''}
-                            </div>
-                        `;
+                    const numSections = eventData.sections.length;
+                    const numColumns = Math.ceil(numSections / 2);
 
-                    eventData.sections.forEach(section => {
-                        reportHtmlContent += `
-                            <div style="margin-bottom: 40px; padding: 20px; background-color: rgba(255,255,255,0.1); border-radius: 12px;">
-                                <h2 style="font-size: 28px; font-weight: bold; margin-bottom: 20px; text-align: center;">${section.title}</h2>
-                                <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; color: white;">
+                    let sectionsHtml = eventData.sections.map(section => {
+                        let tableHtml;
+                        if (section.isTransposed) {
+                             let headerRow = '<th>Mục</th>';
+                            (section.registrations || []).forEach((reg, index) => {
+                                headerRow += `<th style="padding: 8px; border: 1px solid rgba(0,0,0,0.2); text-align: center;">${index + 1}</th>`;
+                            });
+
+                            let bodyRows = (section.columns || []).map(col => {
+                                let rowData = `<td style="padding: 8px; border: 1px solid rgba(0,0,0,0.2); font-weight: bold;">${col.label}</td>`;
+                                (section.registrations || []).forEach(reg => {
+                                    rowData += `<td style="padding: 8px; border: 1px solid rgba(0,0,0,0.2);">${reg.values[col.id] || ''}</td>`;
+                                });
+                                return `<tr>${rowData}</tr>`;
+                            }).join('');
+                            
+                            tableHtml = `
+                                <table style="width: 100%; border-collapse: collapse; color: black; font-size: 12px;">
+                                    <thead><tr style="background-color: #f0f0f0;">${headerRow}</tr></thead>
+                                    <tbody>${bodyRows}</tbody>
+                                </table>
+                            `;
+
+                        } else {
+                             tableHtml = `
+                                <table style="width: 100%; border-collapse: collapse; color: black; font-size: 12px;">
                                     <thead>
-                                        <tr style="background-color: rgba(255,255,255,0.2); font-weight: bold;">
-                                            <th style="padding: 12px; border: 1px solid rgba(255,255,255,0.3);">STT</th>
-                                            ${section.columns.map(c => `<th style="padding: 12px; border: 1px solid rgba(255,255,255,0.3);">${c.label}</th>`).join('')}
+                                        <tr style="background-color: #f0f0f0; font-weight: bold;">
+                                            <th style="padding: 8px; border: 1px solid rgba(0,0,0,0.2);">STT</th>
+                                            ${section.columns.map(c => `<th style="padding: 8px; border: 1px solid rgba(0,0,0,0.2);">${c.label}</th>`).join('')}
                                         </tr>
                                     </thead>
                                     <tbody>
                                         ${(section.registrations || []).map((reg, index) => `
                                             <tr>
-                                                <td style="padding: 12px; border: 1px solid rgba(255,255,255,0.3); text-align: center;">${index + 1}</td>
-                                                ${section.columns.map(c => `<td style="padding: 12px; border: 1px solid rgba(255,255,255,0.3);">${reg.values[c.id] || ''}</td>`).join('')}
+                                                <td style="padding: 8px; border: 1px solid rgba(0,0,0,0.2); text-align: center;">${index + 1}</td>
+                                                ${section.columns.map(c => `<td style="padding: 8px; border: 1px solid rgba(0,0,0,0.2);">${reg.values[c.id] || ''}</td>`).join('')}
                                             </tr>
                                         `).join('')}
                                     </tbody>
                                 </table>
+                            `;
+                        }
+                        return `
+                            <div style="background-color: #f8f9fa; border-radius: 12px; padding: 15px; display: flex; flex-direction: column; overflow: hidden; border: 1px solid #dee2e6;">
+                                <h2 style="font-size: 20px; font-weight: bold; margin-bottom: 10px; text-align: center; color: #343a40;">${section.title}</h2>
+                                <div style="flex-grow: 1; overflow: auto;">
+                                ${tableHtml}
+                                </div>
                             </div>`;
-                    });
-                    reportHtmlContent += `</div>`;
+                    }).join('');
+
+                    let reportHtmlContent = `
+                        <div style="background-color: #ffffff; color: #212529; padding: 40px; font-family: 'Inter', sans-serif; box-sizing: border-box; width: ${numColumns * 600}px;">
+                            <div style="text-align: center; margin-bottom: 20px; flex-shrink: 0;">
+                                <img src="${logoSrc}" style="height: 80px; margin: 0 auto 15px; display: block; border-radius: 8px;" crossorigin="anonymous">
+                                <h1 style="font-size: 28px; font-weight: bold; margin-bottom: 8px;">${eventName}</h1>
+                                <p style="font-size: 20px; color: #495057;">Gia đình Minh Sư Tịnh Quang</p>
+                            </div>
+                            
+                            <div style="display: grid; grid-template-columns: repeat(${numColumns}, 1fr); grid-template-rows: repeat(2, auto); grid-auto-flow: column; gap: 20px;">
+                                ${sectionsHtml}
+                            </div>
+
+                            <div style="margin-top: 20px; text-align: center; flex-shrink: 0; border-top: 1px solid #dee2e6; padding-top: 15px;">
+                                <p style="font-size: 16px; margin-bottom: 10px;"><strong>Ngày xuất:</strong> ${new Date().toLocaleDateString('vi-VN')}</p>
+                                ${signerName ? `<p style="font-size: 16px;"><strong>Người ký:</strong> ${signerName}</p>` : ''}
+                            </div>
+                        </div>`;
+                    
                     printableReportContainer.innerHTML = reportHtmlContent;
                     printableReportContainer.classList.add('visible-for-capture');
 
-                    const canvas = await html2canvas(printableReportContainer, { scale: 2, useCORS: true, backgroundColor: null });
+                    const canvas = await html2canvas(printableReportContainer, { 
+                        scale: 2, 
+                        useCORS: true, 
+                        backgroundColor: null 
+                    });
                     printableReportContainer.classList.remove('visible-for-capture');
                     
                     if (type === 'jpg') {
@@ -1863,20 +1999,14 @@
                         showToast('Xuất JPG thành công!', 'success');
                     } else if (type === 'pdf') {
                         const imgData = canvas.toDataURL('image/jpeg', 0.9);
-                        const pdf = new jsPDF('p', 'mm', 'a4');
-                        const imgProps = pdf.getImageProperties(imgData);
-                        const pdfWidth = pdf.internal.pageSize.getWidth();
-                        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-                        let heightLeft = pdfHeight;
-                        let position = 0;
-                        pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
-                        heightLeft -= pdf.internal.pageSize.getHeight();
-                        while (heightLeft > 0) {
-                            position = heightLeft - pdfHeight;
-                            pdf.addPage();
-                            pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, pdfHeight);
-                            heightLeft -= pdf.internal.pageSize.getHeight();
-                        }
+                        const { width, height } = canvas;
+                        const orientation = width > height ? 'l' : 'p';
+                        const pdf = new jsPDF({
+                            orientation: orientation,
+                            unit: 'px',
+                            format: [width, height]
+                        });
+                        pdf.addImage(imgData, 'JPEG', 0, 0, width, height);
                         pdf.save(`${eventData.name || 'bao_cao'}.pdf`);
                         showToast('Xuất PDF thành công!', 'success');
                     }
