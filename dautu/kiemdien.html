@@ -156,11 +156,14 @@ async function clickLoop(tab) {
       const logs = [];
 
       // ⚙️ ADJUST SELECTOR HERE (1): the blue lightning bolt button
-      // This selector targets img elements whose src attribute contains "bolt"
-      const targets = [...document.querySelectorAll('img[src*="bolt"]')];
+      // Based on the provided images, the blue bolt has a parent div with style="filter: none"
+      // while the gray bolt has a parent div with style="filter: grayscale(100%)".
+      // We will target img elements that are children of a div with style="filter: none".
+      const targets = [...document.querySelectorAll('div[style="filter: none"] > img[src*="lightning-f6b8ee5c.svg"]')];
+
 
       if (targets.length === 0) {
-        logs.push('Không tìm thấy nút tia chớp.');
+        logs.push('Không tìm thấy nút tia chớp xanh để click.');
       }
 
       for (const el of targets) {
