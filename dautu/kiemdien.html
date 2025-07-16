@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Auto‑Click AI Earn</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  body {
+    font-family: 'Inter', sans-serif;
+    line-height: 1.6;
+    background-color: #f0f2f5;
+    color: #333;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 20px;
+    box-sizing: border-box;
+  }
+  .container {
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    max-width: 600px;
+    width: 100%;
+    text-align: center;
+  }
+  h2 {
+    color: #008cfa;
+    margin-bottom: 20px;
+    font-weight: 600;
+  }
+  p {
+    margin-bottom: 25px;
+    font-size: 16px;
+  }
+  button {
+    padding: 12px 25px;
+    font-size: 17px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    font-weight: 600;
+    margin: 0 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  }
+  button:hover {
+    transform: translateY(-2px);
+  }
+  button:active {
+    transform: translateY(0);
+  }
+  #start {
+    background: linear-gradient(45deg, #007bff, #00c6ff);
+    color: #fff;
+  }
+  #start:disabled {
+    background: #a0d8ff;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+  #stop {
+    background: linear-gradient(45deg, #e74c3c, #ff7a6e);
+    color: #fff;
+  }
+  #stop:disabled {
+    background: #ffc2bb;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+  #log {
+    background-color: #e9ecef;
+    border: 1px solid #ced4da;
+    border-radius: 8px;
+    padding: 15px;
+    margin-top: 30px;
+    text-align: left;
+    white-space: pre-wrap;
+    max-height: 200px;
+    overflow-y: auto;
+    font-family: monospace;
+    font-size: 14px;
+    color: #495057;
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+    <h2>AI Earn – Auto Click Lightning</h2>
+    <p>Mở tab <strong>aiearn.vn/home/vip</strong>, đăng nhập. Sau đó bấm <em>Start</em>.</p>
+    <button id="start">Start</button>
+    <button id="stop" disabled>Stop</button>
+    <pre id="log"></pre>
+  </div>
+
+<script>
+// ====== CẤU HÌNH ======
+const CLICK_DELAY   = 800;   // ms giữa hai cú click
+const PAGE_DELAY    = 1500;  // thời gian chờ sau khi đổi trang
+// ====== /CẤU HÌNH ======
+
+let running = false, timer = null;
+
+// Function to log messages to the pre element
+const log = msg => {
+  const logElement = document.getElementById('log');
+  logElement.textContent += msg + '\n';
+  logElement.scrollTop = logElement.scrollHeight; // Auto-scroll to the bottom
+};
+
+/**
+ * Switches to the AI Earn tab or opens it if not found.
+ * Uses window.open with a target name to try and reuse an existing tab.
+ * @returns {Promise<Window>} A promise that resolves with the window object of the AI Earn tab.
+ */
+async function switchToAIEarn() {
+  const url = 'https://aiearn.vn/home/vip';
+  // Open the tab with a specific target name to allow reuse
+  const tab = window.open(url, 'aiearn_tab');
+  // Wait a bit to ensure the tab is open and accessible
+  return new Promise(r => setTimeout(() => r(tab), 1200));
+}
+
+/**
+ * Simple sleep function using Promises and setTimeout.
+ * @param {number} ms - The number of milliseconds to sleep.
+ * @returns {Promise<void>} A promise that resolves after the specified delay.
+ */
+function sleep(ms) {
+  return new Promise(r => setTimeout(r, ms));
+}
+
+/**
+ * The main auto-clicking loop.
+ * It injects a script into the AI Earn tab to perform clicks and navigation.
+ * @param {Window} tab - The window object of the AI Earn tab.
+ */
+async function clickLoop(tab) {
+  while (running) {
+    // Ensure the tab is focused before attempting to interact with it
+    tab.focus();
+    // This line tab.navigator?.userActivation?.isActive is for potential future browser APIs
+    // For current browser environments in iframes, direct interaction might be limited.
+    // The polyfill below attempts to bridge this.
+    // await tab.navigator?.userActivation?.isActive; // commented out as it might not be directly applicable in iframe context
+
+    // Inject the script into the AI Earn tab using the evalInTab polyfill
+    const done = await tab.evalInTab?.(async () => {
+      // ------------- INSIDE THE AI EARN TAB -------------
+      const delay = ms => new Promise(r => setTimeout(r, ms));
+      const logs = [];
+
+      // ⚙️ ADJUST SELECTOR HERE (1): the blue lightning bolt button
+      // This selector targets img elements whose src attribute contains "bolt"
+      const targets = [...document.querySelectorAll('img[src*="bolt"]')];
+
+      if (targets.length === 0) {
+        logs.push('Không tìm thấy nút tia chớp.');
+      }
+
+      for (const el of targets) {
+        if (!el) continue;
+        // Scroll the element into view for better visibility and interaction
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        await delay(200); // Small delay after scrolling
+        el.click(); // Perform the click
+        logs.push('Đã click!');
+        await delay(CLICK_DELAY); // Delay between clicks
+      }
+
+      // If no more lightning buttons, try to navigate to the next page
+      // ⚙️ ADJUST SELECTOR HERE (2): the next page button
+      // This selector targets the last li element in a pagination ul that is not disabled
+      const next = document.querySelector('ul.pagination li:last-child:not(.disabled) a');
+      if (next) {
+        next.click(); // Click the next page button
+        await delay(PAGE_DELAY); // Delay after page navigation
+        return false; // Indicate that more pages might exist
+      } else {
+        return true; // Indicate that we are at the last page
+      }
+      // ------------- /INSIDE THE TAB -------------
+    });
+
+    if (done) { // If at the end (no more next buttons) -> go back to page 1
+      log('Đã hết trang, quay về trang đầu.');
+      // Inject script to click the first page button
+      tab.evalInTab?.(() => document.querySelector('ul.pagination li:first-child a')?.click());
+      await sleep(PAGE_DELAY); // Delay after navigating back to the first page
+    }
+  }
+}
+
+// Polyfill for evalInTab to allow injecting scripts into the opened tab.
+// This works by setting a property on the target window which then executes the function.
+window.evalInTabPolyfill = function(tab, fn) {
+  return new Promise(resolve => {
+    // Generate a unique ID for the function result
+    const id = '__ae' + Math.random().toString(36).slice(2);
+    // Set a property on the target window that, when accessed, executes the function
+    // and resolves the promise with its result.
+    tab.window[id] = fn().then(res => {
+      resolve(res);
+      delete tab.window[id]; // Clean up the property
+    });
+  });
+};
+
+// Extend HTMLIFrameElement and Window prototypes to include evalInTab method
+// This makes it easier to call evalInTab on the window object returned by window.open
+HTMLIFrameElement.prototype.evalInTab = function(fn) { return evalInTabPolyfill(this, fn); };
+Window.prototype.evalInTab           = function(fn) { return evalInTabPolyfill(this, fn); };
+
+// Event listener for the "Start" button
+document.getElementById('start').onclick = async () => {
+  if (running) return; // Prevent multiple starts
+  running = true;
+  document.getElementById('start').disabled = true; // Disable start button
+  document.getElementById('stop').disabled = false; // Enable stop button
+  log('Bắt đầu...');
+  // Switch to or open the AI Earn tab
+  const tab = await switchToAIEarn();
+  // Start the clicking loop
+  clickLoop(tab);
+};
+
+// Event listener for the "Stop" button
+document.getElementById('stop').onclick = () => {
+  running = false; // Stop the loop
+  clearInterval(timer); // Clear any existing timer (though timer is not used in this version)
+  document.getElementById('stop').disabled = true; // Disable stop button
+  document.getElementById('start').disabled = false; // Enable start button
+  log('Đã dừng.');
+};
+</script>
+</body>
+</html>
