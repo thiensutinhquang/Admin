@@ -1,9 +1,14 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Control Panel</title>
+
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Firebase CDN -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
     import { getFirestore, doc, getDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
@@ -14,14 +19,37 @@
       projectId: "ai-companel",
       storageBucket: "ai-companel.appspot.com",
       messagingSenderId: "869875628579",
-      appId: "1:869875628579:web:9c5fcf2c4372748c17cf96",
-      measurementId: "G-YY7E4DLFHL"
+      appId: "1:869875628579:web:9c5fcf2c4372748c17cf96"
     };
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-
     const accounts = ['acc1', 'acc2'];
+
+    const chartData = {
+      labels: [],
+      datasets: [{
+        label: 'Số điểm của tôi',
+        backgroundColor: '#007bff',
+        borderColor: '#007bff',
+        data: [],
+      }]
+    };
+
+    let chartInstance = null;
+
+    function renderChart() {
+      const ctx = document.getElementById('scoreChart').getContext('2d');
+      if (chartInstance) chartInstance.destroy();
+      chartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: chartData,
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+        }
+      });
+    }
 
     for (const acc of accounts) {
       const card = document.getElementById(acc);
@@ -38,6 +66,14 @@
           card.querySelector('.endTime').value = data.schedule?.endTime || '';
           card.querySelector('.email').value = data.credentials?.email || '';
           card.querySelector('.password').value = data.credentials?.password || '';
+
+          const i = chartData.labels.indexOf(acc);
+          if (i >= 0) chartData.datasets[0].data[i] = data.totalClicks;
+          else {
+            chartData.labels.push(acc);
+            chartData.datasets[0].data.push(data.totalClicks);
+          }
+          renderChart();
         }
       });
 
@@ -46,6 +82,8 @@
         const endTime = card.querySelector('.endTime').value;
         const email = card.querySelector('.email').value;
         const password = card.querySelector('.password').value;
+        localStorage.setItem(`${acc}-email`, email);
+        localStorage.setItem(`${acc}-password`, password);
         await updateDoc(docRef, {
           action: 'start',
           schedule: { startTime, endTime },
@@ -56,54 +94,114 @@
       card.querySelector('.stop-btn').addEventListener('click', async () => {
         await updateDoc(docRef, { action: 'stop' });
       });
+
+      // Auto-fill từ localStorage
+      window.addEventListener('DOMContentLoaded', () => {
+        const savedEmail = localStorage.getItem(`${acc}-email`);
+        const savedPass = localStorage.getItem(`${acc}-password`);
+        if (savedEmail) card.querySelector('.email').value = savedEmail;
+        if (savedPass) card.querySelector('.password').value = savedPass;
+      });
     }
+
+    // Đăng nhập tổng
+    window.addEventListener('DOMContentLoaded', () => {
+      const saved = localStorage.getItem('admin-token');
+      if (saved) document.getElementById('login').style.display = 'none';
+    });
+
+    window.loginGlobal = () => {
+      const user = document.getElementById('admin-email').value;
+      const pass = document.getElementById('admin-pass').value;
+      if (user === 'admin@gmail.com' && pass === '123456') {
+        localStorage.setItem('admin-token', 'yes');
+        document.getElementById('login').style.display = 'none';
+      } else {
+        alert("Sai tài khoản hoặc mật khẩu.");
+      }
+    };
   </script>
+
   <style>
-    body { font-family: sans-serif; background: #f4f4f4; padding: 20px; }
-    h1 { display: flex; align-items: center; }
-    h1::before { content: "📊"; margin-right: 10px; }
+    body { font-family: sans-serif; background: #f4f4f4; padding: 0; margin: 0; }
+    header { padding: 20px; background: #007bff; color: white; text-align: center; }
+    nav { background: #f8f9fa; padding: 10px; display: flex; justify-content: center; gap: 20px; }
+    nav button { padding: 10px 20px; border: none; background: #ddd; border-radius: 5px; cursor: pointer; }
+    nav button.active { background: #007bff; color: white; }
+    .section { display: none; padding: 20px; }
+    .section.active { display: block; }
     .grid { display: flex; gap: 20px; flex-wrap: wrap; }
     .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px #ccc; width: 300px; }
     .status { float: right; padding: 4px 10px; border-radius: 20px; background: #90ee90; font-size: 12px; }
     .field { margin: 5px 0; }
     .field input { width: 100%; padding: 6px; border-radius: 5px; border: 1px solid #ccc; }
     .btns { display: flex; gap: 10px; margin-top: 10px; }
-    button { flex: 1; padding: 8px; border: none; border-radius: 5px; cursor: pointer; }
-    .start-btn { background: #007bff; color: white; }
-    .stop-btn { background: #dc3545; color: white; }
+    button.start-btn { background: #007bff; color: white; }
+    button.stop-btn { background: #dc3545; color: white; }
+    #login { padding: 20px; background: white; width: 300px; margin: 30px auto; border-radius: 10px; box-shadow: 0 0 10px #ccc; }
+    #login input { width: 100%; padding: 8px; margin-bottom: 10px; }
+    #scoreChart { max-width: 700px; margin: auto; }
   </style>
 </head>
 <body>
-  <h1>Control Panel</h1>
-  <div class="grid">
-    <div class="card" id="acc1">
-      <div><strong>acc1</strong> <span class="status">-</span></div>
-      <div>👍 Số điểm của tôi: <span class="clicks">0</span></div>
-      <div>👥 Người tham gia: <span class="participants">0</span></div>
-      <div>🧾 % Nâng cấp: <span class="upgrade">0%</span></div>
-      <div class="field">🕒 Giờ bắt đầu: <input class="startTime" placeholder="09:00"></div>
-      <div class="field">🕒 Giờ kết thúc: <input class="endTime" placeholder="22:00"></div>
-      <div class="field"><input class="email" placeholder="Email"></div>
-      <div class="field"><input class="password" type="password" placeholder="Mật khẩu"></div>
-      <div class="btns">
-        <button class="start-btn">Start</button>
-        <button class="stop-btn">Stop</button>
+  <header><h2>Control Panel</h2></header>
+
+  <nav>
+    <button class="tab active" onclick="switchTab('main')">📋 Điều khiển</button>
+    <button class="tab" onclick="switchTab('stats')">📊 Thống kê</button>
+  </nav>
+
+  <div id="login">
+    <h3>🔐 Đăng nhập Admin</h3>
+    <input id="admin-email" placeholder="Email" />
+    <input id="admin-pass" type="password" placeholder="Mật khẩu" />
+    <button onclick="loginGlobal()">Đăng nhập</button>
+  </div>
+
+  <div class="section active" id="main">
+    <div class="grid">
+      <div class="card" id="acc1">
+        <div><strong>acc1</strong> <span class="status">-</span></div>
+        <div>👍 Số điểm của tôi: <span class="clicks">0</span></div>
+        <div>👥 Người tham gia: <span class="participants">0</span></div>
+        <div>🧾 % Nâng cấp: <span class="upgrade">0%</span></div>
+        <div class="field">🕒 Bắt đầu: <input class="startTime" placeholder="09:00"></div>
+        <div class="field">🕒 Kết thúc: <input class="endTime" placeholder="22:00"></div>
+        <div class="field"><input class="email" placeholder="Email"></div>
+        <div class="field"><input class="password" type="password" placeholder="Mật khẩu"></div>
+        <div class="btns">
+          <button class="start-btn">Start</button>
+          <button class="stop-btn">Stop</button>
+        </div>
       </div>
-    </div>
-    <div class="card" id="acc2">
-      <div><strong>acc2</strong> <span class="status">-</span></div>
-      <div>👍 Số điểm của tôi: <span class="clicks">0</span></div>
-      <div>👥 Người tham gia: <span class="participants">0</span></div>
-      <div>🧾 % Nâng cấp: <span class="upgrade">0%</span></div>
-      <div class="field">🕒 Giờ bắt đầu: <input class="startTime" placeholder="09:00"></div>
-      <div class="field">🕒 Giờ kết thúc: <input class="endTime" placeholder="22:00"></div>
-      <div class="field"><input class="email" placeholder="Email"></div>
-      <div class="field"><input class="password" type="password" placeholder="Mật khẩu"></div>
-      <div class="btns">
-        <button class="start-btn">Start</button>
-        <button class="stop-btn">Stop</button>
+      <div class="card" id="acc2">
+        <div><strong>acc2</strong> <span class="status">-</span></div>
+        <div>👍 Số điểm của tôi: <span class="clicks">0</span></div>
+        <div>👥 Người tham gia: <span class="participants">0</span></div>
+        <div>🧾 % Nâng cấp: <span class="upgrade">0%</span></div>
+        <div class="field">🕒 Bắt đầu: <input class="startTime" placeholder="09:00"></div>
+        <div class="field">🕒 Kết thúc: <input class="endTime" placeholder="22:00"></div>
+        <div class="field"><input class="email" placeholder="Email"></div>
+        <div class="field"><input class="password" type="password" placeholder="Mật khẩu"></div>
+        <div class="btns">
+          <button class="start-btn">Start</button>
+          <button class="stop-btn">Stop</button>
+        </div>
       </div>
     </div>
   </div>
+
+  <div class="section" id="stats">
+    <canvas id="scoreChart" height="300"></canvas>
+  </div>
+
+  <script>
+    function switchTab(id) {
+      document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      document.querySelectorAll('.tab').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+    }
+  </script>
 </body>
 </html>
