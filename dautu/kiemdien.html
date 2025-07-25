@@ -206,6 +206,15 @@
         alertModal.classList.remove('visible');
     }
 
+    const statusMap = {
+        running: { text: 'Đang chạy', badge: 'bg-green-100 text-green-800', border: 'border-green-500' },
+        stopped: { text: 'Đã dừng', badge: 'bg-gray-100 text-gray-800', border: 'border-gray-400' },
+        idle: { text: 'Không hoạt động', badge: 'bg-gray-100 text-gray-800', border: 'border-gray-400' },
+        'waiting-login': { text: 'Chờ đăng nhập', badge: 'bg-yellow-100 text-yellow-800', border: 'border-yellow-500' },
+        'logged-in': { text: 'Đã đăng nhập', badge: 'bg-blue-100 text-blue-800', border: 'border-blue-500' },
+        default: { text: 'Lỗi', badge: 'bg-red-100 text-red-800', border: 'border-red-500' }
+    };
+
     // --- Charting Functions ---
     function renderScoreHistoryChart() {
         const ctx = document.getElementById("scoreHistoryChart").getContext("2d");
@@ -278,14 +287,12 @@
         }
         data.forEach(acc => {
             const status = acc.status || 'idle';
-            const statusColor = status === 'running' ? 'text-green-600' : (status.includes('error') ? 'text-red-600' : 'text-gray-600');
+            const currentStatus = statusMap[status] || { ...statusMap.default, text: status };
             const lastUpdate = acc.lastUpdate ? new Date(acc.lastUpdate.seconds * 1000).toLocaleString('vi-VN') : 'N/A';
-            
-            // Desktop Row
             const desktopRow = `
                 <tr class="hover:bg-gray-50">
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${acc.id}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold ${statusColor}">${status}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${currentStatus.badge}">${currentStatus.text}</span></td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${acc.machine?.id || 'N/A'}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${acc.machine?.ip || 'N/A'}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${acc.machine?.location || 'N/A'}</td>
@@ -293,13 +300,11 @@
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${lastUpdate}</td>
                 </tr>`;
             masterPanelBodyDesktop.innerHTML += desktopRow;
-
-            // Mobile Card
             const mobileCard = `
                 <div class="bg-gray-50 rounded-lg p-4 space-y-2 border border-gray-200">
                     <div class="flex justify-between items-center">
                         <p class="font-bold text-gray-800">${acc.id}</p>
-                        <p class="text-sm font-semibold px-2 py-1 rounded-full ${status === 'running' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}">${status}</p>
+                        <p class="text-sm font-semibold px-2 py-1 rounded-full ${currentStatus.badge}">${currentStatus.text}</p>
                     </div>
                     <div class="text-sm text-gray-600"><strong>Điểm:</strong> <span class="font-bold text-blue-600">${(acc.totalClicks || 0).toLocaleString('vi-VN')}</span></div>
                     <div class="text-sm text-gray-600"><strong>Máy chủ:</strong> ${acc.machine?.id || 'N/A'} (${acc.machine?.ip || 'N/A'})</div>
@@ -313,7 +318,12 @@
     function updateAccountCard(accId, data) {
         const card = document.getElementById(`card-${accId}`);
         if (!card) return;
-        card.querySelector('.status').textContent = data.status || '-';
+        const status = data.status || 'idle';
+        const currentStatus = statusMap[status] || { ...statusMap.default, text: status };
+        card.className = `bg-white rounded-xl shadow-lg p-6 flex flex-col transition-all duration-300 border-l-4 ${currentStatus.border}`;
+        const statusEl = card.querySelector('.status');
+        statusEl.textContent = currentStatus.text;
+        statusEl.className = `status text-sm font-semibold px-3 py-1 rounded-full ${currentStatus.badge}`;
         card.querySelector('.clicks').textContent = (data.totalClicks || 0).toLocaleString('vi-VN');
         card.querySelector('.participants').textContent = data.participants || 0;
         card.querySelector('.upgrade').textContent = `${data.upgradeProgress || 0}%`;
@@ -321,9 +331,8 @@
     function createAccountCard(accId, data) {
         const card = document.createElement("div");
         card.id = `card-${accId}`;
-        card.className = "bg-white rounded-xl shadow-lg p-6 flex flex-col transition hover:shadow-2xl";
         card.innerHTML = `
-            <div class="flex justify-between items-start mb-4"><h3 class="text-xl font-bold text-gray-900">${accId}</h3><span class="status text-sm font-semibold text-gray-600 px-3 py-1 rounded-full bg-gray-100"></span></div>
+            <div class="flex justify-between items-start mb-4"><h3 class="text-xl font-bold text-gray-900">${accId}</h3><span class="status"></span></div>
             <div class="grid grid-cols-3 gap-4 text-center mb-4 flex-grow">
                 <div><p class="text-2xl font-bold text-blue-600 clicks"></p><p class="text-xs text-gray-500">Điểm</p></div>
                 <div><p class="text-2xl font-bold text-gray-700 participants"></p><p class="text-xs text-gray-500">Tham gia</p></div>
@@ -333,7 +342,7 @@
                 <div class="field">🕒 Bắt đầu: <input class="startTime w-full border p-2 text-base rounded mt-1" value="${data.schedule?.startTime || '09:00'}"></div>
                 <div class="field">🕒 Kết thúc: <input class="endTime w-full border p-2 text-base rounded mt-1" value="${data.schedule?.endTime || '22:00'}"></div>
                 <div class="field">📧 Email: <input class="email w-full border p-2 text-base rounded mt-1"></div>
-                <div class="field">🔑 Mật khẩu: <input type="password" class="password w-full border p-2 text-base rounded mt-1"></div>
+                <div class="field">� Mật khẩu: <input type="password" class="password w-full border p-2 text-base rounded mt-1"></div>
                 <div class="field">🖥️ Máy chủ ID: <input class="machineId w-full border p-2 text-base rounded mt-1" value="${data.machine?.id || ''}"></div>
                 <div class="field">🌐 IP Máy: <input class="machineIp w-full border p-2 text-base rounded mt-1" value="${data.machine?.ip || ''}"></div>
                 <div class="field">📍 Vị trí: <input class="machineLocation w-full border p-2 text-base rounded mt-1" value="${data.machine?.location || ''}"></div>
@@ -431,3 +440,4 @@
   </script>
 </body>
 </html>
+�
