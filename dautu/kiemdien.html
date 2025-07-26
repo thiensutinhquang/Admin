@@ -74,7 +74,6 @@
     <header class="bg-white shadow-sm">
         <div class="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-4"><h1 class="text-2xl font-extrabold text-gray-900">Control Panel</h1></div>
         <div class="border-b border-gray-200">
-            <!-- Mobile Optimization: Added overflow-x-auto for horizontal scrolling on small screens -->
             <nav class="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 -mb-px flex space-x-2 sm:space-x-8 overflow-x-auto" aria-label="Tabs">
                 <a id="tab-dashboard" onclick="switchTab(event, 'dashboard')" class="tab active btn-interaction">📈 Thống kê</a>
                 <a id="tab-master" onclick="switchTab(event, 'master')" class="tab btn-interaction">🌐 Điều phối tổng</a>
@@ -91,7 +90,6 @@
             </div>
         </div>
         <div id="master" class="tab-content">
-            <!-- Mobile Optimization: Table transforms into cards on small screens -->
             <div class="bg-white rounded-xl shadow-md">
                 <div class="hidden md:block">
                     <table class="min-w-full divide-y divide-gray-200">
@@ -106,14 +104,10 @@
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cập nhật</th>
                             </tr>
                         </thead>
-                        <tbody id="master-panel-body-desktop" class="bg-white divide-y divide-gray-200">
-                            <!-- Desktop rows will be inserted here -->
-                        </tbody>
+                        <tbody id="master-panel-body-desktop" class="bg-white divide-y divide-gray-200"></tbody>
                     </table>
                 </div>
-                <div id="master-panel-body-mobile" class="md:hidden p-4 space-y-4">
-                    <!-- Mobile cards will be inserted here -->
-                </div>
+                <div id="master-panel-body-mobile" class="md:hidden p-4 space-y-4"></div>
             </div>
         </div>
         <div id="management" class="tab-content">
@@ -212,6 +206,7 @@
         idle: { text: 'Không hoạt động', badge: 'bg-gray-100 text-gray-800', border: 'border-gray-400' },
         'waiting-login': { text: 'Chờ đăng nhập', badge: 'bg-yellow-100 text-yellow-800', border: 'border-yellow-500' },
         'logged-in': { text: 'Đã đăng nhập', badge: 'bg-blue-100 text-blue-800', border: 'border-blue-500' },
+        completed: { text: 'Đã hoàn thành', badge: 'bg-indigo-100 text-indigo-800', border: 'border-indigo-500' },
         default: { text: 'Lỗi', badge: 'bg-red-100 text-red-800', border: 'border-red-500' }
     };
 
@@ -286,7 +281,7 @@
             return;
         }
         data.forEach(acc => {
-            const status = acc.status || 'idle';
+            const status = (acc.upgradeProgress || 0) >= 95 ? 'completed' : (acc.status || 'idle');
             const currentStatus = statusMap[status] || { ...statusMap.default, text: status };
             const lastUpdate = acc.lastUpdate ? new Date(acc.lastUpdate.seconds * 1000).toLocaleString('vi-VN') : 'N/A';
             const desktopRow = `
@@ -318,15 +313,30 @@
     function updateAccountCard(accId, data) {
         const card = document.getElementById(`card-${accId}`);
         if (!card) return;
-        const status = data.status || 'idle';
+        const upgradeProgress = data.upgradeProgress || 0;
+        const isCompleted = upgradeProgress >= 95;
+        const status = isCompleted ? 'completed' : (data.status || 'idle');
         const currentStatus = statusMap[status] || { ...statusMap.default, text: status };
+        
         card.className = `bg-white rounded-xl shadow-lg p-6 flex flex-col transition-all duration-300 border-l-4 ${currentStatus.border}`;
         const statusEl = card.querySelector('.status');
         statusEl.textContent = currentStatus.text;
         statusEl.className = `status text-sm font-semibold px-3 py-1 rounded-full ${currentStatus.badge}`;
+        
         card.querySelector('.clicks').textContent = (data.totalClicks || 0).toLocaleString('vi-VN');
         card.querySelector('.participants').textContent = data.participants || 0;
-        card.querySelector('.upgrade').textContent = `${data.upgradeProgress || 0}%`;
+        card.querySelector('.upgrade').textContent = `${upgradeProgress}%`;
+
+        const startBtn = card.querySelector('.start-btn');
+        if (isCompleted) {
+            startBtn.disabled = true;
+            startBtn.classList.remove('bg-blue-500', 'hover:bg-blue-600');
+            startBtn.classList.add('bg-gray-400');
+        } else {
+            startBtn.disabled = false;
+            startBtn.classList.add('bg-blue-500', 'hover:bg-blue-600');
+            startBtn.classList.remove('bg-gray-400');
+        }
     }
     function createAccountCard(accId, data) {
         const card = document.createElement("div");
@@ -342,7 +352,7 @@
                 <div class="field">🕒 Bắt đầu: <input class="startTime w-full border p-2 text-base rounded mt-1" value="${data.schedule?.startTime || '09:00'}"></div>
                 <div class="field">🕒 Kết thúc: <input class="endTime w-full border p-2 text-base rounded mt-1" value="${data.schedule?.endTime || '22:00'}"></div>
                 <div class="field">📧 Email: <input class="email w-full border p-2 text-base rounded mt-1"></div>
-                <div class="field">� Mật khẩu: <input type="password" class="password w-full border p-2 text-base rounded mt-1"></div>
+                <div class="field">🔑 Mật khẩu: <input type="password" class="password w-full border p-2 text-base rounded mt-1"></div>
                 <div class="field">🖥️ Máy chủ ID: <input class="machineId w-full border p-2 text-base rounded mt-1" value="${data.machine?.id || ''}"></div>
                 <div class="field">🌐 IP Máy: <input class="machineIp w-full border p-2 text-base rounded mt-1" value="${data.machine?.ip || ''}"></div>
                 <div class="field">📍 Vị trí: <input class="machineLocation w-full border p-2 text-base rounded mt-1" value="${data.machine?.location || ''}"></div>
@@ -351,14 +361,20 @@
                 <button class="delete-btn bg-red-100 hover:bg-red-200 text-red-700 font-bold py-3 px-4 rounded-lg btn-interaction">Xóa</button>
                 <div class="flex flex-col sm:flex-row gap-3">
                     <button class="save-btn bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 px-4 rounded-lg btn-interaction">Lưu</button>
-                    <button class="start-btn bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-lg btn-interaction">Start</button>
+                    <button class="start-btn text-white font-bold py-3 px-4 rounded-lg btn-interaction">Start</button>
                     <button class="stop-btn bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-4 rounded-lg btn-interaction">Stop</button>
                 </div>
             </div>
         `;
         card.querySelector('.save-btn').addEventListener('click', () => handleSaveChanges(accId));
         card.querySelector('.delete-btn').addEventListener('click', () => showDeleteModal(accId));
-        card.querySelector('.start-btn').addEventListener('click', () => sendAction(accId, 'start'));
+        card.querySelector('.start-btn').addEventListener('click', () => {
+            if (card.querySelector('.start-btn').disabled) {
+                 showAlert("Bạn đã đạt giới hạn hoàn thành, chúng ta tạm dừng ở đây.");
+                 return;
+            }
+            sendAction(accId, 'start');
+        });
         card.querySelector('.stop-btn').addEventListener('click', () => sendAction(accId, 'stop'));
         const emailEl = card.querySelector('.email');
         const passEl = card.querySelector('.password');
@@ -440,4 +456,3 @@
   </script>
 </body>
 </html>
-�
