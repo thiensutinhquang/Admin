@@ -288,7 +288,7 @@
             const lastUpdate = acc.lastUpdate?.seconds;
             const inactiveStates = ['completed', 'stopped', 'idle'];
             if (!inactiveStates.includes(status) && lastUpdate) {
-                if ((new Date().getTime() / 1000 - lastUpdate) > 90) {
+                if ((new Date().getTime() / 1000 - lastUpdate) > 180) {
                     status = 'unresponsive';
                 }
             }
@@ -329,7 +329,7 @@
         const lastUpdate = data.lastUpdate?.seconds;
         const inactiveStates = ['completed', 'stopped', 'idle'];
         if (!inactiveStates.includes(status) && lastUpdate) {
-            if ((new Date().getTime() / 1000 - lastUpdate) > 90) {
+            if ((new Date().getTime() / 1000 - lastUpdate) > 180) {
                 status = 'unresponsive';
             }
         }
