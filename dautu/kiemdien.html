@@ -206,6 +206,7 @@
         idle: { text: 'Không hoạt động', badge: 'bg-gray-100 text-gray-800', border: 'border-gray-400' },
         'waiting-login': { text: 'Chờ đăng nhập', badge: 'bg-yellow-100 text-yellow-800', border: 'border-yellow-500' },
         'waiting-2fa': { text: 'Cần mã 2FA', badge: 'bg-yellow-100 text-yellow-800', border: 'border-yellow-500' },
+        'waiting-for-2fa': { text: 'Cần mã 2FA', badge: 'bg-yellow-100 text-yellow-800', border: 'border-yellow-500' },
         'logged-in': { text: 'Đã đăng nhập', badge: 'bg-blue-100 text-blue-800', border: 'border-blue-500' },
         completed: { text: 'Đã hoàn thành', badge: 'bg-indigo-100 text-indigo-800', border: 'border-indigo-500' },
         default: { text: 'Lỗi', badge: 'bg-red-100 text-red-800', border: 'border-red-500' }
@@ -340,7 +341,7 @@
         }
 
         const twoFaForm = card.querySelector('.two-fa-form');
-        if (data.status === 'waiting-2fa') {
+        if (data.status === 'waiting-2fa' || data.status === 'waiting-for-2fa') {
             twoFaForm.classList.remove('hidden');
         } else {
             twoFaForm.classList.add('hidden');
