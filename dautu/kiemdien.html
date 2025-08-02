@@ -209,6 +209,7 @@
         'waiting-for-2fa': { text: 'Cần mã 2FA', badge: 'bg-yellow-100 text-yellow-800', border: 'border-yellow-500' },
         'logged-in': { text: 'Đã đăng nhập', badge: 'bg-blue-100 text-blue-800', border: 'border-blue-500' },
         completed: { text: 'Đã hoàn thành', badge: 'bg-indigo-100 text-indigo-800', border: 'border-indigo-500' },
+        unresponsive: { text: 'Mất kết nối', badge: 'bg-orange-100 text-orange-800', border: 'border-orange-500' },
         default: { text: 'Lỗi', badge: 'bg-red-100 text-red-800', border: 'border-red-500' }
     };
 
@@ -283,9 +284,16 @@
             return;
         }
         data.forEach(acc => {
-            const status = (acc.upgradeProgress || 0) >= 95 ? 'completed' : (acc.status || 'idle');
+            let status = (acc.upgradeProgress || 0) >= 85 ? 'completed' : (acc.status || 'idle');
+            const lastUpdate = acc.lastUpdate?.seconds;
+            const inactiveStates = ['completed', 'stopped', 'idle'];
+            if (!inactiveStates.includes(status) && lastUpdate) {
+                if ((new Date().getTime() / 1000 - lastUpdate) > 90) {
+                    status = 'unresponsive';
+                }
+            }
             const currentStatus = statusMap[status] || { ...statusMap.default, text: status };
-            const lastUpdate = acc.lastUpdate ? new Date(acc.lastUpdate.seconds * 1000).toLocaleString('vi-VN') : 'N/A';
+            const lastUpdateString = acc.lastUpdate ? new Date(acc.lastUpdate.seconds * 1000).toLocaleString('vi-VN') : 'N/A';
             const desktopRow = `
                 <tr class="hover:bg-gray-50">
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${acc.id}</td>
@@ -294,7 +302,7 @@
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${acc.machine?.ip || 'N/A'}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${acc.machine?.location || 'N/A'}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-blue-600">${(acc.totalClicks || 0).toLocaleString('vi-VN')}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${lastUpdate}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${lastUpdateString}</td>
                 </tr>`;
             masterPanelBodyDesktop.innerHTML += desktopRow;
             const mobileCard = `
@@ -306,7 +314,7 @@
                     <div class="text-sm text-gray-600"><strong>Điểm:</strong> <span class="font-bold text-blue-600">${(acc.totalClicks || 0).toLocaleString('vi-VN')}</span></div>
                     <div class="text-sm text-gray-600"><strong>Máy chủ:</strong> ${acc.machine?.id || 'N/A'} (${acc.machine?.ip || 'N/A'})</div>
                     <div class="text-sm text-gray-600"><strong>Vị trí:</strong> ${acc.machine?.location || 'N/A'}</div>
-                    <div class="text-xs text-gray-400 pt-2 border-t mt-2"><strong>Cập nhật:</strong> ${lastUpdate}</div>
+                    <div class="text-xs text-gray-400 pt-2 border-t mt-2"><strong>Cập nhật:</strong> ${lastUpdateString}</div>
                 </div>
             `;
             masterPanelBodyMobile.innerHTML += mobileCard;
@@ -316,8 +324,15 @@
         const card = document.getElementById(`card-${accId}`);
         if (!card) return;
         const upgradeProgress = data.upgradeProgress || 0;
-        const isCompleted = upgradeProgress >= 95;
-        const status = isCompleted ? 'completed' : (data.status || 'idle');
+        const isCompleted = upgradeProgress >= 85;
+        let status = isCompleted ? 'completed' : (data.status || 'idle');
+        const lastUpdate = data.lastUpdate?.seconds;
+        const inactiveStates = ['completed', 'stopped', 'idle'];
+        if (!inactiveStates.includes(status) && lastUpdate) {
+            if ((new Date().getTime() / 1000 - lastUpdate) > 90) {
+                status = 'unresponsive';
+            }
+        }
         const currentStatus = statusMap[status] || { ...statusMap.default, text: status };
         
         card.className = `bg-white rounded-xl shadow-lg p-6 flex flex-col transition-all duration-300 border-l-4 ${currentStatus.border}`;
