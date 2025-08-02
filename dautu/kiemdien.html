@@ -143,12 +143,10 @@
           </div>
       </div>
   </div>
-  <div id="alert-modal" class="modal">
-    <div class="modal-content">
-        <h3 class="text-xl font-bold mb-4">Thông báo</h3>
-        <p id="alert-message" class="text-gray-600 mb-6"></p>
-        <button onclick="hideAlertModal()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg btn-interaction">OK</button>
-    </div>
+  
+  <!-- Toast Notification -->
+  <div id="toast-notification" class="fixed bottom-5 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-lg shadow-xl transition-all duration-300 ease-in-out opacity-0 transform translate-y-10 z-50">
+      <p id="toast-message"></p>
   </div>
 
   <script type="module">
@@ -172,18 +170,19 @@
     const masterPanelBodyMobile = document.getElementById('master-panel-body-mobile');
     const addModal = document.getElementById('add-modal');
     const deleteModal = document.getElementById('delete-modal');
-    const alertModal = document.getElementById('alert-modal');
-    const alertMessage = document.getElementById('alert-message');
+    const toast = document.getElementById('toast-notification');
+    const toastMessage = document.getElementById('toast-message');
     const deleteAccIdSpan = document.getElementById('delete-acc-id-span');
     const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
 
     let scoreHistoryChartInstance = null;
     let scoreComparisonChartInstance = null;
     let accountsData = {};
+    let toastTimeout;
 
     function triggerVibration() { if (navigator.vibrate) navigator.vibrate(50); }
 
-    // --- Modal Management ---
+    // --- Modal & Toast Management ---
     window.showAddModal = () => { addModal.classList.add('visible'); };
     window.hideAddModal = () => { addModal.classList.remove('visible'); };
     window.showDeleteModal = (accId) => {
@@ -193,11 +192,14 @@
     };
     window.hideDeleteModal = () => { deleteModal.classList.remove('visible'); };
     function showAlert(message) {
-        alertMessage.textContent = message;
-        alertModal.classList.add('visible');
-    }
-    window.hideAlertModal = () => {
-        alertModal.classList.remove('visible');
+        if (toastTimeout) clearTimeout(toastTimeout);
+        toastMessage.textContent = message;
+        toast.classList.remove('opacity-0', 'translate-y-10');
+        toast.classList.add('opacity-100', 'translate-y-0');
+        toastTimeout = setTimeout(() => {
+            toast.classList.remove('opacity-100', 'translate-y-0');
+            toast.classList.add('opacity-0', 'translate-y-10');
+        }, 1500);
     }
 
     const statusMap = {
@@ -476,7 +478,7 @@
                 action: "submit-2fa",
                 twoFactorCode: code,
             });
-            showAlert(`Đã gửi mã 2FA cho ${accId}. Vui lòng chờ bot xử lý.`);
+            showAlert(`Đã gửi mã 2FA cho ${accId}.`);
         } catch (err) {
             showAlert(`Lỗi gửi mã 2FA: ${err.message}`);
         } finally {
