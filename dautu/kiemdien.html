@@ -56,6 +56,13 @@
         transform: scale(0.95); transition: transform 0.3s ease;
     }
     .modal.visible .modal-content { transform: scale(1); }
+    /* Blinking animation for errors */
+    @keyframes blink-border {
+        50% { border-color: transparent; }
+    }
+    .blinking-error {
+        animation: blink-border 1.5s step-end infinite;
+    }
   </style>
 </head>
 <body>
@@ -199,7 +206,7 @@
         toastTimeout = setTimeout(() => {
             toast.classList.remove('opacity-100', 'translate-y-0');
             toast.classList.add('opacity-0', 'translate-y-10');
-        }, 1500);
+        }, 2500); // Increased duration for better readability
     }
 
     const statusMap = {
@@ -211,8 +218,9 @@
         'waiting-for-2fa': { text: 'Cần mã 2FA', badge: 'bg-yellow-100 text-yellow-800', border: 'border-yellow-500' },
         'logged-in': { text: 'Đã đăng nhập', badge: 'bg-blue-100 text-blue-800', border: 'border-blue-500' },
         completed: { text: 'Đã hoàn thành', badge: 'bg-indigo-100 text-indigo-800', border: 'border-indigo-500' },
-        unresponsive: { text: 'Mất kết nối', badge: 'bg-orange-100 text-orange-800', border: 'border-orange-500' },
-        default: { text: 'Lỗi', badge: 'bg-red-100 text-red-800', border: 'border-red-500' }
+        unresponsive: { text: 'Mất kết nối', badge: 'bg-orange-100 text-orange-800', border: 'border-orange-500 blinking-error' },
+        stalled: { text: 'Lỗi Logic', badge: 'bg-red-100 text-red-800', border: 'border-red-500 blinking-error' },
+        default: { text: 'Lỗi', badge: 'bg-red-100 text-red-800', border: 'border-red-500 blinking-error' }
     };
 
     // --- Charting Functions ---
@@ -277,6 +285,25 @@
     }
 
     // --- UI Rendering ---
+    function getStatus(acc) {
+        if ((acc.upgradeProgress || 0) >= 85) return 'completed';
+        
+        let status = acc.status || 'idle';
+        const lastUpdate = acc.lastUpdate?.seconds;
+        const inactiveStates = ['completed', 'stopped', 'idle'];
+
+        if (status === 'running' && (acc.totalClicks === 0 || acc.participants === 0 || acc.upgradeProgress === 0)) {
+            return 'stalled';
+        }
+
+        if (!inactiveStates.includes(status) && lastUpdate) {
+            if ((new Date().getTime() / 1000 - lastUpdate) > 180) {
+                return 'unresponsive';
+            }
+        }
+        return status;
+    }
+
     function renderMasterPanel(data) {
         masterPanelBodyDesktop.innerHTML = "";
         masterPanelBodyMobile.innerHTML = "";
@@ -286,14 +313,7 @@
             return;
         }
         data.forEach(acc => {
-            let status = (acc.upgradeProgress || 0) >= 85 ? 'completed' : (acc.status || 'idle');
-            const lastUpdate = acc.lastUpdate?.seconds;
-            const inactiveStates = ['completed', 'stopped', 'idle'];
-            if (!inactiveStates.includes(status) && lastUpdate) {
-                if ((new Date().getTime() / 1000 - lastUpdate) > 180) {
-                    status = 'unresponsive';
-                }
-            }
+            const status = getStatus(acc);
             const currentStatus = statusMap[status] || { ...statusMap.default, text: status };
             const lastUpdateString = acc.lastUpdate ? new Date(acc.lastUpdate.seconds * 1000).toLocaleString('vi-VN') : 'N/A';
             const desktopRow = `
@@ -325,29 +345,26 @@
     function updateAccountCard(accId, data) {
         const card = document.getElementById(`card-${accId}`);
         if (!card) return;
-        const upgradeProgress = data.upgradeProgress || 0;
-        const isCompleted = upgradeProgress >= 85;
-        let status = isCompleted ? 'completed' : (data.status || 'idle');
-        const lastUpdate = data.lastUpdate?.seconds;
-        const inactiveStates = ['completed', 'stopped', 'idle'];
-        if (!inactiveStates.includes(status) && lastUpdate) {
-            if ((new Date().getTime() / 1000 - lastUpdate) > 180) {
-                status = 'unresponsive';
-            }
-        }
+        const status = getStatus(data);
         const currentStatus = statusMap[status] || { ...statusMap.default, text: status };
         
         card.className = `bg-white rounded-xl shadow-lg p-6 flex flex-col transition-all duration-300 border-l-4 ${currentStatus.border}`;
+        if (status === 'unresponsive' || status === 'stalled' || status === 'default') {
+            card.classList.add('blinking-error');
+        } else {
+            card.classList.remove('blinking-error');
+        }
+
         const statusEl = card.querySelector('.status');
         statusEl.textContent = currentStatus.text;
         statusEl.className = `status text-sm font-semibold px-3 py-1 rounded-full ${currentStatus.badge}`;
         
         card.querySelector('.clicks').textContent = (data.totalClicks || 0).toLocaleString('vi-VN');
         card.querySelector('.participants').textContent = data.participants || 0;
-        card.querySelector('.upgrade').textContent = `${upgradeProgress}%`;
+        card.querySelector('.upgrade').textContent = `${data.upgradeProgress || 0}%`;
 
         const startBtn = card.querySelector('.start-btn');
-        if (isCompleted) {
+        if ((data.upgradeProgress || 0) >= 85) {
             startBtn.disabled = true;
             startBtn.classList.remove('bg-blue-500', 'hover:bg-blue-600');
             startBtn.classList.add('bg-gray-400');
@@ -363,6 +380,14 @@
         } else {
             twoFaForm.classList.add('hidden');
         }
+
+        const errorLog = card.querySelector('.error-log');
+        if(data.errorLog && data.errorLog.message && data.errorLog.timestamp) {
+            errorLog.classList.remove('hidden');
+            errorLog.querySelector('.error-message').textContent = `(${new Date(data.errorLog.timestamp.seconds * 1000).toLocaleString('vi-VN')}) ${data.errorLog.message}`;
+        } else {
+            errorLog.classList.add('hidden');
+        }
     }
     function createAccountCard(accId, data) {
         const card = document.createElement("div");
@@ -374,6 +399,10 @@
                 <div><p class="text-2xl font-bold text-gray-700 participants"></p><p class="text-xs text-gray-500">Tham gia</p></div>
                 <div><p class="text-2xl font-bold text-gray-700 upgrade"></p><p class="text-xs text-gray-500">Nâng cấp</p></div>
             </div>
+            <div class="error-log hidden mt-2 p-2 bg-red-50 border border-red-200 rounded-lg text-xs">
+                <p class="font-bold text-red-700">Lỗi cuối cùng:</p>
+                <p class="error-message text-red-600"></p>
+            </div>
             <form class="two-fa-form hidden my-3 p-3 bg-yellow-50 rounded-lg border border-yellow-300" onsubmit="handle2faSubmit(event, '${accId}')">
                 <label class="block text-sm font-medium text-yellow-800 mb-1">Yêu cầu xác thực 2FA</label>
                 <div class="flex gap-2">
@@ -381,7 +410,7 @@
                     <button type="submit" class="submit-2fa-btn bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg btn-interaction">Gửi</button>
                 </div>
             </form>
-            <div class="space-y-3">
+            <div class="space-y-3 mt-3">
                 <div class="field">🕒 Bắt đầu: <input class="startTime w-full border p-2 text-base rounded mt-1" value="${data.schedule?.startTime || '09:00'}"></div>
                 <div class="field">🕒 Kết thúc: <input class="endTime w-full border p-2 text-base rounded mt-1" value="${data.schedule?.endTime || '22:00'}"></div>
                 <div class="field">📧 Email: <input class="email w-full border p-2 text-base rounded mt-1"></div>
