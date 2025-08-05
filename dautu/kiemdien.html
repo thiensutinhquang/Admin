@@ -206,7 +206,7 @@
         toastTimeout = setTimeout(() => {
             toast.classList.remove('opacity-100', 'translate-y-0');
             toast.classList.add('opacity-0', 'translate-y-10');
-        }, 2500); // Increased duration for better readability
+        }, 2500);
     }
 
     const statusMap = {
@@ -382,6 +382,15 @@
         }
 
         const errorLog = card.querySelector('.error-log');
+        const unresponsiveWarning = card.querySelector('.unresponsive-warning');
+        
+        if (status === 'unresponsive') {
+            unresponsiveWarning.classList.remove('hidden');
+            unresponsiveWarning.querySelector('.last-update-time').textContent = new Date(data.lastUpdate.seconds * 1000).toLocaleString('vi-VN');
+        } else {
+            unresponsiveWarning.classList.add('hidden');
+        }
+
         if(data.errorLog && data.errorLog.message && data.errorLog.timestamp) {
             errorLog.classList.remove('hidden');
             errorLog.querySelector('.error-message').textContent = `(${new Date(data.errorLog.timestamp.seconds * 1000).toLocaleString('vi-VN')}) ${data.errorLog.message}`;
@@ -394,6 +403,10 @@
         card.id = `card-${accId}`;
         card.innerHTML = `
             <div class="flex justify-between items-start mb-4"><h3 class="text-xl font-bold text-gray-900">${accId}</h3><span class="status"></span></div>
+            <div class="unresponsive-warning hidden mb-4 p-3 bg-orange-50 border-l-4 border-orange-400 text-orange-700">
+                <p class="font-bold">Cảnh báo: Mất kết nối</p>
+                <p class="text-sm">Cập nhật lần cuối: <span class="last-update-time font-semibold"></span></p>
+            </div>
             <div class="grid grid-cols-3 gap-4 text-center mb-4 flex-grow">
                 <div><p class="text-2xl font-bold text-blue-600 clicks"></p><p class="text-xs text-gray-500">Điểm</p></div>
                 <div><p class="text-2xl font-bold text-gray-700 participants"></p><p class="text-xs text-gray-500">Tham gia</p></div>
@@ -414,7 +427,7 @@
                 <div class="field">🕒 Bắt đầu: <input class="startTime w-full border p-2 text-base rounded mt-1" value="${data.schedule?.startTime || '09:00'}"></div>
                 <div class="field">🕒 Kết thúc: <input class="endTime w-full border p-2 text-base rounded mt-1" value="${data.schedule?.endTime || '22:00'}"></div>
                 <div class="field">📧 Email: <input class="email w-full border p-2 text-base rounded mt-1"></div>
-                <div class="field">🔑 Mật khẩu: <input type="password" class="password w-full border p-2 text-base rounded mt-1"></div>
+                <div class="field">� Mật khẩu: <input type="password" class="password w-full border p-2 text-base rounded mt-1"></div>
                 <div class="field">🖥️ Máy chủ ID: <input class="machineId w-full border p-2 text-base rounded mt-1" value="${data.machine?.id || ''}"></div>
                 <div class="field">🌐 IP Máy: <input class="machineIp w-full border p-2 text-base rounded mt-1" value="${data.machine?.ip || ''}"></div>
                 <div class="field">📍 Vị trí: <input class="machineLocation w-full border p-2 text-base rounded mt-1" value="${data.machine?.location || ''}"></div>
@@ -548,3 +561,4 @@
   </script>
 </body>
 </html>
+�
