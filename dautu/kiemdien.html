@@ -150,6 +150,16 @@
           </div>
       </div>
   </div>
+  <div id="reset-modal" class="modal">
+      <div class="modal-content">
+          <h3 class="text-xl font-bold mb-2">Xác nhận Reset</h3>
+          <p class="text-gray-600 mb-6">Bạn có chắc chắn muốn reset toàn bộ chỉ số (Điểm, Tham gia, % Nâng cấp) của tài khoản <strong id="reset-acc-id-span"></strong> về 0 không?</p>
+          <div class="flex justify-end gap-3">
+              <button onclick="hideResetModal()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg btn-interaction">Hủy</button>
+              <button id="confirm-reset-btn" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded-lg btn-interaction">Xác nhận Reset</button>
+          </div>
+      </div>
+  </div>
   
   <!-- Toast Notification -->
   <div id="toast-notification" class="fixed bottom-5 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-lg shadow-xl transition-all duration-300 ease-in-out opacity-0 transform translate-y-10 z-50">
@@ -177,10 +187,13 @@
     const masterPanelBodyMobile = document.getElementById('master-panel-body-mobile');
     const addModal = document.getElementById('add-modal');
     const deleteModal = document.getElementById('delete-modal');
+    const resetModal = document.getElementById('reset-modal');
     const toast = document.getElementById('toast-notification');
     const toastMessage = document.getElementById('toast-message');
     const deleteAccIdSpan = document.getElementById('delete-acc-id-span');
+    const resetAccIdSpan = document.getElementById('reset-acc-id-span');
     const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
+    const confirmResetBtn = document.getElementById('confirm-reset-btn');
 
     let scoreHistoryChartInstance = null;
     let scoreComparisonChartInstance = null;
@@ -198,6 +211,12 @@
         deleteModal.classList.add('visible');
     };
     window.hideDeleteModal = () => { deleteModal.classList.remove('visible'); };
+    window.showResetModal = (accId) => {
+        resetAccIdSpan.textContent = accId;
+        confirmResetBtn.onclick = () => handleResetAccount(accId);
+        resetModal.classList.add('visible');
+    };
+    window.hideResetModal = () => { resetModal.classList.remove('visible'); };
     function showAlert(message) {
         if (toastTimeout) clearTimeout(toastTimeout);
         toastMessage.textContent = message;
@@ -368,7 +387,6 @@
         startBtn.classList.add('bg-blue-500', 'hover:bg-blue-600');
         startBtn.classList.remove('bg-gray-400');
 
-
         const twoFaForm = card.querySelector('.two-fa-form');
         if (data.status === 'waiting-2fa' || data.status === 'waiting-for-2fa') {
             twoFaForm.classList.remove('hidden');
@@ -431,6 +449,7 @@
                 <button class="delete-btn bg-red-100 hover:bg-red-200 text-red-700 font-bold py-3 px-4 rounded-lg btn-interaction">Xóa</button>
                 <div class="flex flex-col sm:flex-row gap-3">
                     <button class="save-btn bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 px-4 rounded-lg btn-interaction">Lưu</button>
+                    <button class="reset-btn bg-orange-400 hover:bg-orange-500 text-white font-bold py-3 px-4 rounded-lg btn-interaction">Reset</button>
                     <button class="start-btn text-white font-bold py-3 px-4 rounded-lg btn-interaction">Start</button>
                     <button class="stop-btn bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-4 rounded-lg btn-interaction">Stop</button>
                 </div>
@@ -438,6 +457,7 @@
         `;
         card.querySelector('.save-btn').addEventListener('click', () => handleSaveChanges(accId));
         card.querySelector('.delete-btn').addEventListener('click', () => showDeleteModal(accId));
+        card.querySelector('.reset-btn').addEventListener('click', () => showResetModal(accId));
         card.querySelector('.start-btn').addEventListener('click', () => sendAction(accId, 'start'));
         card.querySelector('.stop-btn').addEventListener('click', () => sendAction(accId, 'stop'));
         const emailEl = card.querySelector('.email');
@@ -483,6 +503,21 @@
     async function handleDeleteAccount(accId) {
         await deleteDoc(doc(db, "puppeteer-control", accId));
         hideDeleteModal();
+    }
+    async function handleResetAccount(accId) {
+        triggerVibration();
+        const resetData = {
+            totalClicks: 0,
+            participants: 0,
+            upgradeProgress: 0,
+            status: 'idle',
+            action: 'stop',
+            errorLog: null,
+            lastUpdate: new Date()
+        };
+        await updateDoc(doc(db, "puppeteer-control", accId), resetData);
+        hideResetModal();
+        showAlert(`Đã reset chỉ số cho ${accId}.`);
     }
     async function sendAction(accId, action) {
         triggerVibration();
