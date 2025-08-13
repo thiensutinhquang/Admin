@@ -132,7 +132,7 @@
   <div id="add-modal" class="modal">
       <div class="modal-content">
           <h3 class="text-xl font-bold mb-4">Tạo tài khoản mới</h3>
-          <p class="text-sm text-gray-500 mb-4">Nhập ID duy nhất cho tài khoản mới (ví dụ: acc3, bot_user_1).</p>
+          <p class="text-sm text-gray-500 mb-4">Nhập ID duy nhất cho tài khoản mới (ví dụ: acc1, bot_user_1).</p>
           <input id="new-acc-id" class="w-full border p-3 text-base rounded mb-4" placeholder="ID Tài khoản mới">
           <div class="flex justify-end gap-3">
               <button onclick="hideAddModal()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg btn-interaction">Hủy</button>
@@ -170,14 +170,19 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
     import { getFirestore, collection, doc, updateDoc, onSnapshot, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 
+    // --- FIREBASE CONFIG ---
     const firebaseConfig = {
-      apiKey: "AIzaSyD1VGc1stVvkpFqTMaSh2X7KqzBiH1-dDY",
-      authDomain: "ai-companel.firebaseapp.com",
-      projectId: "ai-companel",
-      storageBucket: "ai-companel.appspot.com",
-      messagingSenderId: "869875628579",
-      appId: "1:869875628579:web:9c5fcf2c4372748c17cf96"
+      apiKey: "AIzaSyBRZ-PJ26GA4fQR82IFH8czPLcoeMAN0Rw",
+      authDomain: "tracnghiem-3d119.firebaseapp.com",
+      projectId: "tracnghiem-3d119",
+      storageBucket: "tracnghiem-3d119.appspot.com",
+      messagingSenderId: "284314073537",
+      appId: "1:284314073537:web:a6bbea2bf01de662491740",
+      measurementId: "G-L8HDLXSPFE"
     };
+    
+    // --- COLLECTION NAME ---
+    const COLLECTION_NAME = "puppeteer-control";
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
@@ -268,7 +273,7 @@
 
     // --- Firestore Listener ---
     function setupRealtimeListener() {
-        const collectionRef = collection(db, "puppeteer-control");
+        const collectionRef = collection(db, COLLECTION_NAME);
         onSnapshot(collectionRef, (querySnapshot) => {
             if (accountGrid.innerHTML.includes("Đang tìm kiếm")) accountGrid.innerHTML = "";
             const activeIds = new Set();
@@ -480,7 +485,7 @@
             machine: { id: "Chưa gán", ip: "N/A", location: "N/A" },
             lastUpdate: new Date()
         };
-        await setDoc(doc(db, "puppeteer-control", newId), defaultData);
+        await setDoc(doc(db, COLLECTION_NAME, newId), defaultData);
         hideAddModal();
         document.getElementById('new-acc-id').value = "";
     };
@@ -494,14 +499,14 @@
             credentials: { email: card.querySelector('.email').value, password: card.querySelector('.password').value },
             machine: { id: card.querySelector('.machineId').value, ip: card.querySelector('.machineIp').value, location: card.querySelector('.machineLocation').value }
         };
-        await updateDoc(doc(db, "puppeteer-control", accId), updatedData);
+        await updateDoc(doc(db, COLLECTION_NAME, accId), updatedData);
         localStorage.setItem(`${accId}-email`, updatedData.credentials.email);
         localStorage.setItem(`${accId}-password`, updatedData.credentials.password);
         saveBtn.disabled = false;
         showAlert(`Đã lưu thay đổi cho ${accId}!`);
     }
     async function handleDeleteAccount(accId) {
-        await deleteDoc(doc(db, "puppeteer-control", accId));
+        await deleteDoc(doc(db, COLLECTION_NAME, accId));
         hideDeleteModal();
     }
     async function handleResetAccount(accId) {
@@ -515,13 +520,13 @@
             errorLog: null,
             lastUpdate: new Date()
         };
-        await updateDoc(doc(db, "puppeteer-control", accId), resetData);
+        await updateDoc(doc(db, COLLECTION_NAME, accId), resetData);
         hideResetModal();
         showAlert(`Đã reset chỉ số cho ${accId}.`);
     }
     async function sendAction(accId, action) {
         triggerVibration();
-        await updateDoc(doc(db, "puppeteer-control", accId), { action });
+        await updateDoc(doc(db, COLLECTION_NAME, accId), { action });
     }
     window.handle2faSubmit = async (event, accId) => {
         event.preventDefault();
@@ -540,7 +545,7 @@
         button.innerHTML = `<span class="spinner"></span>`;
 
         try {
-            await updateDoc(doc(db, "puppeteer-control", accId), {
+            await updateDoc(doc(db, COLLECTION_NAME, accId), {
                 action: "submit-2fa",
                 twoFactorCode: code,
             });
