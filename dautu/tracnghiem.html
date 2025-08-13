@@ -97,6 +97,22 @@
             </div>
         </div>
         <div id="master" class="tab-content">
+            <!-- Global API Key Section -->
+            <div class="bg-white p-6 rounded-xl shadow-md mb-6">
+                <h3 class="font-bold text-lg mb-4 text-gray-800">Cấu hình chung</h3>
+                <div class="space-y-4">
+                    <div>
+                        <label for="global-api-key" class="block text-sm font-medium text-gray-700">OpenAI API Key (Dùng chung cho tất cả tài khoản)</label>
+                        <div class="mt-1 flex rounded-md shadow-sm">
+                            <input type="password" id="global-api-key" class="flex-1 block w-full rounded-none rounded-l-md p-3 border-gray-300 focus:ring-blue-500 focus:border-blue-500" placeholder="sk-...">
+                            <button onclick="handleSaveGlobalApiKey()" class="inline-flex items-center px-4 py-2 border border-l-0 border-gray-300 rounded-r-md bg-gray-50 text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 btn-interaction">
+                                Lưu
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Master Panel Table -->
             <div class="bg-white rounded-xl shadow-md">
                 <div class="hidden md:block">
                     <table class="min-w-full divide-y divide-gray-200">
@@ -168,7 +184,7 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
-    import { getFirestore, collection, doc, updateDoc, onSnapshot, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
+    import { getFirestore, collection, doc, updateDoc, onSnapshot, setDoc, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 
     // --- FIREBASE CONFIG ---
     const firebaseConfig = {
@@ -199,6 +215,7 @@
     const resetAccIdSpan = document.getElementById('reset-acc-id-span');
     const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
     const confirmResetBtn = document.getElementById('confirm-reset-btn');
+    const globalApiKeyInput = document.getElementById('global-api-key');
 
     let scoreHistoryChartInstance = null;
     let scoreComparisonChartInstance = null;
@@ -273,6 +290,7 @@
 
     // --- Firestore Listener ---
     function setupRealtimeListener() {
+        loadGlobalApiKey(); // Load the global API key first
         const collectionRef = collection(db, COLLECTION_NAME);
         onSnapshot(collectionRef, (querySnapshot) => {
             if (accountGrid.innerHTML.includes("Đang tìm kiếm")) accountGrid.innerHTML = "";
@@ -280,12 +298,17 @@
             const comparisonLabels = [];
             const comparisonData = [];
             const masterPanelData = [];
-            if (querySnapshot.empty) { 
+            
+            // Filter out the global_settings document
+            const accountDocs = querySnapshot.docs.filter(doc => doc.id !== 'global_settings');
+
+            if (accountDocs.length === 0) { 
                 accountGrid.innerHTML = `<p class="text-center col-span-full p-10">Chưa có tài khoản nào. Hãy thêm một tài khoản mới!</p>`; 
                 masterPanelBodyDesktop.innerHTML = `<tr><td colspan="7" class="text-center p-10 text-gray-500">Không có dữ liệu</td></tr>`;
                 masterPanelBodyMobile.innerHTML = `<p class="text-center p-10 text-gray-500">Không có dữ liệu</p>`;
             }
-            querySnapshot.forEach((docSnap) => {
+            
+            accountDocs.forEach((docSnap) => {
                 const accId = docSnap.id;
                 const data = docSnap.data();
                 activeIds.add(accId);
@@ -299,6 +322,7 @@
                 if (!card) { card = createAccountCard(accId, data); accountGrid.appendChild(card); }
                 else { updateAccountCard(accId, data); }
             });
+
             Object.keys(accountsData).forEach(accId => {
                 if (!activeIds.has(accId)) { delete accountsData[accId]; document.getElementById(`card-${accId}`)?.remove(); }
             });
@@ -556,6 +580,31 @@
             button.disabled = false;
             button.innerHTML = 'Gửi';
             input.value = '';
+        }
+    };
+    
+    // --- Global API Key Functions ---
+    async function loadGlobalApiKey() {
+        const docRef = doc(db, COLLECTION_NAME, "global_settings");
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists() && docSnap.data().OPENAI_API_KEY) {
+            globalApiKeyInput.value = docSnap.data().OPENAI_API_KEY;
+        }
+    }
+    window.handleSaveGlobalApiKey = async () => {
+        triggerVibration();
+        const key = globalApiKeyInput.value.trim();
+        if (!key) {
+            showAlert("Vui lòng nhập API Key.");
+            return;
+        }
+        try {
+            const docRef = doc(db, COLLECTION_NAME, "global_settings");
+            await setDoc(docRef, { OPENAI_API_KEY: key }, { merge: true });
+            showAlert("Đã lưu API Key chung thành công!");
+        } catch (error) {
+            console.error("Lỗi khi lưu API Key: ", error);
+            showAlert("Lưu API Key thất bại.");
         }
     };
 
