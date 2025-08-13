@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Control Panel</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+        font-family: 'Inter', sans-serif;
+        background-color: #f1f5f9;
+    }
+    .tab {
+        cursor: pointer;
+        padding: 0.75rem 1rem;
+        border-bottom: 3px solid transparent;
+        transition: all 0.3s ease;
+        font-weight: 600;
+        white-space: nowrap; /* Prevent tabs from wrapping */
+    }
+    @media (min-width: 640px) { .tab { padding: 0.75rem 1.5rem; } }
+    .tab.active { color: #2563eb; border-bottom-color: #2563eb; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .spinner {
+        display: inline-block; width: 1rem; height: 1rem;
+        border: 2px solid rgba(255,255,255,0.3); border-radius: 50%;
+        border-top-color: #fff; animation: spin 1s ease-in-out infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    button:disabled { cursor: not-allowed; opacity: 0.7; }
+    .btn-interaction {
+        transform: scale(1);
+        transition: transform 0.1s ease-out;
+    }
+    .btn-interaction:active { transform: scale(0.97); }
+    .modal {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background-color: rgba(0, 0, 0, 0.5); display: flex;
+        justify-content: center; align-items: center; z-index: 50;
+        opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+    }
+    .modal.visible { opacity: 1; pointer-events: auto; }
+    .modal-content {
+        background-color: white; padding: 2rem; border-radius: 0.75rem;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        width: 100%; max-width: 400px;
+        transform: scale(0.95); transition: transform 0.3s ease;
+    }
+    .modal.visible .modal-content { transform: scale(1); }
+    /* Blinking animation for errors */
+    @keyframes blink-border {
+        50% { border-color: transparent; }
+    }
+    .blinking-error {
+        animation: blink-border 1.5s step-end infinite;
+    }
+  </style>
+</head>
+<body>
+  <div id="login" class="flex items-center justify-center min-h-screen bg-gray-100 p-4">
+    <div class="w-full max-w-md p-8 space-y-6 bg-white rounded-xl shadow-lg">
+        <h2 class="text-3xl font-extrabold text-center text-gray-900">🔐 Đăng nhập Admin</h2>
+        <div class="space-y-6">
+            <div><input id="admin-email" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Email" value="admin@gmail.com"></div>
+            <div><input id="admin-pass" type="password" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Mật khẩu" value="123456"></div>
+            <div><button onclick="loginGlobal()" class="w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 btn-interaction">Đăng nhập</button></div>
+        </div>
+    </div>
+  </div>
+
+  <div id="main-content" style="display: none;">
+    <header class="bg-white shadow-sm">
+        <div class="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-4"><h1 class="text-2xl font-extrabold text-gray-900">Control Panel</h1></div>
+        <div class="border-b border-gray-200">
+            <nav class="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 -mb-px flex space-x-2 sm:space-x-8 overflow-x-auto" aria-label="Tabs">
+                <a id="tab-dashboard" onclick="switchTab(event, 'dashboard')" class="tab active btn-interaction">📈 Thống kê</a>
+                <a id="tab-master" onclick="switchTab(event, 'master')" class="tab btn-interaction">🌐 Điều phối tổng</a>
+                <a id="tab-management" onclick="switchTab(event, 'management')" class="tab btn-interaction">👤 Quản lý</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div id="dashboard" class="tab-content active">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-white p-4 sm:p-6 rounded-xl shadow-md"><h3 class="font-bold text-lg mb-4">Lịch sử Điểm theo Thời gian</h3><div class="h-80"><canvas id="scoreHistoryChart"></canvas></div></div>
+                <div class="bg-white p-4 sm:p-6 rounded-xl shadow-md"><h3 class="font-bold text-lg mb-4">So sánh Điểm Hiện tại</h3><div class="h-80"><canvas id="scoreComparisonChart"></canvas></div></div>
+            </div>
+        </div>
+        <div id="master" class="tab-content">
+            <div class="bg-white rounded-xl shadow-md">
+                <div class="hidden md:block">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tài khoản</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng thái</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Máy chủ</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">IP Máy</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vị trí</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Điểm</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cập nhật</th>
+                            </tr>
+                        </thead>
+                        <tbody id="master-panel-body-desktop" class="bg-white divide-y divide-gray-200"></tbody>
+                    </table>
+                </div>
+                <div id="master-panel-body-mobile" class="md:hidden p-4 space-y-4"></div>
+            </div>
+        </div>
+        <div id="management" class="tab-content">
+            <div class="mb-6 text-right">
+                <button onclick="showAddModal()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg btn-interaction">+ Thêm Tài khoản mới</button>
+            </div>
+            <div id="accountGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                 <div class="text-center col-span-full p-10 text-gray-500"><p>Đang tìm kiếm tài khoản trên Firestore...</p></div>
+            </div>
+        </div>
+    </main>
+  </div>
+
+  <!-- Modals -->
+  <div id="add-modal" class="modal">
+      <div class="modal-content">
+          <h3 class="text-xl font-bold mb-4">Tạo tài khoản mới</h3>
+          <p class="text-sm text-gray-500 mb-4">Nhập ID duy nhất cho tài khoản mới (ví dụ: acc3, bot_user_1).</p>
+          <input id="new-acc-id" class="w-full border p-3 text-base rounded mb-4" placeholder="ID Tài khoản mới">
+          <div class="flex justify-end gap-3">
+              <button onclick="hideAddModal()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg btn-interaction">Hủy</button>
+              <button onclick="handleCreateAccount()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg btn-interaction">Tạo</button>
+          </div>
+      </div>
+  </div>
+  <div id="delete-modal" class="modal">
+      <div class="modal-content">
+          <h3 class="text-xl font-bold mb-2">Xác nhận Xóa</h3>
+          <p class="text-gray-600 mb-6">Bạn có chắc chắn muốn xóa tài khoản <strong id="delete-acc-id-span"></strong>? Hành động này không thể hoàn tác.</p>
+          <div class="flex justify-end gap-3">
+              <button onclick="hideDeleteModal()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg btn-interaction">Hủy</button>
+              <button id="confirm-delete-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg btn-interaction">Xác nhận Xóa</button>
+          </div>
+      </div>
+  </div>
+  <div id="reset-modal" class="modal">
+      <div class="modal-content">
+          <h3 class="text-xl font-bold mb-2">Xác nhận Reset</h3>
+          <p class="text-gray-600 mb-6">Bạn có chắc chắn muốn reset toàn bộ chỉ số (Điểm, Tham gia, % Nâng cấp) của tài khoản <strong id="reset-acc-id-span"></strong> về 0 không?</p>
+          <div class="flex justify-end gap-3">
+              <button onclick="hideResetModal()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg btn-interaction">Hủy</button>
+              <button id="confirm-reset-btn" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded-lg btn-interaction">Xác nhận Reset</button>
+          </div>
+      </div>
+  </div>
+  
+  <!-- Toast Notification -->
+  <div id="toast-notification" class="fixed bottom-5 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-lg shadow-xl transition-all duration-300 ease-in-out opacity-0 transform translate-y-10 z-50">
+      <p id="toast-message"></p>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
+    import { getFirestore, collection, doc, updateDoc, onSnapshot, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyD1VGc1stVvkpFqTMaSh2X7KqzBiH1-dDY",
+      authDomain: "ai-companel.firebaseapp.com",
+      projectId: "ai-companel",
+      storageBucket: "ai-companel.appspot.com",
+      messagingSenderId: "869875628579",
+      appId: "1:869875628579:web:9c5fcf2c4372748c17cf96"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    
+    const accountGrid = document.getElementById('accountGrid');
+    const masterPanelBodyDesktop = document.getElementById('master-panel-body-desktop');
+    const masterPanelBodyMobile = document.getElementById('master-panel-body-mobile');
+    const addModal = document.getElementById('add-modal');
+    const deleteModal = document.getElementById('delete-modal');
+    const resetModal = document.getElementById('reset-modal');
+    const toast = document.getElementById('toast-notification');
+    const toastMessage = document.getElementById('toast-message');
+    const deleteAccIdSpan = document.getElementById('delete-acc-id-span');
+    const resetAccIdSpan = document.getElementById('reset-acc-id-span');
+    const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
+    const confirmResetBtn = document.getElementById('confirm-reset-btn');
+
+    let scoreHistoryChartInstance = null;
+    let scoreComparisonChartInstance = null;
+    let accountsData = {};
+    let toastTimeout;
+
+    function triggerVibration() { if (navigator.vibrate) navigator.vibrate(50); }
+
+    // --- Modal & Toast Management ---
+    window.showAddModal = () => { addModal.classList.add('visible'); };
+    window.hideAddModal = () => { addModal.classList.remove('visible'); };
+    window.showDeleteModal = (accId) => {
+        deleteAccIdSpan.textContent = accId;
+        confirmDeleteBtn.onclick = () => handleDeleteAccount(accId);
+        deleteModal.classList.add('visible');
+    };
+    window.hideDeleteModal = () => { deleteModal.classList.remove('visible'); };
+    window.showResetModal = (accId) => {
+        resetAccIdSpan.textContent = accId;
+        confirmResetBtn.onclick = () => handleResetAccount(accId);
+        resetModal.classList.add('visible');
+    };
+    window.hideResetModal = () => { resetModal.classList.remove('visible'); };
+    function showAlert(message) {
+        if (toastTimeout) clearTimeout(toastTimeout);
+        toastMessage.textContent = message;
+        toast.classList.remove('opacity-0', 'translate-y-10');
+        toast.classList.add('opacity-100', 'translate-y-0');
+        toastTimeout = setTimeout(() => {
+            toast.classList.remove('opacity-100', 'translate-y-0');
+            toast.classList.add('opacity-0', 'translate-y-10');
+        }, 2500);
+    }
+
+    const statusMap = {
+        running: { text: 'Đang chạy', badge: 'bg-green-100 text-green-800', border: 'border-green-500' },
+        stopped: { text: 'Đã dừng', badge: 'bg-gray-100 text-gray-800', border: 'border-gray-400' },
+        idle: { text: 'Không hoạt động', badge: 'bg-gray-100 text-gray-800', border: 'border-gray-400' },
+        'waiting-login': { text: 'Chờ đăng nhập', badge: 'bg-yellow-100 text-yellow-800', border: 'border-yellow-500' },
+        'waiting-2fa': { text: 'Cần mã 2FA', badge: 'bg-yellow-100 text-yellow-800', border: 'border-yellow-500' },
+        'waiting-for-2fa': { text: 'Cần mã 2FA', badge: 'bg-yellow-100 text-yellow-800', border: 'border-yellow-500' },
+        'logged-in': { text: 'Đã đăng nhập', badge: 'bg-blue-100 text-blue-800', border: 'border-blue-500' },
+        completed: { text: 'Đã hoàn thành', badge: 'bg-indigo-100 text-indigo-800', border: 'border-indigo-500' },
+        unresponsive: { text: 'Mất kết nối', badge: 'bg-orange-100 text-orange-800', border: 'border-orange-500 blinking-error' },
+        stalled: { text: 'Lỗi Logic', badge: 'bg-red-100 text-red-800', border: 'border-red-500 blinking-error' },
+        default: { text: 'Lỗi', badge: 'bg-red-100 text-red-800', border: 'border-red-500 blinking-error' }
+    };
+
+    // --- Charting Functions ---
+    function renderScoreHistoryChart() {
+        const ctx = document.getElementById("scoreHistoryChart").getContext("2d");
+        const datasets = Object.keys(accountsData).map(accId => {
+            const color = accountsData[accId].color;
+            const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+            const startColor = color.replace('hsl', 'hsla').replace(')', ', 0.4)');
+            const endColor = color.replace('hsl', 'hsla').replace(')', ', 0)');
+            gradient.addColorStop(0, startColor);
+            gradient.addColorStop(1, endColor);
+            return {
+                label: accId, data: accountsData[accId].history, borderColor: color, backgroundColor: gradient,
+                fill: true, tension: 0.4, pointBackgroundColor: color, pointRadius: 2, pointHoverRadius: 5
+            };
+        });
+        if (scoreHistoryChartInstance) { scoreHistoryChartInstance.data.datasets = datasets; scoreHistoryChartInstance.update(); }
+        else { scoreHistoryChartInstance = new Chart(ctx, { type: 'line', data: { datasets }, options: { responsive: true, maintainAspectRatio: false, scales: { x: { type: 'time', time: { unit: 'minute', tooltipFormat: 'HH:mm, dd/MM/yy' }, title: { display: true, text: 'Thời gian' } }, y: { beginAtZero: true, title: { display: true, text: 'Số điểm' } } }, plugins: { legend: { position: 'top' }, tooltip: { mode: 'index', intersect: false, callbacks: { title: (tooltipItems) => { const date = new Date(tooltipItems[0].parsed.x); return date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' - ' + date.toLocaleDateString('vi-VN'); }, label: (context) => { let label = context.dataset.label || ''; if (label) { label += ': '; } if (context.parsed.y !== null) { label += context.parsed.y.toLocaleString('vi-VN') + ' điểm'; } return label; } } } }, interaction: { mode: 'index', intersect: false } } }); }
+    }
+    function renderScoreComparisonChart(labels, data) {
+        const ctx = document.getElementById("scoreComparisonChart").getContext("2d");
+        if (scoreComparisonChartInstance) { scoreComparisonChartInstance.data.labels = labels; scoreComparisonChartInstance.data.datasets[0].data = data; scoreComparisonChartInstance.update(); }
+        else { scoreComparisonChartInstance = new Chart(ctx, { type: 'bar', data: { labels, datasets: [{ label: 'Số điểm', data, backgroundColor: '#3b82f6' }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, indexAxis: 'y' } }); }
+    }
+
+    // --- Firestore Listener ---
+    function setupRealtimeListener() {
+        const collectionRef = collection(db, "puppeteer-control");
+        onSnapshot(collectionRef, (querySnapshot) => {
+            if (accountGrid.innerHTML.includes("Đang tìm kiếm")) accountGrid.innerHTML = "";
+            const activeIds = new Set();
+            const comparisonLabels = [];
+            const comparisonData = [];
+            const masterPanelData = [];
+            if (querySnapshot.empty) { 
+                accountGrid.innerHTML = `<p class="text-center col-span-full p-10">Chưa có tài khoản nào. Hãy thêm một tài khoản mới!</p>`; 
+                masterPanelBodyDesktop.innerHTML = `<tr><td colspan="7" class="text-center p-10 text-gray-500">Không có dữ liệu</td></tr>`;
+                masterPanelBodyMobile.innerHTML = `<p class="text-center p-10 text-gray-500">Không có dữ liệu</p>`;
+            }
+            querySnapshot.forEach((docSnap) => {
+                const accId = docSnap.id;
+                const data = docSnap.data();
+                activeIds.add(accId);
+                masterPanelData.push({id: accId, ...data});
+                if (!accountsData[accId]) { accountsData[accId] = { history: [], color: `hsl(${Math.random() * 360}, 70%, 50%)` }; }
+                const lastHistoryPoint = accountsData[accId].history.slice(-1)[0];
+                if (!lastHistoryPoint || lastHistoryPoint.y !== (data.totalClicks || 0)) { accountsData[accId].history.push({ x: new Date(), y: data.totalClicks || 0 }); }
+                comparisonLabels.push(accId);
+                comparisonData.push(data.totalClicks || 0);
+                let card = document.getElementById(`card-${accId}`);
+                if (!card) { card = createAccountCard(accId, data); accountGrid.appendChild(card); }
+                else { updateAccountCard(accId, data); }
+            });
+            Object.keys(accountsData).forEach(accId => {
+                if (!activeIds.has(accId)) { delete accountsData[accId]; document.getElementById(`card-${accId}`)?.remove(); }
+            });
+            renderMasterPanel(masterPanelData);
+            renderScoreHistoryChart();
+            renderScoreComparisonChart(comparisonLabels, comparisonData);
+        });
+    }
+
+    // --- UI Rendering ---
+    function getStatus(acc) {
+        if ((acc.upgradeProgress || 0) >= 85) return 'completed';
+        
+        let status = acc.status || 'idle';
+        const lastUpdate = acc.lastUpdate?.seconds;
+        const inactiveStates = ['completed', 'stopped', 'idle'];
+
+        if (status === 'running' && (acc.totalClicks === 0 || acc.participants === 0 || acc.upgradeProgress === 0)) {
+            return 'stalled';
+        }
+
+        if (!inactiveStates.includes(status) && lastUpdate) {
+            if ((new Date().getTime() / 1000 - lastUpdate) > 180) {
+                return 'unresponsive';
+            }
+        }
+        return status;
+    }
+
+    function renderMasterPanel(data) {
+        masterPanelBodyDesktop.innerHTML = "";
+        masterPanelBodyMobile.innerHTML = "";
+        if (data.length === 0) {
+            masterPanelBodyDesktop.innerHTML = `<tr><td colspan="7" class="text-center p-10 text-gray-500">Không có dữ liệu</td></tr>`;
+            masterPanelBodyMobile.innerHTML = `<p class="text-center p-10 text-gray-500">Không có dữ liệu</p>`;
+            return;
+        }
+        data.forEach(acc => {
+            const status = getStatus(acc);
+            const currentStatus = statusMap[status] || { ...statusMap.default, text: status };
+            const lastUpdateString = acc.lastUpdate ? new Date(acc.lastUpdate.seconds * 1000).toLocaleString('vi-VN') : 'N/A';
+            const desktopRow = `
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${acc.id}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${currentStatus.badge}">${currentStatus.text}</span></td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${acc.machine?.id || 'N/A'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${acc.machine?.ip || 'N/A'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${acc.machine?.location || 'N/A'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-blue-600">${(acc.totalClicks || 0).toLocaleString('vi-VN')}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${lastUpdateString}</td>
+                </tr>`;
+            masterPanelBodyDesktop.innerHTML += desktopRow;
+            const mobileCard = `
+                <div class="bg-gray-50 rounded-lg p-4 space-y-2 border border-gray-200">
+                    <div class="flex justify-between items-center">
+                        <p class="font-bold text-gray-800">${acc.id}</p>
+                        <p class="text-sm font-semibold px-2 py-1 rounded-full ${currentStatus.badge}">${currentStatus.text}</p>
+                    </div>
+                    <div class="text-sm text-gray-600"><strong>Điểm:</strong> <span class="font-bold text-blue-600">${(acc.totalClicks || 0).toLocaleString('vi-VN')}</span></div>
+                    <div class="text-sm text-gray-600"><strong>Máy chủ:</strong> ${acc.machine?.id || 'N/A'} (${acc.machine?.ip || 'N/A'})</div>
+                    <div class="text-sm text-gray-600"><strong>Vị trí:</strong> ${acc.machine?.location || 'N/A'}</div>
+                    <div class="text-xs text-gray-400 pt-2 border-t mt-2"><strong>Cập nhật:</strong> ${lastUpdateString}</div>
+                </div>
+            `;
+            masterPanelBodyMobile.innerHTML += mobileCard;
+        });
+    }
+    function updateAccountCard(accId, data) {
+        const card = document.getElementById(`card-${accId}`);
+        if (!card) return;
+        const status = getStatus(data);
+        const currentStatus = statusMap[status] || { ...statusMap.default, text: status };
+        
+        card.className = `bg-white rounded-xl shadow-lg p-6 flex flex-col transition-all duration-300 border-l-4 ${currentStatus.border}`;
+        if (status === 'unresponsive' || status === 'stalled' || status === 'default') {
+            card.classList.add('blinking-error');
+        } else {
+            card.classList.remove('blinking-error');
+        }
+
+        const statusEl = card.querySelector('.status');
+        statusEl.textContent = currentStatus.text;
+        statusEl.className = `status text-sm font-semibold px-3 py-1 rounded-full ${currentStatus.badge}`;
+        
+        card.querySelector('.clicks').textContent = (data.totalClicks || 0).toLocaleString('vi-VN');
+        card.querySelector('.participants').textContent = data.participants || 0;
+        card.querySelector('.upgrade').textContent = `${data.upgradeProgress || 0}%`;
+
+        const startBtn = card.querySelector('.start-btn');
+        startBtn.disabled = false;
+        startBtn.classList.add('bg-blue-500', 'hover:bg-blue-600');
+        startBtn.classList.remove('bg-gray-400');
+
+        const twoFaForm = card.querySelector('.two-fa-form');
+        if (data.status === 'waiting-2fa' || data.status === 'waiting-for-2fa') {
+            twoFaForm.classList.remove('hidden');
+        } else {
+            twoFaForm.classList.add('hidden');
+        }
+
+        const errorLog = card.querySelector('.error-log');
+        const unresponsiveWarning = card.querySelector('.unresponsive-warning');
+        
+        if (status === 'unresponsive') {
+            unresponsiveWarning.classList.remove('hidden');
+            unresponsiveWarning.querySelector('.last-update-time').textContent = new Date(data.lastUpdate.seconds * 1000).toLocaleString('vi-VN');
+        } else {
+            unresponsiveWarning.classList.add('hidden');
+        }
+
+        if(data.errorLog && data.errorLog.message && data.errorLog.timestamp) {
+            errorLog.classList.remove('hidden');
+            errorLog.querySelector('.error-message').textContent = `(${new Date(data.errorLog.timestamp.seconds * 1000).toLocaleString('vi-VN')}) ${data.errorLog.message}`;
+        } else {
+            errorLog.classList.add('hidden');
+        }
+    }
+    function createAccountCard(accId, data) {
+        const card = document.createElement("div");
+        card.id = `card-${accId}`;
+        card.innerHTML = `
+            <div class="flex justify-between items-start mb-4"><h3 class="text-xl font-bold text-gray-900">${accId}</h3><span class="status"></span></div>
+            <div class="unresponsive-warning hidden mb-4 p-3 bg-orange-50 border-l-4 border-orange-400 text-orange-700">
+                <p class="font-bold">Cảnh báo: Mất kết nối</p>
+                <p class="text-sm">Cập nhật lần cuối: <span class="last-update-time font-semibold"></span></p>
+            </div>
+            <div class="grid grid-cols-3 gap-4 text-center mb-4 flex-grow">
+                <div><p class="text-2xl font-bold text-blue-600 clicks"></p><p class="text-xs text-gray-500">Điểm</p></div>
+                <div><p class="text-2xl font-bold text-gray-700 participants"></p><p class="text-xs text-gray-500">Tham gia</p></div>
+                <div><p class="text-2xl font-bold text-gray-700 upgrade"></p><p class="text-xs text-gray-500">Nâng cấp</p></div>
+            </div>
+            <div class="error-log hidden mt-2 p-2 bg-red-50 border border-red-200 rounded-lg text-xs">
+                <p class="font-bold text-red-700">Lỗi cuối cùng:</p>
+                <p class="error-message text-red-600"></p>
+            </div>
+            <form class="two-fa-form hidden my-3 p-3 bg-yellow-50 rounded-lg border border-yellow-300" onsubmit="handle2faSubmit(event, '${accId}')">
+                <label class="block text-sm font-medium text-yellow-800 mb-1">Yêu cầu xác thực 2FA</label>
+                <div class="flex gap-2">
+                    <input type="text" placeholder="Nhập mã 6 số" class="w-full border p-2 text-base rounded-md" pattern="[0-9]{6}" required>
+                    <button type="submit" class="submit-2fa-btn bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg btn-interaction">Gửi</button>
+                </div>
+            </form>
+            <div class="space-y-3 mt-3">
+                <div class="field">🕒 Bắt đầu: <input class="startTime w-full border p-2 text-base rounded mt-1" value="${data.schedule?.startTime || '09:00'}"></div>
+                <div class="field">🕒 Kết thúc: <input class="endTime w-full border p-2 text-base rounded mt-1" value="${data.schedule?.endTime || '22:00'}"></div>
+                <div class="field">📧 Email: <input class="email w-full border p-2 text-base rounded mt-1"></div>
+                <div class="field">🔑 Mật khẩu: <input type="password" class="password w-full border p-2 text-base rounded mt-1"></div>
+                <div class="field">🖥️ Máy chủ ID: <input class="machineId w-full border p-2 text-base rounded mt-1" value="${data.machine?.id || ''}"></div>
+                <div class="field">🌐 IP Máy: <input class="machineIp w-full border p-2 text-base rounded mt-1" value="${data.machine?.ip || ''}"></div>
+                <div class="field">📍 Vị trí: <input class="machineLocation w-full border p-2 text-base rounded mt-1" value="${data.machine?.location || ''}"></div>
+            </div>
+            <div class="mt-4 pt-4 border-t border-gray-200 flex flex-col sm:flex-row sm:justify-between gap-3">
+                <button class="delete-btn bg-red-100 hover:bg-red-200 text-red-700 font-bold py-3 px-4 rounded-lg btn-interaction">Xóa</button>
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <button class="save-btn bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 px-4 rounded-lg btn-interaction">Lưu</button>
+                    <button class="reset-btn bg-orange-400 hover:bg-orange-500 text-white font-bold py-3 px-4 rounded-lg btn-interaction">Reset</button>
+                    <button class="start-btn text-white font-bold py-3 px-4 rounded-lg btn-interaction">Start</button>
+                    <button class="stop-btn bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-4 rounded-lg btn-interaction">Stop</button>
+                </div>
+            </div>
+        `;
+        card.querySelector('.save-btn').addEventListener('click', () => handleSaveChanges(accId));
+        card.querySelector('.delete-btn').addEventListener('click', () => showDeleteModal(accId));
+        card.querySelector('.reset-btn').addEventListener('click', () => showResetModal(accId));
+        card.querySelector('.start-btn').addEventListener('click', () => sendAction(accId, 'start'));
+        card.querySelector('.stop-btn').addEventListener('click', () => sendAction(accId, 'stop'));
+        const emailEl = card.querySelector('.email');
+        const passEl = card.querySelector('.password');
+        emailEl.value = localStorage.getItem(`${accId}-email`) || data.credentials?.email || "xiemsansang@gmail.com";
+        passEl.value = localStorage.getItem(`${accId}-password`) || data.credentials?.password || "Xiem@1985";
+        updateAccountCard(accId, data);
+        return card;
+    }
+
+    // --- CRUD Functions ---
+    window.handleCreateAccount = async () => {
+        const newId = document.getElementById('new-acc-id').value.trim();
+        if (!newId) { showAlert("Vui lòng nhập ID tài khoản."); return; }
+        if (accountsData[newId]) { showAlert("ID tài khoản đã tồn tại."); return; }
+        const defaultData = {
+            action: "stop", status: "idle", totalClicks: 0, participants: 0, upgradeProgress: 0,
+            schedule: { startTime: "09:00", endTime: "22:00" },
+            credentials: { email: "xiemsansang@gmail.com", password: "Xiem@1985" },
+            machine: { id: "Chưa gán", ip: "N/A", location: "N/A" },
+            lastUpdate: new Date()
+        };
+        await setDoc(doc(db, "puppeteer-control", newId), defaultData);
+        hideAddModal();
+        document.getElementById('new-acc-id').value = "";
+    };
+    async function handleSaveChanges(accId) {
+        triggerVibration();
+        const card = document.getElementById(`card-${accId}`);
+        const saveBtn = card.querySelector('.save-btn');
+        saveBtn.disabled = true;
+        const updatedData = {
+            schedule: { startTime: card.querySelector('.startTime').value, endTime: card.querySelector('.endTime').value },
+            credentials: { email: card.querySelector('.email').value, password: card.querySelector('.password').value },
+            machine: { id: card.querySelector('.machineId').value, ip: card.querySelector('.machineIp').value, location: card.querySelector('.machineLocation').value }
+        };
+        await updateDoc(doc(db, "puppeteer-control", accId), updatedData);
+        localStorage.setItem(`${accId}-email`, updatedData.credentials.email);
+        localStorage.setItem(`${accId}-password`, updatedData.credentials.password);
+        saveBtn.disabled = false;
+        showAlert(`Đã lưu thay đổi cho ${accId}!`);
+    }
+    async function handleDeleteAccount(accId) {
+        await deleteDoc(doc(db, "puppeteer-control", accId));
+        hideDeleteModal();
+    }
+    async function handleResetAccount(accId) {
+        triggerVibration();
+        const resetData = {
+            totalClicks: 0,
+            participants: 0,
+            upgradeProgress: 0,
+            status: 'idle',
+            action: 'stop',
+            errorLog: null,
+            lastUpdate: new Date()
+        };
+        await updateDoc(doc(db, "puppeteer-control", accId), resetData);
+        hideResetModal();
+        showAlert(`Đã reset chỉ số cho ${accId}.`);
+    }
+    async function sendAction(accId, action) {
+        triggerVibration();
+        await updateDoc(doc(db, "puppeteer-control", accId), { action });
+    }
+    window.handle2faSubmit = async (event, accId) => {
+        event.preventDefault();
+        triggerVibration();
+        const form = event.target;
+        const input = form.querySelector('input');
+        const button = form.querySelector('button');
+        const code = input.value.trim();
+
+        if (!/^\d{6}$/.test(code)) {
+            showAlert("Vui lòng nhập mã 2FA gồm 6 chữ số.");
+            return;
+        }
+
+        button.disabled = true;
+        button.innerHTML = `<span class="spinner"></span>`;
+
+        try {
+            await updateDoc(doc(db, "puppeteer-control", accId), {
+                action: "submit-2fa",
+                twoFactorCode: code,
+            });
+            showAlert(`Đã gửi mã 2FA cho ${accId}.`);
+        } catch (err) {
+            showAlert(`Lỗi gửi mã 2FA: ${err.message}`);
+        } finally {
+            button.disabled = false;
+            button.innerHTML = 'Gửi';
+            input.value = '';
+        }
+    };
+
+    // --- Global Functions ---
+    window.switchTab = (event, id) => {
+        triggerVibration();
+        document.querySelectorAll('.tab-content').forEach(sec => sec.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        document.querySelectorAll('.tab').forEach(btn => btn.classList.remove('active'));
+        event.target.classList.add('active');
+    };
+    window.loginGlobal = () => {
+        triggerVibration();
+        const user = document.getElementById('admin-email').value;
+        const pass = document.getElementById('admin-pass').value;
+        if (user === 'admin@gmail.com' && pass === '123456') {
+            localStorage.setItem('admin-token', 'yes');
+            document.getElementById('login').style.display = 'none';
+            document.getElementById('main-content').style.display = 'block';
+            setupRealtimeListener();
+        } else { showAlert("Sai tài khoản hoặc mật khẩu."); }
+    };
+    
+    // --- Initialization ---
+    document.addEventListener('DOMContentLoaded', () => {
+        if (localStorage.getItem('admin-token') === 'yes') {
+            document.getElementById('login').style.display = 'none';
+            document.getElementById('main-content').style.display = 'block';
+            setupRealtimeListener();
+        }
+    });
+  </script>
+</body>
+</html>
