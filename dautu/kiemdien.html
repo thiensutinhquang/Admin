@@ -225,7 +225,7 @@
         toastTimeout = setTimeout(() => {
             toast.classList.remove('opacity-100', 'translate-y-0');
             toast.classList.add('opacity-0', 'translate-y-10');
-        }, 2500);
+        }, 1500);
     }
 
     const statusMap = {
@@ -429,10 +429,10 @@
                 <p class="font-bold text-red-700">Lỗi cuối cùng:</p>
                 <p class="error-message text-red-600"></p>
             </div>
-            <form class="two-fa-form hidden my-3 p-3 bg-yellow-50 rounded-lg border border-yellow-300" onsubmit="handle2faSubmit(event, '${accId}')">
+            <form class="two-fa-form hidden my-3 p-3 bg-yellow-50 rounded-lg border border-yellow-300">
                 <label class="block text-sm font-medium text-yellow-800 mb-1">Yêu cầu xác thực 2FA</label>
                 <div class="flex gap-2">
-                    <input type="text" placeholder="Nhập mã 6 số" class="w-full border p-2 text-base rounded-md" pattern="[0-9]{6}" required>
+                    <input type="text" placeholder="Nhập mã 6 số" class="two-fa-input w-full border p-2 text-base rounded-md" pattern="[0-9]{6}" maxlength="6" required>
                     <button type="submit" class="submit-2fa-btn bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg btn-interaction">Gửi</button>
                 </div>
             </form>
@@ -460,6 +460,17 @@
         card.querySelector('.reset-btn').addEventListener('click', () => showResetModal(accId));
         card.querySelector('.start-btn').addEventListener('click', () => sendAction(accId, 'start'));
         card.querySelector('.stop-btn').addEventListener('click', () => sendAction(accId, 'stop'));
+        
+        // Auto-submit 2FA
+        const twoFaForm = card.querySelector('.two-fa-form');
+        const twoFaInput = card.querySelector('.two-fa-input');
+        twoFaForm.addEventListener('submit', (e) => handle2faSubmit(e, accId));
+        twoFaInput.addEventListener('input', () => {
+            if (twoFaInput.value.trim().length === 6) {
+                handle2faSubmit(new Event('submit'), accId);
+            }
+        });
+
         const emailEl = card.querySelector('.email');
         const passEl = card.querySelector('.password');
         emailEl.value = localStorage.getItem(`${accId}-email`) || data.credentials?.email || "xiemsansang@gmail.com";
@@ -526,7 +537,7 @@
     window.handle2faSubmit = async (event, accId) => {
         event.preventDefault();
         triggerVibration();
-        const form = event.target;
+        const form = document.getElementById(`card-${accId}`).querySelector('.two-fa-form');
         const input = form.querySelector('input');
         const button = form.querySelector('button');
         const code = input.value.trim();
