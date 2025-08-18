@@ -82,15 +82,15 @@
         <div class="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-4"><h1 class="text-2xl font-extrabold text-gray-900">Control Panel</h1></div>
         <div class="border-b border-gray-200">
             <nav class="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 -mb-px flex space-x-2 sm:space-x-8 overflow-x-auto" aria-label="Tabs">
-                <a id="tab-dashboard" onclick="switchTab(event, 'dashboard')" class="tab active btn-interaction">📈 Thống kê</a>
+                <a id="tab-dashboard" onclick="switchTab(event, 'dashboard')" class="tab btn-interaction">📈 Thống kê</a>
                 <a id="tab-master" onclick="switchTab(event, 'master')" class="tab btn-interaction">🌐 Điều phối tổng</a>
-                <a id="tab-management" onclick="switchTab(event, 'management')" class="tab btn-interaction">👤 Quản lý</a>
+                <a id="tab-management" onclick="switchTab(event, 'management')" class="tab active btn-interaction">👤 Quản lý</a>
             </nav>
         </div>
     </header>
 
     <main class="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div id="dashboard" class="tab-content active">
+        <div id="dashboard" class="tab-content">
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div class="bg-white p-4 sm:p-6 rounded-xl shadow-md"><h3 class="font-bold text-lg mb-4">Lịch sử Điểm theo Thời gian</h3><div class="h-80"><canvas id="scoreHistoryChart"></canvas></div></div>
                 <div class="bg-white p-4 sm:p-6 rounded-xl shadow-md"><h3 class="font-bold text-lg mb-4">So sánh Điểm Hiện tại</h3><div class="h-80"><canvas id="scoreComparisonChart"></canvas></div></div>
@@ -117,7 +117,7 @@
                 <div id="master-panel-body-mobile" class="md:hidden p-4 space-y-4"></div>
             </div>
         </div>
-        <div id="management" class="tab-content">
+        <div id="management" class="tab-content active">
             <div class="mb-6 text-right">
                 <button onclick="showAddModal()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg btn-interaction">+ Thêm Tài khoản mới</button>
             </div>
