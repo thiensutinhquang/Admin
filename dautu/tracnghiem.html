@@ -66,25 +66,17 @@
   </style>
 </head>
 <body>
-  <div id="login" class="flex items-center justify-center min-h-screen bg-gray-100 p-4">
-    <div class="w-full max-w-md p-8 space-y-6 bg-white rounded-xl shadow-lg">
-        <h2 class="text-3xl font-extrabold text-center text-gray-900">🔐 Đăng nhập Admin</h2>
-        <div class="space-y-6">
-            <div><input id="admin-email" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Email" value="admin@gmail.com"></div>
-            <div><input id="admin-pass" type="password" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Mật khẩu" value="123456"></div>
-            <div><button onclick="loginGlobal()" class="w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 btn-interaction">Đăng nhập</button></div>
-        </div>
-    </div>
-  </div>
-
-  <div id="main-content" style="display: none;">
+  <div id="main-content">
     <header class="bg-white shadow-sm">
-        <div class="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-4"><h1 class="text-2xl font-extrabold text-gray-900">Control Panel</h1></div>
+        <div class="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+            <h1 class="text-2xl font-extrabold text-gray-900">Control Panel</h1>
+        </div>
         <div class="border-b border-gray-200">
             <nav class="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 -mb-px flex space-x-2 sm:space-x-8 overflow-x-auto" aria-label="Tabs">
                 <a id="tab-dashboard" onclick="switchTab(event, 'dashboard')" class="tab btn-interaction">📈 Thống kê</a>
                 <a id="tab-master" onclick="switchTab(event, 'master')" class="tab btn-interaction">🌐 Điều phối tổng</a>
                 <a id="tab-management" onclick="switchTab(event, 'management')" class="tab active btn-interaction">👤 Quản lý</a>
+                <a id="tab-global_settings" onclick="switchTab(event, 'global_settings')" class="tab btn-interaction">⚙️ Cài đặt chung</a>
             </nav>
         </div>
     </header>
@@ -123,6 +115,20 @@
             </div>
             <div id="accountGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                  <div class="text-center col-span-full p-10 text-gray-500"><p>Đang tìm kiếm tài khoản trên Firestore...</p></div>
+            </div>
+        </div>
+        <div id="global_settings" class="tab-content">
+            <div class="max-w-2xl mx-auto bg-white p-6 sm:p-8 rounded-xl shadow-md">
+                <h2 class="text-xl font-bold text-gray-800 mb-6">Cài đặt chung</h2>
+                <div class="space-y-4">
+                    <div>
+                        <label for="openai-api-key" class="block text-sm font-medium text-gray-700 mb-1">OPENAI_API_KEY</label>
+                        <input type="password" id="openai-api-key" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="sk-...">
+                    </div>
+                    <div class="text-right">
+                        <button onclick="saveOpenAIKey()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-5 rounded-lg btn-interaction">Lưu</button>
+                    </div>
+                </div>
             </div>
         </div>
     </main>
@@ -168,7 +174,8 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
-    import { getFirestore, collection, doc, updateDoc, onSnapshot, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
+    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
+    import { getFirestore, collection, doc, updateDoc, onSnapshot, setDoc, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 
     // --- FIREBASE CONFIG ---
     const firebaseConfig = {
@@ -181,11 +188,12 @@
       measurementId: "G-L8HDLXSPFE"
     };
     
-    // --- COLLECTION NAME ---
-    const COLLECTION_NAME = "puppeteer-control";
+    // --- COLLECTION NAMES ---
+    const ACCOUNTS_COLLECTION = "puppeteer-control";
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+    const auth = getAuth(app);
     
     const accountGrid = document.getElementById('accountGrid');
     const masterPanelBodyDesktop = document.getElementById('master-panel-body-desktop');
@@ -204,6 +212,7 @@
     let scoreComparisonChartInstance = null;
     let accountsData = {};
     let toastTimeout;
+    let firestoreUnsubscribe = null;
 
     function triggerVibration() { if (navigator.vibrate) navigator.vibrate(50); }
 
@@ -251,6 +260,7 @@
     function renderScoreHistoryChart() {
         const ctx = document.getElementById("scoreHistoryChart").getContext("2d");
         const datasets = Object.keys(accountsData).map(accId => {
+            if (accId === 'global') return null; // Ignore global config document
             const color = accountsData[accId].color;
             const gradient = ctx.createLinearGradient(0, 0, 0, 300);
             const startColor = color.replace('hsl', 'hsla').replace(')', ', 0.4)');
@@ -261,7 +271,7 @@
                 label: accId, data: accountsData[accId].history, borderColor: color, backgroundColor: gradient,
                 fill: true, tension: 0.4, pointBackgroundColor: color, pointRadius: 2, pointHoverRadius: 5
             };
-        });
+        }).filter(Boolean); // Remove null entries
         if (scoreHistoryChartInstance) { scoreHistoryChartInstance.data.datasets = datasets; scoreHistoryChartInstance.update(); }
         else { scoreHistoryChartInstance = new Chart(ctx, { type: 'line', data: { datasets }, options: { responsive: true, maintainAspectRatio: false, scales: { x: { type: 'time', time: { unit: 'minute', tooltipFormat: 'HH:mm, dd/MM/yy' }, title: { display: true, text: 'Thời gian' } }, y: { beginAtZero: true, title: { display: true, text: 'Số điểm' } } }, plugins: { legend: { position: 'top' }, tooltip: { mode: 'index', intersect: false, callbacks: { title: (tooltipItems) => { const date = new Date(tooltipItems[0].parsed.x); return date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' - ' + date.toLocaleDateString('vi-VN'); }, label: (context) => { let label = context.dataset.label || ''; if (label) { label += ': '; } if (context.parsed.y !== null) { label += context.parsed.y.toLocaleString('vi-VN') + ' điểm'; } return label; } } } }, interaction: { mode: 'index', intersect: false } } }); }
     }
@@ -273,19 +283,25 @@
 
     // --- Firestore Listener ---
     function setupRealtimeListener() {
-        const collectionRef = collection(db, COLLECTION_NAME);
-        onSnapshot(collectionRef, (querySnapshot) => {
+        if (firestoreUnsubscribe) {
+            firestoreUnsubscribe(); // Detach any old listener
+        }
+        const collectionRef = collection(db, ACCOUNTS_COLLECTION);
+        firestoreUnsubscribe = onSnapshot(collectionRef, (querySnapshot) => {
             if (accountGrid.innerHTML.includes("Đang tìm kiếm")) accountGrid.innerHTML = "";
             const activeIds = new Set();
             const comparisonLabels = [];
             const comparisonData = [];
             const masterPanelData = [];
-            if (querySnapshot.empty) { 
+            
+            const docs = querySnapshot.docs.filter(doc => doc.id !== 'global');
+
+            if (docs.length === 0) { 
                 accountGrid.innerHTML = `<p class="text-center col-span-full p-10">Chưa có tài khoản nào. Hãy thêm một tài khoản mới!</p>`; 
                 masterPanelBodyDesktop.innerHTML = `<tr><td colspan="7" class="text-center p-10 text-gray-500">Không có dữ liệu</td></tr>`;
                 masterPanelBodyMobile.innerHTML = `<p class="text-center p-10 text-gray-500">Không có dữ liệu</p>`;
             }
-            querySnapshot.forEach((docSnap) => {
+            docs.forEach((docSnap) => {
                 const accId = docSnap.id;
                 const data = docSnap.data();
                 activeIds.add(accId);
@@ -476,7 +492,7 @@
     // --- CRUD Functions ---
     window.handleCreateAccount = async () => {
         const newId = document.getElementById('new-acc-id').value.trim();
-        if (!newId) { showAlert("Vui lòng nhập ID tài khoản."); return; }
+        if (!newId || newId === 'global') { showAlert("ID tài khoản không hợp lệ."); return; }
         if (accountsData[newId]) { showAlert("ID tài khoản đã tồn tại."); return; }
         const defaultData = {
             action: "stop", status: "idle", totalClicks: 0, participants: 0, upgradeProgress: 0,
@@ -485,7 +501,7 @@
             machine: { id: "Chưa gán", ip: "N/A", location: "N/A" },
             lastUpdate: new Date()
         };
-        await setDoc(doc(db, COLLECTION_NAME, newId), defaultData);
+        await setDoc(doc(db, ACCOUNTS_COLLECTION, newId), defaultData);
         hideAddModal();
         document.getElementById('new-acc-id').value = "";
     };
@@ -499,14 +515,14 @@
             credentials: { email: card.querySelector('.email').value, password: card.querySelector('.password').value },
             machine: { id: card.querySelector('.machineId').value, ip: card.querySelector('.machineIp').value, location: card.querySelector('.machineLocation').value }
         };
-        await updateDoc(doc(db, COLLECTION_NAME, accId), updatedData);
+        await updateDoc(doc(db, ACCOUNTS_COLLECTION, accId), updatedData);
         localStorage.setItem(`${accId}-email`, updatedData.credentials.email);
         localStorage.setItem(`${accId}-password`, updatedData.credentials.password);
         saveBtn.disabled = false;
         showAlert(`Đã lưu thay đổi cho ${accId}!`);
     }
     async function handleDeleteAccount(accId) {
-        await deleteDoc(doc(db, COLLECTION_NAME, accId));
+        await deleteDoc(doc(db, ACCOUNTS_COLLECTION, accId));
         hideDeleteModal();
     }
     async function handleResetAccount(accId) {
@@ -520,13 +536,13 @@
             errorLog: null,
             lastUpdate: new Date()
         };
-        await updateDoc(doc(db, COLLECTION_NAME, accId), resetData);
+        await updateDoc(doc(db, ACCOUNTS_COLLECTION, accId), resetData);
         hideResetModal();
         showAlert(`Đã reset chỉ số cho ${accId}.`);
     }
     async function sendAction(accId, action) {
         triggerVibration();
-        await updateDoc(doc(db, COLLECTION_NAME, accId), { action });
+        await updateDoc(doc(db, ACCOUNTS_COLLECTION, accId), { action });
     }
     window.handle2faSubmit = async (event, accId) => {
         event.preventDefault();
@@ -545,7 +561,7 @@
         button.innerHTML = `<span class="spinner"></span>`;
 
         try {
-            await updateDoc(doc(db, COLLECTION_NAME, accId), {
+            await updateDoc(doc(db, ACCOUNTS_COLLECTION, accId), {
                 action: "submit-2fa",
                 twoFactorCode: code,
             });
@@ -558,6 +574,52 @@
             input.value = '';
         }
     };
+    
+    // --- Settings Functions ---
+    window.saveOpenAIKey = async () => {
+        const apiKey = document.getElementById('openai-api-key').value.trim();
+        const settingsRef = doc(db, ACCOUNTS_COLLECTION, "global");
+        try {
+            await setDoc(settingsRef, { openai_api_key: apiKey }, { merge: true });
+            showAlert('Đã lưu OPENAI_API_KEY vào document global thành công!');
+        } catch (error) {
+            console.error("Lỗi khi lưu API key:", error);
+            showAlert('Có lỗi xảy ra khi lưu API key.');
+        }
+    };
+
+    async function loadSettings() {
+        const settingsRef = doc(db, ACCOUNTS_COLLECTION, "global");
+        try {
+            const docSnap = await getDoc(settingsRef);
+            if (docSnap.exists()) {
+                const settings = docSnap.data();
+                if (settings.openai_api_key) {
+                    document.getElementById('openai-api-key').value = settings.openai_api_key;
+                }
+            } else {
+                console.log("Không tìm thấy document cài đặt global.");
+            }
+        } catch (error) {
+            console.error("Lỗi khi tải cài đặt:", error);
+        }
+    }
+
+    // --- App Initialization and Auth ---
+    async function initializeFirebaseServices() {
+        try {
+            const userCredential = await signInAnonymously(auth);
+            console.log("Signed in anonymously:", userCredential.user.uid);
+            setupRealtimeListener();
+            loadSettings();
+        } catch (error) {
+            console.error("Anonymous sign-in failed:", error);
+            showAlert("Không thể kết nối tới máy chủ. Vui lòng thử lại.");
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', initializeFirebaseServices);
+
 
     // --- Global Functions ---
     window.switchTab = (event, id) => {
@@ -567,26 +629,6 @@
         document.querySelectorAll('.tab').forEach(btn => btn.classList.remove('active'));
         event.target.classList.add('active');
     };
-    window.loginGlobal = () => {
-        triggerVibration();
-        const user = document.getElementById('admin-email').value;
-        const pass = document.getElementById('admin-pass').value;
-        if (user === 'admin@gmail.com' && pass === '123456') {
-            localStorage.setItem('admin-token', 'yes');
-            document.getElementById('login').style.display = 'none';
-            document.getElementById('main-content').style.display = 'block';
-            setupRealtimeListener();
-        } else { showAlert("Sai tài khoản hoặc mật khẩu."); }
-    };
-    
-    // --- Initialization ---
-    document.addEventListener('DOMContentLoaded', () => {
-        if (localStorage.getItem('admin-token') === 'yes') {
-            document.getElementById('login').style.display = 'none';
-            document.getElementById('main-content').style.display = 'block';
-            setupRealtimeListener();
-        }
-    });
   </script>
 </body>
 </html>
