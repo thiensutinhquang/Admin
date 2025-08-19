@@ -17,6 +17,7 @@
     body {
         font-family: 'Inter', sans-serif;
         background-color: #f1f5f9;
+        padding-bottom: 80px; /* Add padding to prevent content from being hidden by the bulk action bar */
     }
     .tab {
         cursor: pointer;
@@ -62,6 +63,19 @@
     }
     .blinking-error {
         animation: blink-border 1.5s step-end infinite;
+    }
+    /* Bulk Action Bar Styles */
+    #bulk-action-bar {
+        transition: transform 0.3s ease-in-out;
+        transform: translateY(100%);
+    }
+    #bulk-action-bar.visible {
+        transform: translateY(0);
+    }
+    /* Account card selection style */
+    .account-card.selected {
+        box-shadow: 0 0 0 3px #3b82f6; /* Blue ring */
+        border-color: #3b82f6;
     }
   </style>
 </head>
@@ -110,7 +124,11 @@
             </div>
         </div>
         <div id="management" class="tab-content active">
-            <div class="mb-6 text-right">
+            <div class="flex justify-between items-center mb-6">
+                <div class="flex items-center space-x-3">
+                    <input type="checkbox" id="select-all-checkbox" class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                    <label for="select-all-checkbox" class="text-sm font-medium text-gray-700">Chọn tất cả</label>
+                </div>
                 <button onclick="showAddModal()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg btn-interaction">+ Thêm Tài khoản mới</button>
             </div>
             <div id="accountGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
@@ -158,11 +176,21 @@
   </div>
   <div id="reset-modal" class="modal">
       <div class="modal-content">
-          <h3 class="text-xl font-bold mb-2">Xác nhận Reset</h3>
-          <p class="text-gray-600 mb-6">Bạn có chắc chắn muốn reset toàn bộ chỉ số (Điểm, Tham gia, % Nâng cấp) của tài khoản <strong id="reset-acc-id-span"></strong> về 0 không?</p>
+          <h3 class="text-xl font-bold mb-2">Xác nhận Xóa Dữ liệu</h3>
+          <p class="text-gray-600 mb-6">Bạn có chắc chắn muốn xóa toàn bộ chỉ số (Điểm, Tham gia, % Nâng cấp) của tài khoản <strong id="reset-acc-id-span"></strong> về 0 không?</p>
           <div class="flex justify-end gap-3">
               <button onclick="hideResetModal()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg btn-interaction">Hủy</button>
-              <button id="confirm-reset-btn" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded-lg btn-interaction">Xác nhận Reset</button>
+              <button id="confirm-reset-btn" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded-lg btn-interaction">Xác nhận</button>
+          </div>
+      </div>
+  </div>
+  <div id="bulk-delete-modal" class="modal">
+      <div class="modal-content">
+          <h3 class="text-xl font-bold mb-2">Xác nhận Xóa Hàng loạt</h3>
+          <p class="text-gray-600 mb-6">Bạn có chắc chắn muốn xóa <strong id="bulk-delete-count-span"></strong> tài khoản đã chọn? Hành động này không thể hoàn tác.</p>
+          <div class="flex justify-end gap-3">
+              <button onclick="hideBulkDeleteModal()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg btn-interaction">Hủy</button>
+              <button id="confirm-bulk-delete-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg btn-interaction">Xác nhận Xóa</button>
           </div>
       </div>
   </div>
@@ -172,10 +200,23 @@
       <p id="toast-message"></p>
   </div>
 
+  <!-- Bulk Action Bar -->
+  <div id="bulk-action-bar" class="fixed bottom-0 left-0 right-0 bg-white shadow-lg border-t border-gray-200 p-4 z-40">
+      <div class="max-w-screen-xl mx-auto flex justify-between items-center">
+          <span id="bulk-action-count" class="font-bold text-gray-700"></span>
+          <div class="flex space-x-3">
+              <button onclick="handleBulkAction('start')" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg btn-interaction">Start</button>
+              <button onclick="handleBulkAction('stop')" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg btn-interaction">Stop</button>
+              <button onclick="handleBulkAction('reset')" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded-lg btn-interaction">Reset</button>
+              <button onclick="showBulkDeleteModal()" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg btn-interaction">Xóa</button>
+          </div>
+      </div>
+  </div>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
     import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
-    import { getFirestore, collection, doc, updateDoc, onSnapshot, setDoc, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
+    import { getFirestore, collection, doc, updateDoc, onSnapshot, setDoc, deleteDoc, getDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 
     // --- FIREBASE CONFIG ---
     const firebaseConfig = {
@@ -201,18 +242,25 @@
     const addModal = document.getElementById('add-modal');
     const deleteModal = document.getElementById('delete-modal');
     const resetModal = document.getElementById('reset-modal');
+    const bulkDeleteModal = document.getElementById('bulk-delete-modal');
     const toast = document.getElementById('toast-notification');
     const toastMessage = document.getElementById('toast-message');
     const deleteAccIdSpan = document.getElementById('delete-acc-id-span');
     const resetAccIdSpan = document.getElementById('reset-acc-id-span');
+    const bulkDeleteCountSpan = document.getElementById('bulk-delete-count-span');
     const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
     const confirmResetBtn = document.getElementById('confirm-reset-btn');
+    const confirmBulkDeleteBtn = document.getElementById('confirm-bulk-delete-btn');
+    const bulkActionBar = document.getElementById('bulk-action-bar');
+    const bulkActionCount = document.getElementById('bulk-action-count');
+    const selectAllCheckbox = document.getElementById('select-all-checkbox');
 
     let scoreHistoryChartInstance = null;
     let scoreComparisonChartInstance = null;
     let accountsData = {};
     let toastTimeout;
     let firestoreUnsubscribe = null;
+    let selectedAccounts = new Set();
 
     function triggerVibration() { if (navigator.vibrate) navigator.vibrate(50); }
 
@@ -231,6 +279,12 @@
         resetModal.classList.add('visible');
     };
     window.hideResetModal = () => { resetModal.classList.remove('visible'); };
+    window.showBulkDeleteModal = () => {
+        bulkDeleteCountSpan.textContent = selectedAccounts.size;
+        confirmBulkDeleteBtn.onclick = () => handleBulkDelete();
+        bulkDeleteModal.classList.add('visible');
+    };
+    window.hideBulkDeleteModal = () => { bulkDeleteModal.classList.remove('visible'); };
     function showAlert(message) {
         if (toastTimeout) clearTimeout(toastTimeout);
         toastMessage.textContent = message;
@@ -260,7 +314,7 @@
     function renderScoreHistoryChart() {
         const ctx = document.getElementById("scoreHistoryChart").getContext("2d");
         const datasets = Object.keys(accountsData).map(accId => {
-            if (accId === 'global') return null; // Ignore global config document
+            if (accId === 'global') return null;
             const color = accountsData[accId].color;
             const gradient = ctx.createLinearGradient(0, 0, 0, 300);
             const startColor = color.replace('hsl', 'hsla').replace(')', ', 0.4)');
@@ -271,7 +325,7 @@
                 label: accId, data: accountsData[accId].history, borderColor: color, backgroundColor: gradient,
                 fill: true, tension: 0.4, pointBackgroundColor: color, pointRadius: 2, pointHoverRadius: 5
             };
-        }).filter(Boolean); // Remove null entries
+        }).filter(Boolean);
         if (scoreHistoryChartInstance) { scoreHistoryChartInstance.data.datasets = datasets; scoreHistoryChartInstance.update(); }
         else { scoreHistoryChartInstance = new Chart(ctx, { type: 'line', data: { datasets }, options: { responsive: true, maintainAspectRatio: false, scales: { x: { type: 'time', time: { unit: 'minute', tooltipFormat: 'HH:mm, dd/MM/yy' }, title: { display: true, text: 'Thời gian' } }, y: { beginAtZero: true, title: { display: true, text: 'Số điểm' } } }, plugins: { legend: { position: 'top' }, tooltip: { mode: 'index', intersect: false, callbacks: { title: (tooltipItems) => { const date = new Date(tooltipItems[0].parsed.x); return date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' - ' + date.toLocaleDateString('vi-VN'); }, label: (context) => { let label = context.dataset.label || ''; if (label) { label += ': '; } if (context.parsed.y !== null) { label += context.parsed.y.toLocaleString('vi-VN') + ' điểm'; } return label; } } } }, interaction: { mode: 'index', intersect: false } } }); }
     }
@@ -283,9 +337,7 @@
 
     // --- Firestore Listener ---
     function setupRealtimeListener() {
-        if (firestoreUnsubscribe) {
-            firestoreUnsubscribe(); // Detach any old listener
-        }
+        if (firestoreUnsubscribe) firestoreUnsubscribe();
         const collectionRef = collection(db, ACCOUNTS_COLLECTION);
         firestoreUnsubscribe = onSnapshot(collectionRef, (querySnapshot) => {
             if (accountGrid.innerHTML.includes("Đang tìm kiếm")) accountGrid.innerHTML = "";
@@ -293,7 +345,6 @@
             const comparisonLabels = [];
             const comparisonData = [];
             const masterPanelData = [];
-            
             const docs = querySnapshot.docs.filter(doc => doc.id !== 'global');
 
             if (docs.length === 0) { 
@@ -316,8 +367,13 @@
                 else { updateAccountCard(accId, data); }
             });
             Object.keys(accountsData).forEach(accId => {
-                if (!activeIds.has(accId)) { delete accountsData[accId]; document.getElementById(`card-${accId}`)?.remove(); }
+                if (!activeIds.has(accId)) { 
+                    delete accountsData[accId]; 
+                    document.getElementById(`card-${accId}`)?.remove(); 
+                    selectedAccounts.delete(accId);
+                }
             });
+            updateBulkActionBar();
             renderMasterPanel(masterPanelData);
             renderScoreHistoryChart();
             renderScoreComparisonChart(comparisonLabels, comparisonData);
@@ -327,19 +383,12 @@
     // --- UI Rendering ---
     function getStatus(acc) {
         if ((acc.upgradeProgress || 0) >= 85) return 'completed';
-        
         let status = acc.status || 'idle';
         const lastUpdate = acc.lastUpdate?.seconds;
         const inactiveStates = ['completed', 'stopped', 'idle'];
-
-        if (status === 'running' && (acc.totalClicks === 0 || acc.participants === 0 || acc.upgradeProgress === 0)) {
-            return 'stalled';
-        }
-
+        if (status === 'running' && (acc.totalClicks === 0 || acc.participants === 0 || acc.upgradeProgress === 0)) return 'stalled';
         if (!inactiveStates.includes(status) && lastUpdate) {
-            if ((new Date().getTime() / 1000 - lastUpdate) > 180) {
-                return 'unresponsive';
-            }
+            if ((new Date().getTime() / 1000 - lastUpdate) > 180) return 'unresponsive';
         }
         return status;
     }
@@ -388,7 +437,7 @@
         const status = getStatus(data);
         const currentStatus = statusMap[status] || { ...statusMap.default, text: status };
         
-        card.className = `bg-white rounded-xl shadow-lg p-6 flex flex-col transition-all duration-300 border-l-4 ${currentStatus.border}`;
+        card.className = `account-card bg-white rounded-xl shadow-lg p-6 flex flex-col transition-all duration-300 border-l-4 relative ${currentStatus.border} ${selectedAccounts.has(accId) ? 'selected' : ''}`;
         if (status === 'unresponsive' || status === 'stalled' || status === 'default') {
             card.classList.add('blinking-error');
         } else {
@@ -436,6 +485,7 @@
         const card = document.createElement("div");
         card.id = `card-${accId}`;
         card.innerHTML = `
+            <input type="checkbox" class="card-checkbox absolute top-4 right-4 h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 z-10">
             <div class="flex justify-between items-start mb-4"><h3 class="text-xl font-bold text-gray-900">${accId}</h3><span class="status"></span></div>
             <div class="unresponsive-warning hidden mb-4 p-3 bg-orange-50 border-l-4 border-orange-400 text-orange-700">
                 <p class="font-bold">Cảnh báo: Mất kết nối</p>
@@ -470,7 +520,8 @@
                 <button class="delete-btn bg-red-100 hover:bg-red-200 text-red-700 font-bold py-3 px-4 rounded-lg btn-interaction">Xóa</button>
                 <div class="flex flex-col sm:flex-row gap-3">
                     <button class="save-btn bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 px-4 rounded-lg btn-interaction">Lưu</button>
-                    <button class="reset-btn bg-orange-400 hover:bg-orange-500 text-white font-bold py-3 px-4 rounded-lg btn-interaction">Reset</button>
+                    <button class="reset-btn bg-orange-400 hover:bg-orange-500 text-white font-bold py-3 px-4 rounded-lg btn-interaction">Xóa DL</button>
+                    <button class="restart-btn bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg btn-interaction">Restart</button>
                     <button class="start-btn text-white font-bold py-3 px-4 rounded-lg btn-interaction">Start</button>
                     <button class="stop-btn bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-4 rounded-lg btn-interaction">Stop</button>
                 </div>
@@ -479,14 +530,101 @@
         card.querySelector('.save-btn').addEventListener('click', () => handleSaveChanges(accId));
         card.querySelector('.delete-btn').addEventListener('click', () => showDeleteModal(accId));
         card.querySelector('.reset-btn').addEventListener('click', () => showResetModal(accId));
+        card.querySelector('.restart-btn').addEventListener('click', () => sendAction(accId, 'reset'));
         card.querySelector('.start-btn').addEventListener('click', () => sendAction(accId, 'start'));
         card.querySelector('.stop-btn').addEventListener('click', () => sendAction(accId, 'stop'));
+        card.querySelector('.card-checkbox').addEventListener('change', (e) => handleAccountSelection(accId, e.target.checked));
         const emailEl = card.querySelector('.email');
         const passEl = card.querySelector('.password');
         emailEl.value = localStorage.getItem(`${accId}-email`) || data.credentials?.email || "xiemsansang@gmail.com";
         passEl.value = localStorage.getItem(`${accId}-password`) || data.credentials?.password || "Xiem@1985";
         updateAccountCard(accId, data);
         return card;
+    }
+
+    // --- Bulk Actions & Selection ---
+    function handleAccountSelection(accId, isSelected) {
+        if (isSelected) {
+            selectedAccounts.add(accId);
+            document.getElementById(`card-${accId}`).classList.add('selected');
+        } else {
+            selectedAccounts.delete(accId);
+            document.getElementById(`card-${accId}`).classList.remove('selected');
+        }
+        updateBulkActionBar();
+    }
+
+    function updateBulkActionBar() {
+        const selectedCount = selectedAccounts.size;
+        if (selectedCount > 0) {
+            bulkActionCount.textContent = `${selectedCount} mục đã chọn`;
+            bulkActionBar.classList.add('visible');
+        } else {
+            bulkActionBar.classList.remove('visible');
+        }
+        
+        const allAccountCards = document.querySelectorAll('.account-card');
+        if (allAccountCards.length > 0 && selectedCount === allAccountCards.length) {
+            selectAllCheckbox.checked = true;
+            selectAllCheckbox.indeterminate = false;
+        } else if (selectedCount > 0) {
+            selectAllCheckbox.checked = false;
+            selectAllCheckbox.indeterminate = true;
+        } else {
+            selectAllCheckbox.checked = false;
+            selectAllCheckbox.indeterminate = false;
+        }
+    }
+
+    selectAllCheckbox.addEventListener('change', (e) => {
+        const isChecked = e.target.checked;
+        document.querySelectorAll('.account-card').forEach(card => {
+            const accId = card.id.replace('card-', '');
+            card.querySelector('.card-checkbox').checked = isChecked;
+            if (isChecked) {
+                selectedAccounts.add(accId);
+                card.classList.add('selected');
+            } else {
+                selectedAccounts.delete(accId);
+                card.classList.remove('selected');
+            }
+        });
+        updateBulkActionBar();
+    });
+
+    window.handleBulkAction = async (action) => {
+        triggerVibration();
+        const batch = writeBatch(db);
+        selectedAccounts.forEach(accId => {
+            const docRef = doc(db, ACCOUNTS_COLLECTION, accId);
+            batch.update(docRef, { action });
+        });
+        await batch.commit();
+        showAlert(`Đã gửi lệnh "${action}" tới ${selectedAccounts.size} tài khoản.`);
+    };
+
+    async function handleBulkDelete() {
+        triggerVibration();
+        const deleteCount = selectedAccounts.size;
+        if (deleteCount === 0) return;
+
+        const batch = writeBatch(db);
+        selectedAccounts.forEach(accId => {
+            const docRef = doc(db, ACCOUNTS_COLLECTION, accId);
+            batch.delete(docRef);
+        });
+
+        try {
+            await batch.commit();
+            showAlert(`Đã xóa thành công ${deleteCount} tài khoản.`);
+            selectedAccounts.clear();
+            updateBulkActionBar();
+            hideBulkDeleteModal();
+        } catch (error) {
+            console.error("Lỗi khi xóa hàng loạt:", error);
+            showAlert("Đã xảy ra lỗi khi xóa tài khoản.");
+            hideBulkDeleteModal();
+        }
     }
 
     // --- CRUD Functions ---
@@ -538,7 +676,7 @@
         };
         await updateDoc(doc(db, ACCOUNTS_COLLECTION, accId), resetData);
         hideResetModal();
-        showAlert(`Đã reset chỉ số cho ${accId}.`);
+        showAlert(`Đã xóa dữ liệu cho ${accId}.`);
     }
     async function sendAction(accId, action) {
         triggerVibration();
