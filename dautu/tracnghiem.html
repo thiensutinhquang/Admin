@@ -552,8 +552,8 @@
                 </div>
             </form>
             <div class="space-y-3 mt-3">
-                <div class="field">🕒 Bắt đầu: <input class="startTime w-full border p-2 text-base rounded mt-1" value="${data.schedule?.startTime || '09:00'}"></div>
-                <div class="field">🕒 Kết thúc: <input class="endTime w-full border p-2 text-base rounded mt-1" value="${data.schedule?.endTime || '22:00'}"></div>
+                <div class="field">🕒 Bắt đầu: <input class="startTime w-full border p-2 text-base rounded mt-1" value="${data.schedule?.startTime || '00:00'}"></div>
+                <div class="field">🕒 Kết thúc: <input class="endTime w-full border p-2 text-base rounded mt-1" value="${data.schedule?.endTime || '00:00'}"></div>
                 <div class="field">📧 Email: <input class="email w-full border p-2 text-base rounded mt-1"></div>
                 <div class="field">🔑 Mật khẩu: <input type="password" class="password w-full border p-2 text-base rounded mt-1"></div>
                 <div class="field">🖥️ Máy chủ ID: <input class="machineId w-full border p-2 text-base rounded mt-1" value="${data.machine?.id || ''}"></div>
@@ -707,7 +707,7 @@
         if (accountsData[newId]) { showAlert("ID tài khoản đã tồn tại."); return; }
         const defaultData = {
             action: "stop", status: "idle", totalClicks: 0, participants: 0, upgradeProgress: 0,
-            schedule: { startTime: "09:00", endTime: "22:00" },
+            schedule: { startTime: "00:00", endTime: "00:00" },
             credentials: { email: "xiemsansang@gmail.com", password: "Xiem@1985" },
             machine: { id: "Chưa gán", ip: "N/A", location: "N/A" },
             lastUpdate: new Date()
