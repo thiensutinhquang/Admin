@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme="tinhquang">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bảng Báo Cáo Toàn Diện - AI Earn</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        :root {
+            --bg-primary: #1a2a45;
+            --bg-secondary: #2d3748;
+            --bg-card: #4a5568;
+            --bg-table-header: #4a5568;
+            --bg-table-row-odd: #3b475c;
+            --bg-table-row-even: #364154;
+            --bg-table-row-hover: #4f5a6e;
+            --bg-highlight: #4299e1;
+            --bg-interactive: #4a5568;
+            --bg-interactive-hover: #63b3ed;
+            --text-primary: #e2e8f0;
+            --text-secondary: #a0aec0;
+            --text-on-highlight: #1a202c;
+            --border-color: #4a5568;
+            --shadow-color: rgba(0, 0, 0, 0.2);
+            --positive-text: #48bb78;
+            --negative-text: #f56565;
+            --risk-high: #ef4444;
+            --risk-medium: #f59e0b;
+            --risk-low: #22c55e;
+            --accent-gradient: linear-gradient(135deg, #1a2a45, #63b3ed);
+        }
+        [data-theme='lucbao'] {--bg-primary: #f0fdf4;--bg-secondary: #ffffff;--bg-card: #ffffff;--bg-table-header: #22c55e;--bg-table-row-odd: #f0fdf4;--bg-table-row-even: #dcfce7;--bg-table-row-hover: #bbf7d0;--bg-highlight: #a8ff78;--bg-interactive: #e2e8f0;--bg-interactive-hover: #cbd5e1;--text-primary: #1e293b;--text-secondary: #475569;--text-on-highlight: #14532d;--border-color: #d1d5db;--shadow-color: rgba(0, 0, 0, 0.06);--positive-text: #16a34a;--negative-text: #dc2626;--accent-gradient: linear-gradient(135deg, #a8ff78, #f4ff81);}
+        [data-theme='tinhquang'] {--bg-primary: #1a2a45;--bg-secondary: #2d3748;--bg-card: #4a5568;--bg-table-header: #4a5568;--bg-table-row-odd: #3b475c;--bg-table-row-even: #364154;--bg-table-row-hover: #4f5a6e;--bg-highlight: #63b3ed;--bg-interactive: #4a5568;--bg-interactive-hover: #63b3ed;--text-primary: #e2e8f0;--text-secondary: #a0aec0;--text-on-highlight: #1a202c;--border-color: #4a5568;--shadow-color: rgba(0, 0, 0, 0.2);--positive-text: #48bb78;--negative-text: #f56565;--accent-gradient: linear-gradient(135deg, #1a2a45, #63b3ed);}
+        [data-theme='senvang'] {--bg-primary: #fffbeb;--bg-secondary: #ffffff;--bg-card: #ffffff;--bg-table-header: #f59e0b;--bg-table-row-odd: #fffbeb;--bg-table-row-even: #fef3c7;--bg-table-row-hover: #fde68a;--bg-highlight: #ffd66e;--bg-interactive: #e2e8f0;--bg-interactive-hover: #cbd5e1;--text-primary: #1e293b;--text-secondary: #475569;--text-on-highlight: #78350f;--border-color: #d1d5db;--shadow-color: rgba(0, 0, 0, 0.06);--positive-text: #166534;--negative-text: #991b1b;--accent-gradient: linear-gradient(135deg, #fff7d6, #ffd66e);}
+        [data-theme='binhminh'] {--bg-primary: #fff7ed;--bg-secondary: #ffffff;--bg-card: #ffffff;--bg-table-header: #f97316;--bg-table-row-odd: #fff7ed;--bg-table-row-even: #ffedd5;--bg-table-row-hover: #fed7aa;--bg-highlight: #ffcf6b;--bg-interactive: #e2e8f0;--bg-interactive-hover: #cbd5e1;--text-primary: #1e293b;--text-secondary: #475569;--text-on-highlight: #7c2d12;--border-color: #d1d5db;--shadow-color: rgba(0, 0, 0, 0.06);--positive-text: #166534;--negative-text: #991b1b;--accent-gradient: linear-gradient(135deg, #ffcf6b, #ff7a45);}
+        [data-theme='hukhong'] {--bg-primary: #f8fafc;--bg-secondary: #ffffff;--bg-card: #ffffff;--bg-table-header: #64748b;--bg-table-row-odd: #f8fafc;--bg-table-row-even: #f1f5f9;--bg-table-row-hover: #e2e8f0;--bg-highlight: #cbd5e1;--bg-interactive: #e2e8f0;--bg-interactive-hover: #cbd5e1;--text-primary: #1e293b;--text-secondary: #475569;--text-on-highlight: #0f172a;--border-color: #d1d5db;--shadow-color: rgba(0, 0, 0, 0.06);--positive-text: #15803d;--negative-text: #be123c;--accent-gradient: linear-gradient(135deg, #e2e8f0, #ffffff);}
+        [data-theme='kimcuong'] {--bg-primary: #ecfeff;--bg-secondary: #ffffff;--bg-card: #ffffff;--bg-table-header: #06b6d4;--bg-table-row-odd: #ecfeff;--bg-table-row-even: #cffafe;--bg-table-row-hover: #a5f3fc;--bg-highlight: #67e8f9;--bg-interactive: #e2e8f0;--bg-interactive-hover: #cbd5e1;--text-primary: #1e293b;--text-secondary: #475569;--text-on-highlight: #164e63;--border-color: #d1d5db;--shadow-color: rgba(0, 0, 0, 0.06);--positive-text: #059669;--negative-text: #be123c;--accent-gradient: linear-gradient(135deg, #a5f3fc, #67e8f9);}
+        [data-theme='haoguang'] {--bg-primary: #1e1b4b;--bg-secondary: #312e81;--bg-card: #4338ca;--bg-table-header: #4f46e5;--bg-table-row-odd: #3730a3;--bg-table-row-even: #312e81;--bg-table-row-hover: #4338ca;--bg-highlight: #60a5fa;--bg-interactive: #4338ca;--bg-interactive-hover: #4f46e5;--text-primary: #e0e7ff;--text-secondary: #c7d2fe;--text-on-highlight: #1e1b4b;--border-color: #4338ca;--shadow-color: rgba(0, 0, 0, 0.2);--positive-text: #6ee7b7;--negative-text: #fda4af;--accent-gradient: linear-gradient(135deg, #60a5fa, #a78bfa);}
+        [data-theme='thienanh'] {--bg-primary: #450a0a;--bg-secondary: #7f1d1d;--bg-card: #991b1b;--bg-table-header: #b91c1c;--bg-table-row-odd: #881337;--bg-table-row-even: #7f1d1d;--bg-table-row-hover: #991b1b;--bg-highlight: #fbbf24;--bg-interactive: #991b1b;--bg-interactive-hover: #b91c1c;--text-primary: #fecaca;--text-secondary: #fee2e2;--text-on-highlight: #450a0a;--border-color: #991b1b;--shadow-color: rgba(0, 0, 0, 0.2);--positive-text: #fde047;--negative-text: #fed7aa;--accent-gradient: linear-gradient(135deg, #fbbf24, #ef4444);}
+        [data-theme='sakura'] {--bg-primary: #fff1f2;--bg-secondary: #ffffff;--bg-card: #ffffff;--bg-table-header: #f43f5e;--bg-table-row-odd: #fff1f2;--bg-table-row-even: #ffe4e6;--bg-table-row-hover: #fecdd3;--bg-highlight: #fda4af;--bg-interactive: #e2e8f0;--bg-interactive-hover: #cbd5e1;--text-primary: #1e293b;--text-secondary: #475569;--text-on-highlight: #881337;--border-color: #d1d5db;--shadow-color: rgba(0, 0, 0, 0.06);--positive-text: #059669;--negative-text: #be123c;--accent-gradient: linear-gradient(135deg, #fecdd3, #fda4af);}
+
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .container { max-width: 1800px; margin: 2rem auto; padding: 2rem; }
+        .widget { background-color: var(--bg-secondary); box-shadow: 0 10px 30px var(--shadow-color); border-radius: 20px; padding: 1.5rem; }
+        .summary-card { background-color: var(--bg-card); border-radius: 12px; padding: 1.25rem; box-shadow: 0 4px 12px var(--shadow-color); transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out, background-color 0.3s; border: 1px solid var(--border-color); }
+        .summary-card:hover { transform: translateY(-5px); box-shadow: 0 8px 20px var(--shadow-color); border-color: var(--bg-highlight); }
+        th { cursor: pointer; user-select: none; }
+        th .sort-icon { opacity: 0.5; transition: opacity 0.2s; }
+        th:hover .sort-icon { opacity: 0.8; }
+        th .sort-icon.active { opacity: 1; color: var(--text-primary); }
+        table { width: 100%; border-collapse: separate; border-spacing: 0 10px; }
+        th, td { padding: 1rem 1.25rem; text-align: left; white-space: nowrap; font-size: 0.95rem; }
+        th { background-color: var(--bg-table-header); color: var(--text-primary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+        td { box-shadow: 0 1px 3px var(--shadow-color); }
+        td.note-cell { white-space: normal; min-width: 200px; }
+        td.editable:hover, td.note-cell:hover { cursor: pointer; box-shadow: 0 0 0 2px var(--bg-highlight); }
+        td.editable:focus, td.note-cell:focus { outline: none; box-shadow: 0 0 0 2px var(--bg-highlight); }
+        tr.header th:first-child { border-top-left-radius: 8px; }
+        tr.header th:last-child { border-top-right-radius: 8px; }
+        tr.data td { background-color: var(--bg-table-row-odd); }
+        tr.data:nth-child(even) td { background-color: var(--bg-table-row-even); }
+        tr.data:hover td { background-color: var(--bg-table-row-hover); }
+        tr.data td:first-child { border-top-left-radius: 8px; border-bottom-left-radius: 8px; }
+        tr.data td:last-child { border-top-right-radius: 8px; border-bottom-right-radius: 8px; }
+        tr.highlighted td { background-color: var(--bg-highlight) !important; color: var(--text-on-highlight) !important; box-shadow: 0 0 0 3px var(--bg-highlight); transition: background-color 0.3s ease, box-shadow 0.3s ease; }
+        .positive { color: var(--positive-text); font-weight: 700; }
+        .negative { color: var(--negative-text); font-weight: 700; }
+        tr.data td.negative { background-color: rgba(220, 53, 69, 0.15) !important; }
+        .action-button { padding: 0.6rem 1.2rem; border-radius: 9999px; font-weight: 600; transition: all 0.2s ease-in-out; box-shadow: 0 4px 6px var(--shadow-color); }
+        .action-button:hover { transform: translateY(-2px); box-shadow: 0 6px 12px var(--shadow-color); }
+        .delete-btn { background: none; border: none; cursor: pointer; color: #e74c3c; font-size: 1.1rem; transition: color 0.2s, transform 0.2s; }
+        .delete-btn:hover { color: #c0392b; transform: scale(1.2); }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 2000; opacity: 0; visibility: hidden; transition: opacity 0.3s, visibility 0.3s; }
+        .modal-overlay.visible { opacity: 1; visibility: visible; }
+        .modal-content { background: var(--bg-secondary); padding: 2rem; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); text-align: center; transform: scale(0.95); transition: transform 0.3s; }
+        .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: var(--bg-primary); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1000; transition: opacity 0.5s ease-in-out; visibility: hidden; opacity: 0; }
+        .loading-overlay.visible { visibility: visible; opacity: 1; }
+        .loading-spinner { border: 4px solid rgba(255, 255, 255, 0.2); border-left-color: var(--text-primary); border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        #save-status { position: fixed; top: 1rem; right: 1rem; background-color: #2ecc71; color: white; padding: 0.5rem 1rem; border-radius: 9999px; font-size: 0.875rem; font-weight: 600; opacity: 0; transform: translateY(-20px); transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out; z-index: 50; }
+        #save-status.visible { opacity: 1; transform: translateY(0); }
+        .pagination-btn { padding: 0.5rem 1rem; border-radius: 0.5rem; font-weight: 500; transition: background-color 0.2s; cursor:pointer; }
+        .pagination-btn.active { background-color: var(--bg-highlight); color: var(--text-on-highlight); }
+        .pagination-btn:not(.active) { background-color: var(--bg-interactive); color: var(--text-primary); }
+        .view-toggle button.active { background-color: var(--bg-highlight); color: var(--text-on-highlight); }
+        #calendar-view { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.5rem; }
+        .calendar-day { position: relative; aspect-ratio: 1/1; border-radius: 0.5rem; padding: 0.5rem; transition: transform 0.2s; cursor: pointer; }
+        .calendar-day:hover { transform: scale(1.05); }
+        .calendar-day-header { font-size: 0.8rem; font-weight: 600; text-align: center; color: var(--text-secondary); }
+        .calendar-day-number { font-size: 0.9rem; font-weight: 500; }
+        .calendar-day-profit { font-size: 1rem; font-weight: 700; text-align: center; margin-top: 0.5rem; }
+        .calendar-empty { background-color: transparent; }
+        .calendar-day-no-data { background-color: var(--bg-interactive); }
+        .risk-badge { padding: 0.2rem 0.6rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 700; color: white; }
+        .export-option { color: var(--text-primary); }
+        .export-option:hover { background-color: var(--bg-table-row-hover); }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script type="module">
+        import { initializeApp, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        setLogLevel('debug');
+
+        const initialData = [
+            { date: '01/09/25', values: [10, -5, 20, -1, 50, 48], total: 122, notes: 'Khởi đầu tốt.' },
+            { date: '02/09/25', values: [12, 8, -6, 2, -46, 41], total: 11, notes: '' },
+            { date: '03/09/25', values: [-2, 15, 18, -3, 30, 55], total: 113, notes: '' },
+            { date: '04/09/25', values: [5, -9, 22, 5, 25, -60], total: -12, notes: 'Lỗ nặng cuối ngày.' },
+            { date: '08/09/25', values: [15, -4, 10, -2, 40, 50], total: 109, notes: '' },
+            { date: '09/09/25', values: [-3, 11, -8, 7, -35, 45], total: 17, notes: '' },
+            { date: '10/09/25', values: [8, 14, 25, 6, 33, 60], total: 146, notes: 'Một ngày tuyệt vời.' },
+        ];
+        let masterData = [], filteredData = [], db, auth, userId, equityCurveChart = null, pieChartInstance = null, rowToDelete = null, monthlyGoal = 5000;
+        let currentPage = 1, rowsPerPage = 10;
+        let sortState = { column: 0, direction: 'asc' };
+        let currentCalendarDate = new Date();
+        const app_id = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfigString = typeof __firebase_config !== 'undefined' ? __firebase_config : '{}';
+        const firebaseConfig = JSON.parse(firebaseConfigString);
+        let tableBody, confirmModal, settingsModal, loadingOverlay, saveStatus;
+        
+        const themes = {
+            lucbao:{name:'Lục Bảo',c1:'#a8ff78',c2:'#f4ff81'},
+            tinhquang:{name:'Tinh Quang',c1:'#1a2a45',c2:'#63b3ed'},
+            senvang:{name:'Sen Vàng',c1:'#fff7d6',c2:'#ffd66e'},
+            binhminh:{name:'Bình Minh',c1:'#ffcf6b',c2:'#ff7a45'},
+            hukhong:{name:'Hư Không',c1:'#e2e8f0',c2:'#ffffff'},
+            kimcuong:{name:'Kim Cương',c1:'#a5f3fc',c2:'#67e8f9'},
+            haoguang:{name:'Hào Quang',c1:'#60a5fa',c2:'#a78bfa'},
+            thienanh:{name:'Thiên Ảnh',c1:'#fbbf24',c2:'#ef4444'},
+            sakura:{name:'Sakura',c1:'#fecdd3',c2:'#fda4af'},
+        };
+
+        function applyTheme(themeName) { document.documentElement.setAttribute('data-theme', themeName); }
+        function saveTheme(themeName) { localStorage.setItem('theme', themeName); }
+
+        function showLoading(show) { if (loadingOverlay) loadingOverlay.classList.toggle('visible', show); }
+        function showSaveStatus() { if (saveStatus) { saveStatus.classList.add('visible'); setTimeout(() => { saveStatus.classList.remove('visible'); }, 2000); } }
+        
+        function saveDataToFirestore() {
+            if (!userId) return;
+            showSaveStatus();
+            const docRef = doc(db, `artifacts/${app_id}/users/${userId}/report`, 'data');
+            masterData.forEach(row => { row.total = row.values.reduce((acc, val) => acc + (typeof val === 'number' ? val : 0), 0); });
+            const serializableData = masterData.map(row => ({ ...row, classes: JSON.stringify(row.classes) }));
+            setDoc(docRef, { tableData: serializableData, monthlyGoal: monthlyGoal });
+        }
+        
+        function startListeningToData() {
+            if (!userId) return;
+            const docRef = doc(db, `artifacts/${app_id}/users/${userId}/report`, 'data');
+            onSnapshot(docRef, (docSnap) => {
+                const monthlyGoalInput = document.getElementById('monthlyGoalInput');
+                if (docSnap.exists() && docSnap.data().tableData) {
+                    const data = docSnap.data();
+                    masterData = (data.tableData && data.tableData.length > 0) ? data.tableData.map(row => ({ ...row, classes: JSON.parse(row.classes || '{}'), notes: row.notes || '' })) : JSON.parse(JSON.stringify(initialData));
+                    monthlyGoal = data.monthlyGoal || 5000;
+                    if(monthlyGoalInput) monthlyGoalInput.value = monthlyGoal;
+                } else {
+                    masterData = JSON.parse(JSON.stringify(initialData));
+                    if(monthlyGoalInput) monthlyGoalInput.value = monthlyGoal;
+                }
+                if (masterData.length > 0) { const lastDate = parseDate(masterData[masterData.length-1].date); currentCalendarDate = new Date(lastDate.getFullYear(), lastDate.getMonth(), 1); }
+                applyFiltersAndSort();
+                showLoading(false);
+            }, (error) => { console.error("Firebase listener error:", error); masterData = JSON.parse(JSON.stringify(initialData)); applyFiltersAndSort(); showLoading(false); });
+        }
+        
+        function parseDate(dateStr) { const [day, month, year] = dateStr.split('/').map(Number); return new Date(2000 + year, month - 1, day); }
+        
+        function applyFiltersAndSort() {
+            const startDate = document.getElementById('startDate')?.valueAsDate;
+            const endDate = document.getElementById('endDate')?.valueAsDate;
+            const searchTerm = document.getElementById('noteSearch')?.value.toLowerCase() || '';
+
+            filteredData = masterData.filter(row => {
+                const rowDate = parseDate(row.date);
+                if (startDate && rowDate < startDate) return false;
+                if (endDate) { const endOfDay = new Date(endDate); endOfDay.setHours(23, 59, 59, 999); if (rowDate > endOfDay) return false; }
+                if (searchTerm && !(row.notes || '').toLowerCase().includes(searchTerm)) return false;
+                return true;
+            });
+            currentPage = 1;
+            sortTable();
+        }
+        
+        function sortTable() {
+            const { column, direction } = sortState;
+            filteredData.sort((a, b) => {
+                let valA, valB;
+                if (column === 0) { valA = parseDate(a.date); valB = parseDate(b.date); } 
+                else if (column > 0 && column <= 6) { valA = a.values[column - 1] ?? 0; valB = b.values[column - 1] ?? 0; } 
+                else if (column === 7) { valA = a.total; valB = b.total; } 
+                else if (column === 8) {
+                    const grandTotal = filteredData.reduce((sum, row) => sum + row.total, 0);
+                    valA = grandTotal !== 0 ? (a.total / Math.abs(grandTotal)) : 0;
+                    valB = grandTotal !== 0 ? (b.total / Math.abs(grandTotal)) : 0;
+                } else { valA = a.notes || ''; valB = b.notes || ''; }
+                
+                let comparison = 0;
+                if (valA > valB) comparison = 1; else if (valA < valB) comparison = -1;
+                return direction === 'asc' ? comparison : comparison * -1;
+            });
+            updateDashboard();
+        }
+
+        function updateDashboard() {
+            updateSummaryCards();
+            updateTotals();
+            renderTimeSlotPieChart();
+            updateSortIcons();
+            renderCalendar();
+            updateGoalProgress();
+            analyzeAndRenderLossFrequency();
+        }
+
+        function updateGoalProgress() {
+            const progressBar = document.getElementById('goalProgressBar');
+            if (!progressBar) return;
+            const totalProfit = masterData.reduce((sum, row) => sum + row.total, 0);
+            const progress = monthlyGoal > 0 ? (totalProfit / monthlyGoal) * 100 : 0;
+            const clampedProgress = Math.max(0, Math.min(progress, 100));
+            progressBar.style.width = `${clampedProgress}%`;
+            progressBar.textContent = `${progress.toFixed(1)}%`;
+        }
+
+        function calculateAdvancedKPIs(data) {
+            let grossProfit = 0, grossLoss = 0, peak = -Infinity, maxDrawdown = 0, currentDrawdown = 0;
+            const dailyTotals = data.map(row => row.total);
+            if (dailyTotals.length < 2) return { profitFactor: Infinity, maxDrawdown: 0, volatility: 0 };
+
+            let runningTotal = 0;
+            data.forEach(row => {
+                if (row.total > 0) grossProfit += row.total;
+                else grossLoss += Math.abs(row.total);
+                
+                runningTotal += row.total;
+                if (runningTotal > peak) peak = runningTotal;
+                currentDrawdown = peak - runningTotal;
+                if (currentDrawdown > maxDrawdown) maxDrawdown = currentDrawdown;
+            });
+
+            const mean = dailyTotals.reduce((a, b) => a + b, 0) / dailyTotals.length;
+            const variance = dailyTotals.reduce((a, b) => a + (b - mean) ** 2, 0) / dailyTotals.length;
+            const volatility = Math.sqrt(variance);
+            
+            const profitFactor = grossLoss > 0 ? (grossProfit / grossLoss) : Infinity;
+            return { profitFactor, maxDrawdown, volatility };
+        }
+
+        function calculateStreaks(data) {
+            let longestWinStreak = 0, currentWinStreak = 0, longestLossStreak = 0, currentLossStreak = 0;
+            data.forEach(row => {
+                if (row.total > 0) { currentWinStreak++; currentLossStreak = 0; }
+                else if (row.total < 0) { currentLossStreak++; currentWinStreak = 0; }
+                else { currentWinStreak = 0; currentLossStreak = 0; }
+                if (currentWinStreak > longestWinStreak) longestWinStreak = currentWinStreak;
+                if (currentLossStreak > longestLossStreak) longestLossStreak = currentLossStreak;
+            });
+            return { longestWinStreak, longestLossStreak };
+        }
+
+        function updateSummaryCards() {
+            const cards = {
+                totalProfit: document.getElementById('total-profit'), avgProfit: document.getElementById('avg-profit'),
+                bestDay: document.getElementById('best-day'), bestDayLabel: document.getElementById('best-day-label'),
+                winRate: document.getElementById('win-rate'), winStreak: document.getElementById('win-streak'),
+                lossStreak: document.getElementById('loss-streak'), profitFactor: document.getElementById('profit-factor'),
+                maxDrawdown: document.getElementById('max-drawdown'), volatility: document.getElementById('volatility')
+            };
+            if (!cards.totalProfit) return;
+
+            if (filteredData.length === 0) {
+                Object.values(cards).forEach(el => { 
+                    if(el) {
+                         if(el.id.includes('Label')) { el.textContent = 'Không có'; }
+                         else if (['total-profit', 'avg-profit', 'best-day', 'max-drawdown', 'volatility'].includes(el.id)) { el.textContent = '$0.00'; }
+                         else { el.textContent = '0'; }
+                    }
+                });
+                return;
+            }
+
+            const totalProfit = filteredData.reduce((sum, row) => sum + row.total, 0);
+            const avgProfit = totalProfit / filteredData.length;
+            const profitableDays = filteredData.filter(row => row.total > 0).length;
+            const winRate = (profitableDays / filteredData.length) * 100;
+            let bestDay = { total: -Infinity, date: 'N/A' };
+            filteredData.forEach(row => { if(row.total > bestDay.total) bestDay = row; });
+            const { longestWinStreak, longestLossStreak } = calculateStreaks(filteredData);
+            const { profitFactor, maxDrawdown, volatility } = calculateAdvancedKPIs(filteredData.slice().sort((a,b) => parseDate(a.date) - parseDate(b.date)));
+
+            cards.totalProfit.textContent = `$${totalProfit.toFixed(2)}`;
+            cards.avgProfit.textContent = `$${avgProfit.toFixed(2)}`;
+            cards.bestDay.textContent = `$${bestDay.total.toFixed(2)}`;
+            cards.bestDayLabel.textContent = `Ngày tốt nhất (${bestDay.date})`;
+            cards.winRate.textContent = `${winRate.toFixed(1)}%`;
+            cards.winStreak.textContent = `${longestWinStreak} ngày`;
+            cards.lossStreak.textContent = `${longestLossStreak} ngày`;
+            cards.profitFactor.textContent = isFinite(profitFactor) ? profitFactor.toFixed(2) : '∞';
+            cards.maxDrawdown.textContent = `$${maxDrawdown.toFixed(2)}`;
+            cards.volatility.textContent = `$${volatility.toFixed(2)}`;
+        }
+
+        function updateSortIcons() {
+            document.querySelectorAll('th .sort-icon').forEach((icon, index) => {
+                icon.classList.remove('active', 'fa-sort-up', 'fa-sort-down'); icon.classList.add('fa-sort');
+                if(sortState.column === index) {
+                    icon.classList.add('active'); icon.classList.remove('fa-sort');
+                    icon.classList.add(sortState.direction === 'asc' ? 'fa-sort-up' : 'fa-sort-down');
+                }
+            });
+        }
+        
+        function updateTotals() { renderTable(); renderEquityCurveChart(); renderPaginationControls(); }
+        
+        function renderTable() {
+            if (!tableBody) return;
+            tableBody.innerHTML = '';
+            const paginatedData = filteredData.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
+            const grandTotal = filteredData.reduce((sum, row) => sum + row.total, 0);
+            paginatedData.forEach(row => {
+                 const masterRowIndex = masterData.findIndex(item => item.date === row.date);
+                const tr = document.createElement('tr'); tr.className = 'data';
+                tr.innerHTML = `
+                    <td>${row.date}</td>
+                    ${row.values.map((value, colIndex) => {
+                        const formattedValue = (typeof value === 'number') ? `$${value.toFixed(2)}` : '-';
+                        const colorClass = (typeof value === 'number') ? (value >= 0 ? 'positive' : 'negative') : '';
+                        return `<td class="editable ${colorClass}" contenteditable="true" data-row-index="${masterRowIndex}" data-col-index="${colIndex}">${formattedValue}</td>`;
+                    }).join('')}
+                    <td class="${row.total >= 0 ? 'positive' : 'negative'}">$${row.total.toFixed(2)}</td>
+                    <td class="${row.total >= 0 ? 'positive' : 'negative'}">${(grandTotal !== 0 && Math.abs(grandTotal) > 0 ? (row.total / Math.abs(grandTotal)) * 100 : 0).toFixed(2)}%</td>
+                    <td class="note-cell" contenteditable="true" data-row-index="${masterRowIndex}">${row.notes || ''}</td>
+                    <td><button class="delete-btn" data-row-index="${masterRowIndex}" title="Xóa dòng này"><i class="fas fa-trash-alt"></i></button></td>`;
+                tableBody.appendChild(tr);
+            });
+        }
+        
+        function renderPaginationControls() {
+            const paginationContainer = document.getElementById('pagination-controls');
+            if (!paginationContainer) return;
+            paginationContainer.innerHTML = '';
+            const pageCount = Math.ceil(filteredData.length / rowsPerPage);
+            if (pageCount <= 1) return;
+            for (let i = 1; i <= pageCount; i++) {
+                const button = document.createElement('button');
+                button.textContent = i;
+                button.className = `pagination-btn ${i === currentPage ? 'active' : ''}`;
+                button.onclick = () => { currentPage = i; renderTable(); renderPaginationControls(); };
+                paginationContainer.appendChild(button);
+            }
+        }
+        
+       function renderEquityCurveChart() {
+            if (equityCurveChart) equityCurveChart.destroy();
+            const ctx = document.getElementById('equityCurveChart')?.getContext('2d');
+            if (!ctx) return;
+
+            const sortedByDate = [...filteredData].sort((a, b) => parseDate(a.date) - parseDate(b.date));
+            let cumulativeProfit = 0;
+            const equityData = sortedByDate.map(row => {
+                cumulativeProfit += row.total;
+                return { x: row.date, y: cumulativeProfit };
+            });
+
+            const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+            gradient.addColorStop(0, 'rgba(75, 192, 192, 0.6)');
+            gradient.addColorStop(1, 'rgba(75, 192, 192, 0.1)');
+
+            equityCurveChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: equityData.map(d => d.x),
+                    datasets: [{
+                        label: 'Lợi nhuận Tích lũy',
+                        data: equityData.map(d => d.y),
+                        borderColor: '#4bc0c0',
+                        backgroundColor: gradient,
+                        fill: true,
+                        tension: 0.1,
+                        pointBackgroundColor: '#4bc0c0',
+                        pointRadius: 3
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: false, ticks: { callback: v => `$${v}`, color: 'var(--text-secondary)' }, grid: { color: 'var(--border-color)' } },
+                        x: { ticks: { color: 'var(--text-secondary)' }, grid: { display: false } }
+                    },
+                    plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => `Tăng trưởng: $${c.parsed.y.toFixed(2)}` } } },
+                     onClick: (event, elements) => {
+                        if (elements.length > 0) {
+                            const indexInFiltered = elements[0].index;
+                            const targetDate = sortedByDate[indexInFiltered].date;
+                            document.getElementById('tableViewBtn').click();
+                            const pageNumberOfItem = Math.ceil((filteredData.findIndex(r => r.date === targetDate) + 1) / rowsPerPage);
+                            if (currentPage !== pageNumberOfItem) { currentPage = pageNumberOfItem; renderTable(); renderPaginationControls(); }
+                            setTimeout(() => {
+                                document.querySelectorAll('#table-body tr.highlighted').forEach(r => r.classList.remove('highlighted'));
+                                const tableRows = document.querySelectorAll('#table-body tr');
+                                const targetRowInPage = Array.from(tableRows).find(tr => tr.cells[0].textContent === targetDate);
+                                if (targetRowInPage) { targetRowInPage.classList.add('highlighted'); targetRowInPage.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+                            }, 100);
+                        }
+                    }
+                }
+            });
+        }
+        
+        function renderTimeSlotPieChart() {
+            if (pieChartInstance) pieChartInstance.destroy();
+            const ctx = document.getElementById('timeSlotPieChart')?.getContext('2d');
+            if (!ctx || filteredData.length === 0) return;
+            const timeSlots = ["10:30", "12:30", "14:30", "16:00", "17:30", "20:00"];
+            const profitBySlot = new Array(timeSlots.length).fill(0);
+            filteredData.forEach(row => { row.values.forEach((value, index) => { if (typeof value === 'number') { profitBySlot[index] += value; } }); });
+            
+            pieChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: { labels: timeSlots, datasets: [{ label: 'Lợi nhuận theo ca', data: profitBySlot.map(p => Math.abs(p)), backgroundColor: profitBySlot.map(p => p >= 0 ? 'rgba(72, 187, 120, 0.7)' : 'rgba(245, 101, 101, 0.7)'), borderColor: 'var(--bg-secondary)', borderWidth: 3 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top', labels: { color: 'var(--text-secondary)' } }, tooltip: { callbacks: { label: c => `${c.label}: ${new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(profitBySlot[c.dataIndex])}` } } } }
+            });
+        }
+        
+        function renderCalendar() {
+            const calendarView = document.getElementById('calendar-view');
+            const calendarHeader = document.getElementById('calendar-header');
+            if (!calendarView || ! calendarHeader) return;
+
+            calendarHeader.textContent = `Tháng ${currentCalendarDate.getMonth() + 1}, ${currentCalendarDate.getFullYear()}`;
+            calendarView.innerHTML = '';
+            
+            const month = currentCalendarDate.getMonth();
+            const year = currentCalendarDate.getFullYear();
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+            const monthData = masterData.filter(row => {
+                const d = parseDate(row.date);
+                return d.getMonth() === month && d.getFullYear() === year;
+            });
+
+            const maxProfit = Math.max(...monthData.map(d => d.total > 0 ? d.total : 0));
+            const maxLoss = Math.abs(Math.min(...monthData.map(d => d.total < 0 ? d.total : 0)));
+
+            const dayHeaders = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+            dayHeaders.forEach(day => {
+                const dayEl = document.createElement('div');
+                dayEl.className = 'calendar-day-header';
+                dayEl.textContent = day;
+                calendarView.appendChild(dayEl);
+            });
+
+            for (let i = 0; i < firstDay; i++) {
+                calendarView.appendChild(document.createElement('div'));
+            }
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dayEl = document.createElement('div');
+                dayEl.className = 'calendar-day';
+                const dayData = monthData.find(d => parseDate(d.date).getDate() === day);
+
+                let color = 'var(--bg-interactive)';
+                let textColor = 'var(--text-primary)';
+                if (dayData) {
+                    const profit = dayData.total;
+                    if (profit > 0) {
+                        const opacity = 0.3 + (profit / maxProfit) * 0.7;
+                        color = `rgba(72, 187, 120, ${opacity})`;
+                    } else if (profit < 0) {
+                        const opacity = 0.3 + (Math.abs(profit) / maxLoss) * 0.7;
+                        color = `rgba(245, 101, 101, ${opacity})`;
+                    }
+                } 
+                dayEl.style.backgroundColor = color;
+                dayEl.style.color = textColor;
+                
+                dayEl.innerHTML = `<div class="calendar-day-number">${day}</div> ${dayData ? `<div class="calendar-day-profit">$${dayData.total.toFixed(0)}</div>` : ''}`;
+                dayEl.title = dayData ? `Ngày ${day}/${month+1}: $${dayData.total.toFixed(2)}\nGhi chú: ${dayData.notes}` : `Ngày ${day}/${month+1}: Không có dữ liệu`;
+                calendarView.appendChild(dayEl);
+            }
+        }
+        
+        function analyzeAndRenderLossFrequency() {
+            const analysisContainer = document.getElementById('loss-frequency-analysis');
+            if (!analysisContainer) return;
+
+            const timeSlots = ["10:30", "12:30", "14:30", "16:00", "17:30", "20:00"];
+            const analysisData = timeSlots.map(t => ({ time: t, lossDates: [] }));
+
+            const sortedByDate = [...filteredData].sort((a, b) => parseDate(a.date) - parseDate(b.date));
+
+            sortedByDate.forEach(row => {
+                row.values.forEach((value, index) => {
+                    if (typeof value === 'number' && value < 0) {
+                        analysisData[index].lossDates.push(parseDate(row.date));
+                    }
+                });
+            });
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            let html = '';
+            analysisData.forEach(slot => {
+                const lossCount = slot.lossDates.length;
+                let avgInterval = 0;
+                let predictionHtml = `<p class="text-xs" style="color: var(--text-secondary);">Chưa đủ dữ liệu để dự báo.</p>`;
+
+                if (lossCount > 1) {
+                    let totalIntervalDays = 0;
+                    for (let i = 1; i < slot.lossDates.length; i++) {
+                        const diffTime = Math.abs(slot.lossDates[i] - slot.lossDates[i-1]);
+                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                        totalIntervalDays += diffDays;
+                    }
+                    avgInterval = totalIntervalDays / (lossCount - 1);
+
+                    const lastLossDate = slot.lossDates[slot.lossDates.length - 1];
+                    const nextLossTimestamp = lastLossDate.getTime() + avgInterval * 24 * 60 * 60 * 1000;
+                    
+                    const predictedDate = new Date(nextLossTimestamp);
+                    const startDate = new Date(predictedDate.getTime() - 2 * 24 * 60 * 60 * 1000); // -2 days for wider window
+                    const endDate = new Date(predictedDate.getTime() + 2 * 24 * 60 * 60 * 1000);   // +2 days
+                    const mediumRiskDate = new Date(startDate.getTime() - 3 * 24 * 60 * 60 * 1000); // 3 days before start
+
+                    let riskLevel = 'Thấp';
+                    let riskColor = 'var(--risk-low)';
+                    let riskText = `Dự báo rủi ro: ${startDate.toLocaleDateString('vi-VN')} - ${endDate.toLocaleDateString('vi-VN')}`;
+                    
+                    if (today >= startDate && today <= endDate) {
+                        riskLevel = 'Cao';
+                        riskColor = 'var(--risk-high)';
+                    } else if (today >= mediumRiskDate && today < startDate) {
+                        riskLevel = 'Trung bình';
+                        riskColor = 'var(--risk-medium)';
+                    }
+                    
+                    predictionHtml = `
+                        <p class="text-xs" style="color: var(--text-secondary);">${riskText}</p>
+                        <div class="flex items-center justify-end gap-2 mt-1">
+                            <span class="font-bold text-sm">Rủi ro:</span>
+                            <span class="risk-badge" style="background-color: ${riskColor};">${riskLevel}</span>
+                        </div>
+                    `;
+                }
+
+                html += `
+                    <div class="p-3 rounded-lg flex justify-between items-center" style="background-color: var(--bg-card);">
+                        <div>
+                            <span class="font-bold">${slot.time}</span>
+                            <p class="text-xs" style="color: var(--text-secondary);">
+                                Chu kỳ TB: ${lossCount > 1 ? `${avgInterval.toFixed(1)} ngày` : 'Không có'}
+                            </p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-sm">Tổng lần âm: <span class="font-bold negative">${lossCount}</span></p>
+                            ${predictionHtml}
+                        </div>
+                    </div>
+                `;
+            });
+
+            analysisContainer.innerHTML = html || '<p class="text-center" style="color: var(--text-secondary);">Không có dữ liệu lệnh thua.</p>';
+        }
+
+        function showConfirmModal(index) { rowToDelete = index; if (confirmModal) confirmModal.classList.add('visible'); }
+        function hideConfirmModal() { rowToDelete = null; if (confirmModal) confirmModal.classList.remove('visible'); }
+        
+        function showSettingsModal() { if (settingsModal) settingsModal.classList.add('visible'); }
+        function hideSettingsModal() { if (settingsModal) settingsModal.classList.remove('visible'); }
+
+        function handleExport(exportFn, buttonEl) {
+            const originalHTML = buttonEl.innerHTML;
+            buttonEl.disabled = true;
+            buttonEl.innerHTML = `<i class="fas fa-spinner fa-spin mr-2"></i><span>Đang xử lý...</span>`;
+
+            setTimeout(() => {
+                try {
+                    exportFn();
+                } catch(e) {
+                    console.error("Export failed", e);
+                } finally {
+                    buttonEl.disabled = false;
+                    buttonEl.innerHTML = originalHTML;
+                }
+            }, 500); 
+        }
+
+        function downloadPNG() {
+            html2canvas(document.querySelector(".container"), { scale: 2, backgroundColor: getComputedStyle(document.body).getPropertyValue('--bg-primary') }).then(canvas => {
+                const link = document.createElement('a'); link.download = 'BaoCao_AIEarn.png';
+                link.href = canvas.toDataURL('image/png'); link.click();
+            });
+        }
+        function downloadXLSX() {
+            const tableClone = document.getElementById('report-table').cloneNode(true);
+            Array.from(tableClone.querySelectorAll('tr')).forEach(tr => tr.deleteCell(-1));
+            const ws = XLSX.utils.table_to_sheet(tableClone); const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Báo cáo"); XLSX.writeFile(wb, "BaoCao_AIEarn.xlsx");
+        }
+        function downloadCSV() {
+            const headers = ["Ngày", "10:30", "12:30", "14:30", "16:00", "17:30", "20:00", "Tổng Lợi Nhuận", "Ghi Chú"];
+            let csvContent = "data:text/csv;charset=utf-8," + headers.join(",") + "\n";
+
+            filteredData.forEach(row => {
+                const values = [ row.date, ...row.values, row.total, `"${(row.notes || '').replace(/"/g, '""')}"` ];
+                csvContent += values.join(",") + "\n";
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "BaoCao_AIEarn.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+        function downloadPDF() {
+            const { jsPDF } = window.jspdf;
+            const report = document.querySelector(".container");
+            const originalBackgroundColor = report.style.backgroundColor;
+            report.style.backgroundColor = getComputedStyle(document.body).getPropertyValue('--bg-primary');
+
+            html2canvas(report, {
+                scale: 2, useCORS: true, backgroundColor: getComputedStyle(document.body).getPropertyValue('--bg-primary'),
+                onclone: (clonedDoc) => {
+                    const clonedEquityCanvas = clonedDoc.getElementById('equityCurveChart');
+                    const clonedPieCanvas = clonedDoc.getElementById('timeSlotPieChart');
+                    if (equityCurveChart && clonedEquityCanvas) new Chart(clonedEquityCanvas, equityCurveChart.config);
+                    if (pieChartInstance && clonedPieCanvas) new Chart(clonedPieCanvas, pieChartInstance.config);
+                }
+            }).then(canvas => {
+                report.style.backgroundColor = originalBackgroundColor;
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jsPDF({ orientation: 'landscape', unit: 'px', format: [canvas.width, canvas.height] });
+                pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+                pdf.save("BaoCao_AIEarn.pdf");
+            }).catch(err => {
+                console.error("PDF export error:", err);
+                report.style.backgroundColor = originalBackgroundColor;
+            });
+        }
+
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('theme') || 'tinhquang';
+            applyTheme(savedTheme);
+
+            tableBody = document.getElementById('table-body');
+            confirmModal = document.getElementById('confirm-modal');
+            settingsModal = document.getElementById('settings-modal');
+            loadingOverlay = document.getElementById('loading-overlay');
+            saveStatus = document.getElementById('save-status');
+            
+            const themeSwitcherButton = document.getElementById('theme-switcher-button');
+            const themeSwitcherMenu = document.getElementById('theme-switcher-menu');
+            
+            Object.keys(themes).forEach(key => {
+                const theme = themes[key];
+                const button = document.createElement('button');
+                button.className = 'export-option w-full text-left px-4 py-2 text-sm flex items-center gap-3';
+                button.dataset.theme = key;
+                button.innerHTML = `
+                    <span class="w-4 h-4 rounded-full border" style="background: linear-gradient(to right, ${theme.c1}, ${theme.c2}); border-color: var(--border-color);"></span>
+                    ${theme.name}
+                `;
+                button.onclick = () => {
+                    applyTheme(key);
+                    saveTheme(key);
+                    themeSwitcherMenu.classList.add('hidden');
+                };
+                themeSwitcherMenu.appendChild(button);
+            });
+            
+            themeSwitcherButton.addEventListener('click', () => { themeSwitcherMenu.classList.toggle('hidden'); });
+
+            const exportMenuButton = document.getElementById('export-menu-button');
+            const exportMenuOptions = document.getElementById('export-menu-options');
+
+            exportMenuButton.addEventListener('click', () => {
+                exportMenuOptions.classList.toggle('hidden');
+            });
+            
+            document.addEventListener('click', (e) => { 
+                if (!themeSwitcherButton.contains(e.target) && !themeSwitcherMenu.contains(e.target)) { themeSwitcherMenu.classList.add('hidden'); } 
+                if (!exportMenuButton.contains(e.target) && !exportMenuOptions.contains(e.target)) { exportMenuOptions.classList.add('hidden'); } 
+            });
+
+
+            const exportLinks = {
+                downloadXlsx: downloadXLSX,
+                downloadCsv: downloadCSV,
+                downloadPng: downloadPNG,
+                downloadPdf: downloadPDF
+            };
+
+            Object.keys(exportLinks).forEach(id => {
+                document.getElementById(id)?.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    exportMenuOptions.classList.add('hidden'); 
+                    handleExport(exportLinks[id], exportMenuButton);
+                });
+            });
+
+
+             document.querySelectorAll('th').forEach((th, index) => {
+                th.addEventListener('click', () => {
+                    if(index > 9) return;
+                    if (sortState.column === index) { sortState.direction = sortState.direction === 'asc' ? 'desc' : 'asc'; } 
+                    else { sortState.column = index; sortState.direction = 'asc'; }
+                    sortTable();
+                });
+            });
+
+            document.getElementById('filterBtn')?.addEventListener('click', applyFiltersAndSort);
+            document.getElementById('resetBtn')?.addEventListener('click', () => {
+                const startDateInput = document.getElementById('startDate');
+                const endDateInput = document.getElementById('endDate');
+                const searchInput = document.getElementById('noteSearch');
+                if (startDateInput) startDateInput.value = ''; if (endDateInput) endDateInput.value = ''; if(searchInput) searchInput.value = '';
+                applyFiltersAndSort();
+            });
+            document.getElementById('noteSearch')?.addEventListener('input', applyFiltersAndSort);
+
+            document.addEventListener('input', (event) => {
+                const cell = event.target;
+                if (!cell.dataset || !cell.dataset.rowIndex) return;
+                const { rowIndex } = cell.dataset;
+                if (cell.classList.contains('editable')) {
+                    const { colIndex } = cell.dataset;
+                    let value = parseFloat(cell.textContent.replace(/[^0-9.-]/g, ''));
+                    if (isNaN(value)) value = 0;
+                    masterData[rowIndex].values[colIndex] = value;
+                } else if (cell.classList.contains('note-cell')) {
+                    masterData[rowIndex].notes = cell.textContent;
+                }
+                saveDataToFirestore();
+            });
+
+            tableBody?.addEventListener('click', (event) => { if (event.target.closest('.delete-btn')) showConfirmModal(event.target.closest('.delete-btn').dataset.rowIndex); });
+            document.getElementById('confirmDelete')?.addEventListener('click', () => { if (rowToDelete !== null) { masterData.splice(rowToDelete, 1); saveDataToFirestore(); } hideConfirmModal(); });
+            document.getElementById('cancelDelete')?.addEventListener('click', hideConfirmModal);
+
+            document.getElementById('settingsBtn')?.addEventListener('click', showSettingsModal);
+            document.getElementById('closeSettingsBtn')?.addEventListener('click', hideSettingsModal);
+            document.getElementById('saveSettingsBtn')?.addEventListener('click', () => {
+                const goalInput = document.getElementById('monthlyGoalInput');
+                monthlyGoal = parseFloat(goalInput.value) || 0;
+                saveDataToFirestore();
+                updateGoalProgress();
+                hideSettingsModal();
+            });
+
+            document.getElementById('addRow')?.addEventListener('click', () => {
+                const lastRow = masterData.length > 0 ? masterData[masterData.length - 1] : null;
+                const lastDate = lastRow ? parseDate(lastRow.date) : new Date(new Date().setDate(new Date().getDate() - 1));
+                lastDate.setDate(lastDate.getDate() + 1);
+                const newDateStr = `${String(lastDate.getDate()).padStart(2, '0')}/${String(lastDate.getMonth() + 1).padStart(2, '0')}/${String(lastDate.getFullYear()).slice(-2)}`;
+                masterData.push({ date: newDateStr, values: new Array(6).fill(0), total: 0, classes: {}, notes: '' });
+                saveDataToFirestore();
+            });
+            
+            const tableViewBtn = document.getElementById('tableViewBtn');
+            const calendarViewBtn = document.getElementById('calendarViewBtn');
+            const tableView = document.getElementById('table-view-container');
+            const calendarContainer = document.getElementById('calendar-view-container');
+
+            tableViewBtn.addEventListener('click', () => {
+                tableView.style.display = 'block';
+                calendarContainer.style.display = 'none';
+                tableViewBtn.classList.add('active');
+                calendarViewBtn.classList.remove('active');
+            });
+             calendarViewBtn.addEventListener('click', () => {
+                tableView.style.display = 'none';
+                calendarContainer.style.display = 'block';
+                tableViewBtn.classList.remove('active');
+                calendarViewBtn.classList.add('active');
+            });
+
+            document.getElementById('prevMonthBtn').addEventListener('click', () => {
+                currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1);
+                renderCalendar();
+            });
+             document.getElementById('nextMonthBtn').addEventListener('click', () => {
+                currentCalendarDate.setMonth(currentCalendarDate.getMonth() + 1);
+                renderCalendar();
+            });
+        });
+        
+        window.onload = function() {
+            showLoading(true);
+            try {
+                 if (Object.keys(firebaseConfig).length === 0) {
+                    throw new Error("Firebase config is empty. Make sure `__firebase_config` is set.");
+                }
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app); auth = getAuth(app);
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) { userId = user.uid; startListeningToData(); } 
+                    else {
+                        try {
+                             const token = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+                             if (token) await signInWithCustomToken(auth, token); else await signInAnonymously(auth);
+                        } catch (error) { console.error("Firebase Auth Error:", error); showLoading(false); }
+                    }
+                });
+            } catch (e) { console.error("Firebase initialization failed:", e); showLoading(false); }
+        };
+    </script>
+</head>
+<body class="p-4">
+
+<div id="loading-overlay" class="loading-overlay visible"> <div class="loading-spinner"></div> </div>
+<div id="save-status">Đã lưu</div>
+
+<div class="container">
+    <!-- HEADER -->
+    <div class="flex flex-col sm:flex-row items-center justify-between mb-6">
+        <h1 class="text-3xl font-bold mb-4 sm:mb-0">Bảng Điều Khiển AI Earn</h1>
+        <div class="flex items-center gap-4">
+             <button id="settingsBtn" class="action-button" style="background-color: var(--bg-interactive); color: var(--text-primary);">
+                <i class="fas fa-cog"></i>
+            </button>
+            <div id="theme-switcher" class="relative">
+                <button id="theme-switcher-button" class="action-button" style="background-color: var(--bg-interactive); color: var(--text-primary);">
+                    <i class="fas fa-palette mr-2"></i>
+                    <span>Giao diện</span>
+                    <i class="fas fa-chevron-down ml-1 text-xs"></i>
+                </button>
+                <div id="theme-switcher-menu" class="absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 z-10 hidden" style="background-color: var(--bg-card); border: 1px solid var(--border-color);">
+                    <!-- Theme options will be injected here by JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CONTROL PANEL -->
+    <div class="widget flex flex-wrap items-center justify-between gap-4 mb-8">
+        <div class="flex flex-wrap items-center gap-4 flex-grow">
+            <div class="flex items-center gap-2"><label for="startDate" class="font-medium">Từ:</label><input type="date" id="startDate" class="p-2 border rounded-md shadow-sm" style="background-color: var(--bg-primary); border-color: var(--border-color); color: var(--text-primary); color-scheme: dark;"></div>
+            <div class="flex items-center gap-2"><label for="endDate" class="font-medium">Đến:</label><input type="date" id="endDate" class="p-2 border rounded-md shadow-sm" style="background-color: var(--bg-primary); border-color: var(--border-color); color: var(--text-primary); color-scheme: dark;"></div>
+             <div class="relative flex-grow min-w-[200px]">
+                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                <input type="text" id="noteSearch" placeholder="Tìm kiếm ghi chú..." class="p-2 pl-10 w-full border rounded-md shadow-sm" style="background-color: var(--bg-primary); border-color: var(--border-color); color: var(--text-primary);">
+            </div>
+            <button id="filterBtn" class="action-button text-white" style="background-color: #2563eb;"><i class="fas fa-filter mr-1"></i>Lọc</button>
+            <button id="resetBtn" class="action-button text-white" style="background-color: #64748b;"><i class="fas fa-undo mr-1"></i>Đặt lại</button>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+            <button id="addRow" class="action-button text-white" style="background-color: #4f46e5; "><i class="fas fa-plus mr-2"></i>Thêm dòng</button>
+            <div id="export-menu" class="relative">
+                <button id="export-menu-button" class="action-button text-white" style="background-color: #16a34a;">
+                    <i class="fas fa-download mr-2"></i>
+                    <span>Xuất Tệp</span>
+                    <i class="fas fa-chevron-down ml-1 text-xs"></i>
+                </button>
+                <div id="export-menu-options" class="absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 z-10 hidden" style="background-color: var(--bg-card); border: 1px solid var(--border-color);">
+                    <a href="#" id="downloadXlsx" class="export-option block px-4 py-2 text-sm flex items-center gap-3"><i class="fas fa-file-excel text-green-500"></i>Excel (.xlsx)</a>
+                    <a href="#" id="downloadCsv" class="export-option block px-4 py-2 text-sm flex items-center gap-3"><i class="fas fa-file-csv text-gray-400"></i>CSV (.csv)</a>
+                    <a href="#" id="downloadPng" class="export-option block px-4 py-2 text-sm flex items-center gap-3"><i class="fas fa-file-image text-blue-500"></i>Ảnh (.png)</a>
+                    <a href="#" id="downloadPdf" class="export-option block px-4 py-2 text-sm flex items-center gap-3"><i class="fas fa-file-pdf text-red-500"></i>PDF (.pdf)</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN DASHBOARD GRID -->
+    <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
+        <!-- LEFT COLUMN (MAIN CONTENT) -->
+        <div class="lg:col-span-3 flex flex-col gap-8">
+            <div class="widget" style="height: 400px;">
+                <h2 class="text-xl font-bold text-center mb-4">Biểu đồ Tăng trưởng Vốn</h2>
+                <canvas id="equityCurveChart"></canvas>
+            </div>
+            <div class="widget">
+                <div class="flex items-center justify-between mb-4">
+                     <h2 class="text-xl font-bold">Lịch sử Giao dịch</h2>
+                     <div class="view-toggle flex items-center border rounded-full p-1" style="border-color: var(--border-color);">
+                        <button id="tableViewBtn" class="action-button active text-sm" style="box-shadow: none;"><i class="fas fa-list mr-2"></i>Dạng Bảng</button>
+                        <button id="calendarViewBtn" class="action-button text-sm" style="box-shadow: none;"><i class="fas fa-calendar-alt mr-2"></i>Dạng Lịch</button>
+                     </div>
+                </div>
+
+                <div id="table-view-container">
+                    <div id="report-table-container" class="overflow-x-auto w-full">
+                        <table id="report-table">
+                            <thead><tr class="header">
+                                <th>Ngày <i class="fas fa-sort sort-icon"></i></th>
+                                <th>10:30 <i class="fas fa-sort sort-icon"></i></th>
+                                <th>12:30 <i class="fas fa-sort sort-icon"></i></th>
+                                <th>14:30 <i class="fas fa-sort sort-icon"></i></th>
+                                <th>16:00 <i class="fas fa-sort sort-icon"></i></th>
+                                <th>17:30 <i class="fas fa-sort sort-icon"></i></th>
+                                <th>20:00 <i class="fas fa-sort sort-icon"></i></th>
+                                <th>Tổng <i class="fas fa-sort sort-icon"></i></th>
+                                <th>Tỷ lệ <i class="fas fa-sort sort-icon"></i></th>
+                                <th>Ghi chú <i class="fas fa-sort sort-icon"></i></th>
+                                <th>Xóa</th>
+                            </tr></thead>
+                            <tbody id="table-body"></tbody>
+                        </table>
+                    </div>
+                    <div id="pagination-controls" class="flex justify-center items-center gap-2 mt-4"></div>
+                </div>
+                 <div id="calendar-view-container" style="display: none;">
+                    <div class="flex justify-between items-center mb-4">
+                        <button id="prevMonthBtn" class="action-button" style="background-color: var(--bg-interactive);"><i class="fas fa-chevron-left"></i></button>
+                        <h3 id="calendar-header" class="text-lg font-bold"></h3>
+                        <button id="nextMonthBtn" class="action-button" style="background-color: var(--bg-interactive);"><i class="fas fa-chevron-right"></i></button>
+                    </div>
+                    <div id="calendar-view"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT COLUMN (ANALYSIS & OVERVIEW) -->
+        <div class="lg:col-span-2 flex flex-col gap-8">
+            <div class="widget">
+                <h3 class="font-bold text-lg mb-2" style="color: var(--text-primary);">Tiến độ Mục tiêu Tháng</h3>
+                <div class="w-full rounded-full h-6" style="background-color: var(--bg-interactive);">
+                    <div id="goalProgressBar" class="bg-gradient-to-r from-green-400 to-blue-500 h-6 rounded-full text-center text-white font-bold text-sm leading-6" style="width: 0%;">0%</div>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="summary-card"><p class="font-medium text-sm" style="color: var(--text-secondary);">Tổng Lợi nhuận</p><p id="total-profit" class="text-2xl font-bold">$0.00</p></div>
+                <div class="summary-card"><p class="font-medium text-sm" style="color: var(--text-secondary);">Lợi nhuận TB/Ngày</p><p id="avg-profit" class="text-2xl font-bold">$0.00</p></div>
+                <div class="summary-card"><p class="font-medium text-sm" style="color: var(--text-secondary);">Tỷ lệ Thắng</p><p id="win-rate" class="text-2xl font-bold">0%</p></div>
+                <div class="summary-card"><p class="font-medium text-sm" style="color: var(--text-secondary);">Độ Biến động (Hàng ngày)</p><p id="volatility" class="text-2xl font-bold">$0.00</p></div>
+                <div class="summary-card"><p class="font-medium text-sm" style="color: var(--text-secondary);">Chuỗi Thắng Dài nhất</p><p id="win-streak" class="text-2xl font-bold">0 ngày</p></div>
+                <div class="summary-card"><p class="font-medium text-sm" style="color: var(--text-secondary);">Chuỗi Thua Dài nhất</p><p id="loss-streak" class="text-2xl font-bold">0 ngày</p></div>
+                <div class="summary-card"><p class="font-medium text-sm" style="color: var(--text-secondary);">Hệ số Lợi nhuận</p><p id="profit-factor" class="text-2xl font-bold">0</p></div>
+                <div class="summary-card"><p class="font-medium text-sm" style="color: var(--text-secondary);">Sụt giảm Tối đa</p><p id="max-drawdown" class="text-2xl font-bold">$0.00</p></div>
+                 <div class="summary-card md:col-span-1"><p id="best-day-label" class="font-medium text-sm" style="color: var(--text-secondary);">Ngày Tốt nhất</p><p id="best-day" class="text-2xl font-bold">$0.00</p></div>
+            </div>
+            <div class="widget">
+                <h2 class="text-xl font-bold text-center mb-4">Phân tích & Dự báo Lệnh Thua</h2>
+                <div id="loss-frequency-analysis" class="space-y-3">
+                    <!-- Analysis content will be injected here -->
+                </div>
+            </div>
+            <div class="widget" style="height: 350px;">
+                <h2 class="text-xl font-bold text-center mb-4">Phân bổ Lợi nhuận Theo Ca</h2>
+                <canvas id="timeSlotPieChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODALS -->
+<div id="confirm-modal" class="modal-overlay">
+    <div class="modal-content">
+        <h2 class="text-xl font-bold mb-4">Xác nhận Xóa</h2>
+        <p class="mb-6">Bạn có chắc chắn muốn xóa dòng này? <br>Hành động này không thể hoàn tác.</p>
+        <div class="flex justify-center gap-4">
+            <button id="cancelDelete" class="action-button" style="background-color: var(--bg-interactive); color: var(--text-primary);">Hủy bỏ</button>
+            <button id="confirmDelete" class="action-button bg-red-500 text-white hover:bg-red-600">Xác nhận</button>
+        </div>
+    </div>
+</div>
+
+<div id="settings-modal" class="modal-overlay">
+    <div class="modal-content w-full max-w-md">
+        <h2 class="text-xl font-bold mb-6">Cài đặt</h2>
+        <div class="text-left mb-4">
+            <label for="monthlyGoalInput" class="font-bold text-lg mb-2 block" style="color: var(--text-primary);">Mục tiêu tháng:</label>
+            <div class="flex items-center gap-2">
+                <span class="font-medium text-lg">$</span>
+                <input type="number" id="monthlyGoalInput" class="p-2 w-full border rounded-md shadow-sm" style="background-color: var(--bg-primary); border-color: var(--border-color); color: var(--text-primary);">
+            </div>
+        </div>
+        <div class="flex justify-end gap-4 mt-8">
+            <button id="closeSettingsBtn" class="action-button" style="background-color: var(--bg-interactive); color: var(--text-primary);">Đóng</button>
+            <button id="saveSettingsBtn" class="action-button bg-blue-500 text-white hover:bg-blue-600">Lưu thay đổi</button>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
+
