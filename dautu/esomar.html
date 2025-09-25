@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Control Panel</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+        font-family: 'Inter', sans-serif;
+        background-color: #f1f5f9;
+        padding-bottom: 80px; /* Add padding to prevent content from being hidden by the bulk action bar */
+    }
+    .tab {
+        cursor: pointer;
+        padding: 0.75rem 1rem;
+        border-bottom: 3px solid transparent;
+        transition: all 0.3s ease;
+        font-weight: 600;
+        white-space: nowrap; /* Prevent tabs from wrapping */
+    }
+    @media (min-width: 640px) { .tab { padding: 0.75rem 1.5rem; } }
+    .tab.active { color: #2563eb; border-bottom-color: #2563eb; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .spinner {
+        display: inline-block; width: 1rem; height: 1rem;
+        border: 2px solid rgba(255,255,255,0.3); border-radius: 50%;
+        border-top-color: #fff; animation: spin 1s ease-in-out infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    button:disabled { cursor: not-allowed; opacity: 0.7; }
+    .btn-interaction {
+        transform: scale(1);
+        transition: transform 0.1s ease-out;
+    }
+    .btn-interaction:active { transform: scale(0.97); }
+    .modal {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background-color: rgba(0, 0, 0, 0.5); display: flex;
+        justify-content: center; align-items: center; z-index: 50;
+        opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+    }
+    .modal.visible { opacity: 1; pointer-events: auto; }
+    .modal-content {
+        background-color: white; padding: 2rem; border-radius: 0.75rem;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        width: 100%; max-width: 400px;
+        transform: scale(0.95); transition: transform 0.3s ease;
+    }
+    .modal.visible .modal-content { transform: scale(1); }
+    /* Blinking animation for errors */
+    @keyframes blink-border {
+        50% { border-color: transparent; }
+    }
+    .blinking-error {
+        animation: blink-border 1.5s step-end infinite;
+    }
+    /* Bulk Action Bar Styles */
+    #bulk-action-bar {
+        transition: transform 0.3s ease-in-out;
+        transform: translateY(100%);
+    }
+    #bulk-action-bar.visible {
+        transform: translateY(0);
+    }
+    /* Account card selection style */
+    .account-card.selected {
+        box-shadow: 0 0 0 3px #3b82f6; /* Blue ring */
+        border-color: #3b82f6;
+    }
+  </style>
+</head>
+<body>
+  <div id="main-content">
+    <header class="bg-white shadow-sm">
+        <div class="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+            <h1 class="text-2xl font-extrabold text-gray-900">Control Panel</h1>
+        </div>
+        <div class="border-b border-gray-200">
+            <nav class="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 -mb-px flex space-x-2 sm:space-x-8 overflow-x-auto" aria-label="Tabs">
+                <a id="tab-dashboard" onclick="switchTab(event, 'dashboard')" class="tab btn-interaction">📈 Thống kê</a>
+                <a id="tab-master" onclick="switchTab(event, 'master')" class="tab btn-interaction">🌐 Điều phối tổng</a>
+                <a id="tab-management" onclick="switchTab(event, 'management')" class="tab active btn-interaction">👤 Quản lý</a>
+                <a id="tab-global_settings" onclick="switchTab(event, 'global_settings')" class="tab btn-interaction">⚙️ Cài đặt chung</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div id="dashboard" class="tab-content">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-white p-4 sm:p-6 rounded-xl shadow-md"><h3 class="font-bold text-lg mb-4">Lịch sử Chỉ tiêu theo Thời gian</h3><div class="h-80"><canvas id="scoreHistoryChart"></canvas></div></div>
+                <div class="bg-white p-4 sm:p-6 rounded-xl shadow-md"><h3 class="font-bold text-lg mb-4">So sánh Chỉ tiêu Hiện tại</h3><div class="h-80"><canvas id="scoreComparisonChart"></canvas></div></div>
+            </div>
+        </div>
+        <div id="master" class="tab-content">
+            <div class="bg-white rounded-xl shadow-md">
+                <div class="hidden md:block">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tài khoản</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng thái</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Máy chủ</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">IP Máy</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vị trí</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Chỉ tiêu</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cập nhật</th>
+                            </tr>
+                        </thead>
+                        <tbody id="master-panel-body-desktop" class="bg-white divide-y divide-gray-200"></tbody>
+                    </table>
+                </div>
+                <div id="master-panel-body-mobile" class="md:hidden p-4 space-y-4"></div>
+            </div>
+        </div>
+        <div id="management" class="tab-content active">
+            <div class="flex justify-between items-center mb-6">
+                <div class="flex items-center space-x-3">
+                    <input type="checkbox" id="select-all-checkbox" class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                    <label for="select-all-checkbox" class="text-sm font-medium text-gray-700">Chọn tất cả</label>
+                </div>
+                <button onclick="showAddModal()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg btn-interaction">+ Thêm Tài khoản mới</button>
+            </div>
+            <div id="accountGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                 <div class="text-center col-span-full p-10 text-gray-500"><p>Đang tìm kiếm tài khoản trên Firestore...</p></div>
+            </div>
+        </div>
+        <div id="global_settings" class="tab-content">
+            <div class="max-w-2xl mx-auto bg-white p-6 sm:p-8 rounded-xl shadow-md">
+                <h2 class="text-xl font-bold text-gray-800 mb-6">Cài đặt chung</h2>
+                <div class="space-y-4">
+                    <div>
+                        <label for="openai-api-key" class="block text-sm font-medium text-gray-700 mb-1">OPENAI_API_KEY (Dự phòng)</label>
+                        <input type="password" id="openai-api-key" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="sk-...">
+                    </div>
+                    <div class="text-right">
+                        <button onclick="saveApiKeys()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-5 rounded-lg btn-interaction">Lưu</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+  </div>
+
+  <!-- Modals -->
+  <div id="add-modal" class="modal">
+      <div class="modal-content">
+          <h3 class="text-xl font-bold mb-4">Tạo tài khoản mới</h3>
+          <p class="text-sm text-gray-500 mb-4">Nhập ID duy nhất cho tài khoản mới (ví dụ: acc1, bot_user_1).</p>
+          <input id="new-acc-id" class="w-full border p-3 text-base rounded mb-4" placeholder="ID Tài khoản mới">
+          <div class="flex justify-end gap-3">
+              <button onclick="hideAddModal()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg btn-interaction">Hủy</button>
+              <button onclick="handleCreateAccount()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg btn-interaction">Tạo</button>
+          </div>
+      </div>
+  </div>
+  <div id="delete-modal" class="modal">
+      <div class="modal-content">
+          <h3 class="text-xl font-bold mb-2">Xác nhận Xóa</h3>
+          <p class="text-gray-600 mb-6">Bạn có chắc chắn muốn xóa tài khoản <strong id="delete-acc-id-span"></strong>? Hành động này không thể hoàn tác.</p>
+          <div class="flex justify-end gap-3">
+              <button onclick="hideDeleteModal()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg btn-interaction">Hủy</button>
+              <button id="confirm-delete-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg btn-interaction">Xác nhận Xóa</button>
+          </div>
+      </div>
+  </div>
+  <div id="reset-modal" class="modal">
+      <div class="modal-content">
+          <h3 class="text-xl font-bold mb-2">Xác nhận Xóa Dữ liệu</h3>
+          <p class="text-gray-600 mb-6">Bạn có chắc chắn muốn xóa toàn bộ chỉ số (Chỉ tiêu, Tham gia, Cấp độ) của tài khoản <strong id="reset-acc-id-span"></strong> về 0 không?</p>
+          <div class="flex justify-end gap-3">
+              <button onclick="hideResetModal()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg btn-interaction">Hủy</button>
+              <button id="confirm-reset-btn" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded-lg btn-interaction">Xác nhận</button>
+          </div>
+      </div>
+  </div>
+  <div id="bulk-delete-modal" class="modal">
+      <div class="modal-content">
+          <h3 class="text-xl font-bold mb-2">Xác nhận Xóa Hàng loạt</h3>
+          <p class="text-gray-600 mb-6">Bạn có chắc chắn muốn xóa <strong id="bulk-delete-count-span"></strong> tài khoản đã chọn? Hành động này không thể hoàn tác.</p>
+          <div class="flex justify-end gap-3">
+              <button onclick="hideBulkDeleteModal()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg btn-interaction">Hủy</button>
+              <button id="confirm-bulk-delete-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg btn-interaction">Xác nhận Xóa</button>
+          </div>
+      </div>
+  </div>
+  <div id="bulk-reset-modal" class="modal">
+      <div class="modal-content">
+          <h3 class="text-xl font-bold mb-2">Xác nhận Xóa Dữ liệu Hàng loạt</h3>
+          <p class="text-gray-600 mb-6">Bạn có chắc chắn muốn xóa dữ liệu (Chỉ tiêu, Tham gia, Cấp độ) của <strong id="bulk-reset-count-span"></strong> tài khoản đã chọn không?</p>
+          <div class="flex justify-end gap-3">
+              <button onclick="hideBulkResetModal()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg btn-interaction">Hủy</button>
+              <button id="confirm-bulk-reset-btn" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded-lg btn-interaction">Xác nhận</button>
+          </div>
+      </div>
+  </div>
+  
+  <!-- Toast Notification -->
+  <div id="toast-notification" class="fixed bottom-5 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-lg shadow-xl transition-all duration-300 ease-in-out opacity-0 transform translate-y-10 z-50">
+      <p id="toast-message"></p>
+  </div>
+
+  <!-- Bulk Action Bar -->
+  <div id="bulk-action-bar" class="fixed bottom-0 left-0 right-0 bg-white shadow-lg border-t border-gray-200 p-4 z-40">
+      <div class="max-w-screen-xl mx-auto flex justify-between items-center">
+          <span id="bulk-action-count" class="font-bold text-gray-700"></span>
+          <div class="flex space-x-3">
+              <button onclick="handleBulkAction('start')" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg btn-interaction">Start</button>
+              <button onclick="handleBulkAction('stop')" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg btn-interaction">Stop</button>
+              <button onclick="handleBulkAction('reset')" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg btn-interaction">Restart</button>
+              <button onclick="showBulkResetModal()" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded-lg btn-interaction">Xóa DL</button>
+          </div>
+      </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
+    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
+    import { getFirestore, collection, doc, updateDoc, onSnapshot, setDoc, deleteDoc, getDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
+
+    // --- FIREBASE CONFIG ---
+    const firebaseConfig = {
+      apiKey: "AIzaSyDT0IEKhjAJZ_ZiMVwVCvO-fuj0ByReoE8",
+      authDomain: "esomar-vnn.firebaseapp.com",
+      projectId: "esomar-vnn",
+      storageBucket: "esomar-vnn.appspot.com",
+      messagingSenderId: "1023271897973",
+      appId: "1:1023271897973:web:c7207b0e8321fc271fe13c",
+      measurementId: "G-L078YGNJ3J"
+    };
+    
+    // --- COLLECTION NAMES ---
+    const ACCOUNTS_COLLECTION = "bot-configs";
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+    
+    const accountGrid = document.getElementById('accountGrid');
+    const masterPanelBodyDesktop = document.getElementById('master-panel-body-desktop');
+    const masterPanelBodyMobile = document.getElementById('master-panel-body-mobile');
+    const addModal = document.getElementById('add-modal');
+    const deleteModal = document.getElementById('delete-modal');
+    const resetModal = document.getElementById('reset-modal');
+    const bulkDeleteModal = document.getElementById('bulk-delete-modal');
+    const bulkResetModal = document.getElementById('bulk-reset-modal');
+    const toast = document.getElementById('toast-notification');
+    const toastMessage = document.getElementById('toast-message');
+    const deleteAccIdSpan = document.getElementById('delete-acc-id-span');
+    const resetAccIdSpan = document.getElementById('reset-acc-id-span');
+    const bulkDeleteCountSpan = document.getElementById('bulk-delete-count-span');
+    const bulkResetCountSpan = document.getElementById('bulk-reset-count-span');
+    const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
+    const confirmResetBtn = document.getElementById('confirm-reset-btn');
+    const confirmBulkDeleteBtn = document.getElementById('confirm-bulk-delete-btn');
+    const confirmBulkResetBtn = document.getElementById('confirm-bulk-reset-btn');
+    const bulkActionBar = document.getElementById('bulk-action-bar');
+    const bulkActionCount = document.getElementById('bulk-action-count');
+    const selectAllCheckbox = document.getElementById('select-all-checkbox');
+
+    let scoreHistoryChartInstance = null;
+    let scoreComparisonChartInstance = null;
+    let accountsData = {};
+    let toastTimeout;
+    let firestoreUnsubscribe = null;
+    let selectedAccounts = new Set();
+
+    function triggerVibration() { if (navigator.vibrate) navigator.vibrate(50); }
+
+    // --- Modal & Toast Management ---
+    window.showAddModal = () => { addModal.classList.add('visible'); };
+    window.hideAddModal = () => { addModal.classList.remove('visible'); };
+    window.showDeleteModal = (accId) => {
+        deleteAccIdSpan.textContent = accId;
+        confirmDeleteBtn.onclick = () => handleDeleteAccount(accId);
+        deleteModal.classList.add('visible');
+    };
+    window.hideDeleteModal = () => { deleteModal.classList.remove('visible'); };
+    window.showResetModal = (accId) => {
+        resetAccIdSpan.textContent = accId;
+        confirmResetBtn.onclick = () => handleResetAccount(accId);
+        resetModal.classList.add('visible');
+    };
+    window.hideResetModal = () => { resetModal.classList.remove('visible'); };
+    window.showBulkDeleteModal = () => {
+        bulkDeleteCountSpan.textContent = selectedAccounts.size;
+        confirmBulkDeleteBtn.onclick = () => handleBulkDelete();
+        bulkDeleteModal.classList.add('visible');
+    };
+    window.hideBulkDeleteModal = () => { bulkDeleteModal.classList.remove('visible'); };
+    window.showBulkResetModal = () => {
+        bulkResetCountSpan.textContent = selectedAccounts.size;
+        confirmBulkResetBtn.onclick = () => handleBulkReset();
+        bulkResetModal.classList.add('visible');
+    };
+    window.hideBulkResetModal = () => { bulkResetModal.classList.remove('visible'); };
+
+    function showAlert(message) {
+        if (toastTimeout) clearTimeout(toastTimeout);
+        toastMessage.textContent = message;
+        toast.classList.remove('opacity-0', 'translate-y-10');
+        toast.classList.add('opacity-100', 'translate-y-0');
+        toastTimeout = setTimeout(() => {
+            toast.classList.remove('opacity-100', 'translate-y-0');
+            toast.classList.add('opacity-0', 'translate-y-10');
+        }, 2500);
+    }
+
+    const statusMap = {
+        running: { text: 'Đang chạy', badge: 'bg-green-100 text-green-800', border: 'border-green-500' },
+        stopped: { text: 'Đã dừng', badge: 'bg-gray-100 text-gray-800', border: 'border-gray-400' },
+        idle: { text: 'Không hoạt động', badge: 'bg-gray-100 text-gray-800', border: 'border-gray-400' },
+        'waiting-login': { text: 'Chờ đăng nhập', badge: 'bg-yellow-100 text-yellow-800', border: 'border-yellow-500' },
+        'waiting-2fa': { text: 'Cần mã 2FA', badge: 'bg-yellow-100 text-yellow-800', border: 'border-yellow-500' },
+        'waiting-for-2fa': { text: 'Cần mã 2FA', badge: 'bg-yellow-100 text-yellow-800', border: 'border-yellow-500' },
+        'logged-in': { text: 'Đã đăng nhập', badge: 'bg-blue-100 text-blue-800', border: 'border-blue-500' },
+        completed: { text: 'Đã hoàn thành', badge: 'bg-indigo-100 text-indigo-800', border: 'border-indigo-500' },
+        unresponsive: { text: 'Mất kết nối', badge: 'bg-orange-100 text-orange-800', border: 'border-orange-500 blinking-error' },
+        stalled: { text: 'Lỗi Logic', badge: 'bg-red-100 text-red-800', border: 'border-red-500 blinking-error' },
+        default: { text: 'Lỗi', badge: 'bg-red-100 text-red-800', border: 'border-red-500 blinking-error' }
+    };
+
+    // --- Charting Functions ---
+    function renderScoreHistoryChart() {
+        const ctx = document.getElementById("scoreHistoryChart").getContext("2d");
+        const datasets = Object.keys(accountsData).map(accId => {
+            if (accId === 'global') return null;
+            const color = accountsData[accId].color;
+            const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+            const startColor = color.replace('hsl', 'hsla').replace(')', ', 0.4)');
+            const endColor = color.replace('hsl', 'hsla').replace(')', ', 0)');
+            gradient.addColorStop(0, startColor);
+            gradient.addColorStop(1, endColor);
+            return {
+                label: accId, data: accountsData[accId].history, borderColor: color, backgroundColor: gradient,
+                fill: true, tension: 0.4, pointBackgroundColor: color, pointRadius: 2, pointHoverRadius: 5
+            };
+        }).filter(Boolean);
+        if (scoreHistoryChartInstance) { scoreHistoryChartInstance.data.datasets = datasets; scoreHistoryChartInstance.update(); }
+        else { scoreHistoryChartInstance = new Chart(ctx, { type: 'line', data: { datasets }, options: { responsive: true, maintainAspectRatio: false, scales: { x: { type: 'time', time: { unit: 'minute', tooltipFormat: 'HH:mm, dd/MM/yy' }, title: { display: true, text: 'Thời gian' } }, y: { beginAtZero: true, title: { display: true, text: 'Chỉ tiêu' } } }, plugins: { legend: { position: 'top' }, tooltip: { mode: 'index', intersect: false, callbacks: { title: (tooltipItems) => { const date = new Date(tooltipItems[0].parsed.x); return date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' - ' + date.toLocaleDateString('vi-VN'); }, label: (context) => { let label = context.dataset.label || ''; if (label) { label += ': '; } if (context.parsed.y !== null) { label += context.parsed.y.toLocaleString('vi-VN') + ' chỉ tiêu'; } return label; } } } }, interaction: { mode: 'index', intersect: false } } }); }
+    }
+    function renderScoreComparisonChart(labels, data) {
+        const ctx = document.getElementById("scoreComparisonChart").getContext("2d");
+        if (scoreComparisonChartInstance) { scoreComparisonChartInstance.data.labels = labels; scoreComparisonChartInstance.data.datasets[0].data = data; scoreComparisonChartInstance.update(); }
+        else { scoreComparisonChartInstance = new Chart(ctx, { type: 'bar', data: { labels, datasets: [{ label: 'Chỉ tiêu', data, backgroundColor: '#3b82f6' }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, indexAxis: 'y' } }); }
+    }
+
+    // --- Firestore Listener ---
+    function setupRealtimeListener() {
+        if (firestoreUnsubscribe) firestoreUnsubscribe();
+        const collectionRef = collection(db, ACCOUNTS_COLLECTION);
+        firestoreUnsubscribe = onSnapshot(collectionRef, (querySnapshot) => {
+            if (accountGrid.innerHTML.includes("Đang tìm kiếm")) accountGrid.innerHTML = "";
+            const activeIds = new Set();
+            const comparisonLabels = [];
+            const comparisonData = [];
+            const masterPanelData = [];
+            
+            const docs = querySnapshot.docs.filter(doc => doc.id !== 'global');
+            // Sort documents naturally by ID
+            docs.sort((a, b) => a.id.localeCompare(b.id, 'en', { numeric: true }));
+
+            if (docs.length === 0) { 
+                accountGrid.innerHTML = `<p class="text-center col-span-full p-10">Chưa có tài khoản nào. Hãy thêm một tài khoản mới!</p>`; 
+                masterPanelBodyDesktop.innerHTML = `<tr><td colspan="7" class="text-center p-10 text-gray-500">Không có dữ liệu</td></tr>`;
+                masterPanelBodyMobile.innerHTML = `<p class="text-center p-10 text-gray-500">Không có dữ liệu</p>`;
+            }
+
+            docs.forEach((docSnap) => {
+                const accId = docSnap.id;
+                const data = docSnap.data();
+                activeIds.add(accId);
+                masterPanelData.push({id: accId, ...data});
+                if (!accountsData[accId]) { accountsData[accId] = { history: [], color: `hsl(${Math.random() * 360}, 70%, 50%)` }; }
+                const lastHistoryPoint = accountsData[accId].history.slice(-1)[0];
+                if (!lastHistoryPoint || lastHistoryPoint.y !== (data.totalClicks || 0)) { accountsData[accId].history.push({ x: new Date(), y: data.totalClicks || 0 }); }
+                comparisonLabels.push(accId);
+                comparisonData.push(data.totalClicks || 0);
+                let card = document.getElementById(`card-${accId}`);
+                if (!card) { card = createAccountCard(accId, data); accountGrid.appendChild(card); }
+                else { updateAccountCard(accId, data); }
+            });
+
+            Object.keys(accountsData).forEach(accId => {
+                if (!activeIds.has(accId)) { 
+                    delete accountsData[accId]; 
+                    document.getElementById(`card-${accId}`)?.remove(); 
+                    selectedAccounts.delete(accId);
+                }
+            });
+
+            // Re-order the cards in the DOM according to the sorted list
+            docs.forEach(doc => {
+                const card = document.getElementById(`card-${doc.id}`);
+                if (card) {
+                    accountGrid.appendChild(card); // Re-appending moves the element to the end of the parent
+                }
+            });
+            
+            updateBulkActionBar();
+            renderMasterPanel(masterPanelData);
+            renderScoreHistoryChart();
+            renderScoreComparisonChart(comparisonLabels, comparisonData);
+        });
+    }
+
+    // --- UI Rendering ---
+    function getStatus(acc) {
+        if ((acc.upgradeProgress || 0) >= 85) return 'completed';
+        let status = acc.status || 'idle';
+        const lastUpdate = acc.lastUpdate?.seconds;
+        const inactiveStates = ['completed', 'stopped', 'idle'];
+        if (status === 'running' && (acc.totalClicks === 0 || acc.participants === 0 || acc.upgradeProgress === 0)) return 'stalled';
+        if (!inactiveStates.includes(status) && lastUpdate) {
+            if ((new Date().getTime() / 1000 - lastUpdate) > 180) return 'unresponsive';
+        }
+        return status;
+    }
+
+    function renderMasterPanel(data) {
+        masterPanelBodyDesktop.innerHTML = "";
+        masterPanelBodyMobile.innerHTML = "";
+        if (data.length === 0) {
+            masterPanelBodyDesktop.innerHTML = `<tr><td colspan="7" class="text-center p-10 text-gray-500">Không có dữ liệu</td></tr>`;
+            masterPanelBodyMobile.innerHTML = `<p class="text-center p-10 text-gray-500">Không có dữ liệu</p>`;
+            return;
+        }
+        data.forEach(acc => {
+            const status = getStatus(acc);
+            const currentStatus = statusMap[status] || { ...statusMap.default, text: status };
+            const lastUpdateString = acc.lastUpdate ? new Date(acc.lastUpdate.seconds * 1000).toLocaleString('vi-VN') : 'N/A';
+            const desktopRow = `
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${acc.id}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${currentStatus.badge}">${currentStatus.text}</span></td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${acc.machine?.id || 'N/A'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${acc.machine?.ip || 'N/A'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${acc.machine?.location || 'N/A'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-blue-600">${(acc.totalClicks || 0).toLocaleString('vi-VN')}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${lastUpdateString}</td>
+                </tr>`;
+            masterPanelBodyDesktop.innerHTML += desktopRow;
+            const mobileCard = `
+                <div class="bg-gray-50 rounded-lg p-4 space-y-2 border border-gray-200">
+                    <div class="flex justify-between items-center">
+                        <p class="font-bold text-gray-800">${acc.id}</p>
+                        <p class="text-sm font-semibold px-2 py-1 rounded-full ${currentStatus.badge}">${currentStatus.text}</p>
+                    </div>
+                    <div class="text-sm text-gray-600"><strong>Chỉ tiêu:</strong> <span class="font-bold text-blue-600">${(acc.totalClicks || 0).toLocaleString('vi-VN')}</span></div>
+                    <div class="text-sm text-gray-600"><strong>Máy chủ:</strong> ${acc.machine?.id || 'N/A'} (${acc.machine?.ip || 'N/A'})</div>
+                    <div class="text-sm text-gray-600"><strong>Vị trí:</strong> ${acc.machine?.location || 'N/A'}</div>
+                    <div class="text-xs text-gray-400 pt-2 border-t mt-2"><strong>Cập nhật:</strong> ${lastUpdateString}</div>
+                </div>
+            `;
+            masterPanelBodyMobile.innerHTML += mobileCard;
+        });
+    }
+    function updateAccountCard(accId, data) {
+        const card = document.getElementById(`card-${accId}`);
+        if (!card) return;
+        const status = getStatus(data);
+        const currentStatus = statusMap[status] || { ...statusMap.default, text: status };
+        
+        card.className = `account-card bg-white rounded-xl shadow-lg p-6 flex flex-col transition-all duration-300 border-l-4 relative ${currentStatus.border} ${selectedAccounts.has(accId) ? 'selected' : ''}`;
+        if (status === 'unresponsive' || status === 'stalled' || status === 'default') {
+            card.classList.add('blinking-error');
+        } else {
+            card.classList.remove('blinking-error');
+        }
+
+        const statusEl = card.querySelector('.status');
+        statusEl.textContent = currentStatus.text;
+        statusEl.className = `status text-sm font-semibold px-3 py-1 rounded-full ${currentStatus.badge}`;
+        
+        card.querySelector('.clicks').textContent = (data.totalClicks || 0).toLocaleString('vi-VN');
+        card.querySelector('.participants').textContent = data.credentials?.password || '[chưa có]';
+        card.querySelector('.upgrade').textContent = data.currentSurveyLevel || 0;
+        
+        const lastUpdateString = data.lastUpdate ? new Date(data.lastUpdate.seconds * 1000).toLocaleString('vi-VN') : 'N/A';
+        card.querySelector('.last-update-text').textContent = lastUpdateString;
+
+        const startBtn = card.querySelector('.start-btn');
+        startBtn.disabled = false;
+        startBtn.classList.add('bg-blue-500', 'hover:bg-blue-600');
+        startBtn.classList.remove('bg-gray-400');
+
+        const twoFaForm = card.querySelector('.two-fa-form');
+        if (data.status === 'waiting-2fa' || data.status === 'waiting-for-2fa') {
+            twoFaForm.classList.remove('hidden');
+        } else {
+            twoFaForm.classList.add('hidden');
+        }
+
+        const errorLog = card.querySelector('.error-log');
+        const unresponsiveWarning = card.querySelector('.unresponsive-warning');
+        
+        if (status === 'unresponsive') {
+            unresponsiveWarning.classList.remove('hidden');
+            unresponsiveWarning.querySelector('.last-update-time').textContent = new Date(data.lastUpdate.seconds * 1000).toLocaleString('vi-VN');
+        } else {
+            unresponsiveWarning.classList.add('hidden');
+        }
+
+        if(data.errorLog && data.errorLog.message && data.errorLog.timestamp) {
+            errorLog.classList.remove('hidden');
+            errorLog.querySelector('.error-message').textContent = `(${new Date(data.errorLog.timestamp.seconds * 1000).toLocaleString('vi-VN')}) ${data.errorLog.message}`;
+        } else {
+            errorLog.classList.add('hidden');
+        }
+    }
+    function createAccountCard(accId, data) {
+        const card = document.createElement("div");
+        card.id = `card-${accId}`;
+        card.innerHTML = `
+            <input type="checkbox" class="card-checkbox absolute top-4 right-4 h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 z-10">
+            <div class="flex justify-between items-start mb-4"><h3 class="text-xl font-bold text-gray-900">${accId}</h3><span class="status"></span></div>
+            <div class="unresponsive-warning hidden mb-4 p-3 bg-orange-50 border-l-4 border-orange-400 text-orange-700">
+                <p class="font-bold">Cảnh báo: Mất kết nối</p>
+                <p class="text-sm">Cập nhật lần cuối: <span class="last-update-time font-semibold"></span></p>
+            </div>
+            <div class="grid grid-cols-3 gap-4 text-center mb-4 flex-grow">
+                <div><p class="text-2xl font-bold text-blue-600 clicks"></p><p class="text-xs text-gray-500">Chỉ tiêu</p></div>
+                <div><p class="text-lg font-bold text-gray-700 participants break-all"></p><p class="text-xs text-gray-500">Tham gia</p></div>
+                <div><p class="text-2xl font-bold text-gray-700 upgrade"></p><p class="text-xs text-gray-500">Cấp độ</p></div>
+            </div>
+            <div class="error-log hidden mt-2 p-2 bg-red-50 border border-red-200 rounded-lg text-xs">
+                <p class="font-bold text-red-700">Lỗi cuối cùng:</p>
+                <p class="error-message text-red-600"></p>
+            </div>
+            <div class="text-xs text-gray-400 mt-2 text-right border-t pt-2">
+                Cập nhật: <strong class="last-update-text"></strong>
+            </div>
+            <form class="two-fa-form hidden my-3 p-3 bg-yellow-50 rounded-lg border border-yellow-300" onsubmit="handle2faSubmit(event, '${accId}')">
+                <label class="block text-sm font-medium text-yellow-800 mb-1">Yêu cầu xác thực 2FA</label>
+                <div class="flex gap-2">
+                    <input type="text" placeholder="Nhập mã 6 số" class="w-full border p-2 text-base rounded-md" pattern="[0-9]{6}" required>
+                    <button type="submit" class="submit-2fa-btn bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg btn-interaction">Gửi</button>
+                </div>
+            </form>
+            <div class="space-y-3 mt-3">
+                <div class="field">🕒 Bắt đầu: <input class="startTime w-full border p-2 text-base rounded mt-1" value="${data.schedule?.startTime || '00:00'}"></div>
+                <div class="field">🕒 Kết thúc: <input class="endTime w-full border p-2 text-base rounded mt-1" value="${data.schedule?.endTime || '00:00'}"></div>
+                <div class="field">👤 Username: <input class="username w-full border p-2 text-base rounded mt-1" value="${data.credentials?.username || ''}"></div>
+                <div class="field">🔑 Mật khẩu: <input type="password" class="password w-full border p-2 text-base rounded mt-1" value="${data.credentials?.password || ''}"></div>
+                <div class="field">🔑 Gemini API Key: <input type="password" class="geminiApiKey w-full border p-2 text-base rounded mt-1" value="${data.gemini_api_key || ''}"></div>
+                <div class="field">🖥️ Máy chủ ID: <input class="machineId w-full border p-2 text-base rounded mt-1" value="${data.machine?.id || ''}"></div>
+                <div class="field">🌐 IP Máy: <input class="machineIp w-full border p-2 text-base rounded mt-1" value="${data.machine?.ip || ''}"></div>
+                <div class="field">📍 Vị trí: <input class="machineLocation w-full border p-2 text-base rounded mt-1" value="${data.machine?.location || ''}"></div>
+            </div>
+            <div class="mt-4 pt-4 border-t border-gray-200 flex flex-wrap items-center justify-between gap-y-2">
+                <div>
+                    <button class="delete-btn bg-red-100 hover:bg-red-200 text-red-700 font-bold py-2 px-4 rounded-lg btn-interaction">Xóa</button>
+                </div>
+                <div class="flex flex-wrap justify-end gap-2">
+                    <button class="save-btn bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg btn-interaction">Lưu</button>
+                    <button class="reset-btn bg-orange-400 hover:bg-orange-500 text-white font-bold py-2 px-4 rounded-lg btn-interaction">Xóa DL</button>
+                    <button class="restart-btn bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg btn-interaction">Restart</button>
+                    <button class="start-btn text-white font-bold py-2 px-4 rounded-lg btn-interaction">Start</button>
+                    <button class="stop-btn bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg btn-interaction">Stop</button>
+                </div>
+            </div>
+        `;
+        card.querySelector('.save-btn').addEventListener('click', () => handleSaveChanges(accId));
+        card.querySelector('.delete-btn').addEventListener('click', () => showDeleteModal(accId));
+        card.querySelector('.reset-btn').addEventListener('click', () => showResetModal(accId));
+        card.querySelector('.restart-btn').addEventListener('click', () => sendAction(accId, 'reset'));
+        card.querySelector('.start-btn').addEventListener('click', () => sendAction(accId, 'start'));
+        card.querySelector('.stop-btn').addEventListener('click', () => sendAction(accId, 'stop'));
+        card.querySelector('.card-checkbox').addEventListener('change', (e) => handleAccountSelection(accId, e.target.checked));
+        updateAccountCard(accId, data);
+        return card;
+    }
+
+    // --- Bulk Actions & Selection ---
+    function handleAccountSelection(accId, isSelected) {
+        if (isSelected) {
+            selectedAccounts.add(accId);
+            document.getElementById(`card-${accId}`).classList.add('selected');
+        } else {
+            selectedAccounts.delete(accId);
+            document.getElementById(`card-${accId}`).classList.remove('selected');
+        }
+        updateBulkActionBar();
+    }
+
+    function updateBulkActionBar() {
+        const selectedCount = selectedAccounts.size;
+        if (selectedCount > 0) {
+            bulkActionCount.textContent = `${selectedCount} mục đã chọn`;
+            bulkActionBar.classList.add('visible');
+        } else {
+            bulkActionBar.classList.remove('visible');
+        }
+        
+        const allAccountCards = document.querySelectorAll('.account-card');
+        if (allAccountCards.length > 0 && selectedCount === allAccountCards.length) {
+            selectAllCheckbox.checked = true;
+            selectAllCheckbox.indeterminate = false;
+        } else if (selectedCount > 0) {
+            selectAllCheckbox.checked = false;
+            selectAllCheckbox.indeterminate = true;
+        } else {
+            selectAllCheckbox.checked = false;
+            selectAllCheckbox.indeterminate = false;
+        }
+    }
+
+    selectAllCheckbox.addEventListener('change', (e) => {
+        const isChecked = e.target.checked;
+        document.querySelectorAll('.account-card').forEach(card => {
+            const accId = card.id.replace('card-', '');
+            card.querySelector('.card-checkbox').checked = isChecked;
+            if (isChecked) {
+                selectedAccounts.add(accId);
+                card.classList.add('selected');
+            } else {
+                selectedAccounts.delete(accId);
+                card.classList.remove('selected');
+            }
+        });
+        updateBulkActionBar();
+    });
+
+    window.handleBulkAction = async (action) => {
+        triggerVibration();
+        const batch = writeBatch(db);
+        selectedAccounts.forEach(accId => {
+            const docRef = doc(db, ACCOUNTS_COLLECTION, accId);
+            batch.update(docRef, { action });
+        });
+        await batch.commit();
+        showAlert(`Đã gửi lệnh "${action}" tới ${selectedAccounts.size} tài khoản.`);
+    };
+
+    async function handleBulkDelete() {
+        triggerVibration();
+        const deleteCount = selectedAccounts.size;
+        if (deleteCount === 0) return;
+
+        const batch = writeBatch(db);
+        selectedAccounts.forEach(accId => {
+            const docRef = doc(db, ACCOUNTS_COLLECTION, accId);
+            batch.delete(docRef);
+        });
+
+        try {
+            await batch.commit();
+            showAlert(`Đã xóa thành công ${deleteCount} tài khoản.`);
+            selectedAccounts.clear();
+            updateBulkActionBar();
+            hideBulkDeleteModal();
+        } catch (error) {
+            console.error("Lỗi khi xóa hàng loạt:", error);
+            showAlert("Đã xảy ra lỗi khi xóa tài khoản.");
+            hideBulkDeleteModal();
+        }
+    }
+    
+    async function handleBulkReset() {
+        triggerVibration();
+        const resetCount = selectedAccounts.size;
+        if (resetCount === 0) return;
+
+        const batch = writeBatch(db);
+        const resetData = {
+            totalClicks: 0, participants: 0, upgradeProgress: 0, status: 'idle',
+            action: 'stop', errorLog: null, lastUpdate: new Date()
+        };
+
+        selectedAccounts.forEach(accId => {
+            const docRef = doc(db, ACCOUNTS_COLLECTION, accId);
+            batch.update(docRef, resetData);
+        });
+
+        try {
+            await batch.commit();
+            showAlert(`Đã xóa dữ liệu thành công cho ${resetCount} tài khoản.`);
+            hideBulkResetModal();
+        } catch (error) {
+            console.error("Lỗi khi xóa dữ liệu hàng loạt:", error);
+            showAlert("Đã xảy ra lỗi khi xóa dữ liệu tài khoản.");
+            hideBulkResetModal();
+        }
+    }
+
+    // --- CRUD Functions ---
+    window.handleCreateAccount = async () => {
+        const newId = document.getElementById('new-acc-id').value.trim();
+        if (!newId || newId === 'global') { showAlert("ID tài khoản không hợp lệ."); return; }
+        if (accountsData[newId]) { showAlert("ID tài khoản đã tồn tại."); return; }
+        const defaultData = {
+            action: "stop", status: "idle", totalClicks: 0, participants: 0, upgradeProgress: 0,
+            schedule: { startTime: "00:00", endTime: "00:00" },
+            credentials: { username: "", password: "" },
+            gemini_api_key: "",
+            machine: { id: "Chưa gán", ip: "N/A", location: "N/A" },
+            lastUpdate: new Date()
+        };
+        await setDoc(doc(db, ACCOUNTS_COLLECTION, newId), defaultData);
+        hideAddModal();
+        document.getElementById('new-acc-id').value = "";
+    };
+    async function handleSaveChanges(accId) {
+        triggerVibration();
+        const card = document.getElementById(`card-${accId}`);
+        const saveBtn = card.querySelector('.save-btn');
+        saveBtn.disabled = true;
+        const updatedData = {
+            schedule: { startTime: card.querySelector('.startTime').value, endTime: card.querySelector('.endTime').value },
+            credentials: { username: card.querySelector('.username').value, password: card.querySelector('.password').value },
+            gemini_api_key: card.querySelector('.geminiApiKey').value,
+            machine: { id: card.querySelector('.machineId').value, ip: card.querySelector('.machineIp').value, location: card.querySelector('.machineLocation').value }
+        };
+        await updateDoc(doc(db, ACCOUNTS_COLLECTION, accId), updatedData);
+        saveBtn.disabled = false;
+        showAlert(`Đã lưu thay đổi cho ${accId}!`);
+    }
+    async function handleDeleteAccount(accId) {
+        await deleteDoc(doc(db, ACCOUNTS_COLLECTION, accId));
+        hideDeleteModal();
+    }
+    async function handleResetAccount(accId) {
+        triggerVibration();
+        const resetData = {
+            totalClicks: 0,
+            participants: 0,
+            upgradeProgress: 0,
+            status: 'idle',
+            action: 'stop',
+            errorLog: null,
+            lastUpdate: new Date()
+        };
+        await updateDoc(doc(db, ACCOUNTS_COLLECTION, accId), resetData);
+        hideResetModal();
+        showAlert(`Đã xóa dữ liệu cho ${accId}.`);
+    }
+    async function sendAction(accId, action) {
+        triggerVibration();
+        await updateDoc(doc(db, ACCOUNTS_COLLECTION, accId), { action });
+    }
+    window.handle2faSubmit = async (event, accId) => {
+        event.preventDefault();
+        triggerVibration();
+        const form = event.target;
+        const input = form.querySelector('input');
+        const button = form.querySelector('button');
+        const code = input.value.trim();
+
+        if (!/^\d{6}$/.test(code)) {
+            showAlert("Vui lòng nhập mã 2FA gồm 6 chữ số.");
+            return;
+        }
+
+        button.disabled = true;
+        button.innerHTML = `<span class="spinner"></span>`;
+
+        try {
+            await updateDoc(doc(db, ACCOUNTS_COLLECTION, accId), {
+                action: "submit-2fa",
+                twoFactorCode: code,
+            });
+            showAlert(`Đã gửi mã 2FA cho ${accId}.`);
+        } catch (err) {
+            showAlert(`Lỗi gửi mã 2FA: ${err.message}`);
+        } finally {
+            button.disabled = false;
+            button.innerHTML = 'Gửi';
+            input.value = '';
+        }
+    };
+    
+    // --- Settings Functions ---
+    window.saveApiKeys = async () => {
+        const openAIKey = document.getElementById('openai-api-key').value.trim();
+        const settingsRef = doc(db, ACCOUNTS_COLLECTION, "global");
+        try {
+            await setDoc(settingsRef, { 
+                openai_api_key: openAIKey,
+            }, { merge: true });
+            showAlert('Đã lưu API Keys vào document global thành công!');
+        } catch (error) {
+            console.error("Lỗi khi lưu API keys:", error);
+            showAlert('Có lỗi xảy ra khi lưu API keys.');
+        }
+    };
+
+    async function loadSettings() {
+        const settingsRef = doc(db, ACCOUNTS_COLLECTION, "global");
+        try {
+            const docSnap = await getDoc(settingsRef);
+            if (docSnap.exists()) {
+                const settings = docSnap.data();
+                if (settings.openai_api_key) {
+                    document.getElementById('openai-api-key').value = settings.openai_api_key;
+                }
+            } else {
+                console.log("Không tìm thấy document cài đặt global.");
+            }
+        } catch (error) {
+            console.error("Lỗi khi tải cài đặt:", error);
+        }
+    }
+
+    // --- App Initialization and Auth ---
+    async function initializeFirebaseServices() {
+        try {
+            const userCredential = await signInAnonymously(auth);
+            console.log("Signed in anonymously:", userCredential.user.uid);
+            setupRealtimeListener();
+            loadSettings();
+        } catch (error) {
+            console.error("Anonymous sign-in failed:", error);
+            showAlert("Không thể kết nối tới máy chủ. Vui lòng thử lại.");
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', initializeFirebaseServices);
+
+
+    // --- Global Functions ---
+    window.switchTab = (event, id) => {
+        triggerVibration();
+        document.querySelectorAll('.tab-content').forEach(sec => sec.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        document.querySelectorAll('.tab').forEach(btn => btn.classList.remove('active'));
+        event.target.classList.add('active');
+    };
+  </script>
+</body>
+</html>
+
