@@ -383,9 +383,9 @@
                 masterPanelData.push({id: accId, ...data});
                 if (!accountsData[accId]) { accountsData[accId] = { history: [], color: `hsl(${Math.random() * 360}, 70%, 50%)` }; }
                 const lastHistoryPoint = accountsData[accId].history.slice(-1)[0];
-                if (!lastHistoryPoint || lastHistoryPoint.y !== (data.totalClicks || 0)) { accountsData[accId].history.push({ x: new Date(), y: data.totalClicks || 0 }); }
+                if (!lastHistoryPoint || lastHistoryPoint.y !== (data.currentSurveyLevel || 0)) { accountsData[accId].history.push({ x: new Date(), y: data.currentSurveyLevel || 0 }); }
                 comparisonLabels.push(accId);
-                comparisonData.push(data.totalClicks || 0);
+                comparisonData.push(data.currentSurveyLevel || 0);
                 let card = document.getElementById(`card-${accId}`);
                 if (!card) { card = createAccountCard(accId, data); accountGrid.appendChild(card); }
                 else { updateAccountCard(accId, data); }
@@ -420,7 +420,7 @@
         let status = acc.status || 'idle';
         const lastUpdate = acc.lastUpdate?.seconds;
         const inactiveStates = ['completed', 'stopped', 'idle'];
-        if (status === 'running' && (acc.totalClicks === 0 || acc.participants === 0 || acc.upgradeProgress === 0)) return 'stalled';
+        if (status === 'running' && (acc.currentSurveyLevel === 0 || acc.participants === 0 || acc.upgradeProgress === 0)) return 'stalled';
         if (!inactiveStates.includes(status) && lastUpdate) {
             if ((new Date().getTime() / 1000 - lastUpdate) > 180) return 'unresponsive';
         }
@@ -446,7 +446,7 @@
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${acc.machine?.id || 'N/A'}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${acc.machine?.ip || 'N/A'}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${acc.machine?.location || 'N/A'}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-blue-600">${(acc.totalClicks || 0).toLocaleString('vi-VN')}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-blue-600">${(acc.currentSurveyLevel || 0).toLocaleString('vi-VN')}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${lastUpdateString}</td>
                 </tr>`;
             masterPanelBodyDesktop.innerHTML += desktopRow;
@@ -456,7 +456,7 @@
                         <p class="font-bold text-gray-800">${acc.id}</p>
                         <p class="text-sm font-semibold px-2 py-1 rounded-full ${currentStatus.badge}">${currentStatus.text}</p>
                     </div>
-                    <div class="text-sm text-gray-600"><strong>Chỉ tiêu:</strong> <span class="font-bold text-blue-600">${(acc.totalClicks || 0).toLocaleString('vi-VN')}</span></div>
+                    <div class="text-sm text-gray-600"><strong>Chỉ tiêu:</strong> <span class="font-bold text-blue-600">${(acc.currentSurveyLevel || 0).toLocaleString('vi-VN')}</span></div>
                     <div class="text-sm text-gray-600"><strong>Máy chủ:</strong> ${acc.machine?.id || 'N/A'} (${acc.machine?.ip || 'N/A'})</div>
                     <div class="text-sm text-gray-600"><strong>Vị trí:</strong> ${acc.machine?.location || 'N/A'}</div>
                     <div class="text-xs text-gray-400 pt-2 border-t mt-2"><strong>Cập nhật:</strong> ${lastUpdateString}</div>
@@ -482,9 +482,9 @@
         statusEl.textContent = currentStatus.text;
         statusEl.className = `status text-sm font-semibold px-3 py-1 rounded-full ${currentStatus.badge}`;
         
-        card.querySelector('.clicks').textContent = (data.totalClicks || 0).toLocaleString('vi-VN');
+        card.querySelector('.clicks').textContent = (data.currentSurveyLevel || 0).toLocaleString('vi-VN');
         card.querySelector('.participants').textContent = (data.participants || 0).toLocaleString('vi-VN');
-        card.querySelector('.upgrade').textContent = data.currentSurveyLevel || 0;
+        card.querySelector('.upgrade').textContent = data.upgradeProgress || 0;
         
         const lastUpdateString = data.lastUpdate ? new Date(data.lastUpdate.seconds * 1000).toLocaleString('vi-VN') : 'N/A';
         card.querySelector('.last-update-text').textContent = lastUpdateString;
@@ -683,7 +683,7 @@
         const batch = writeBatch(db);
         const resetData = {
             totalClicks: 0, participants: 0, upgradeProgress: 0, status: 'idle',
-            action: 'stop', errorLog: null, lastUpdate: new Date()
+            currentSurveyLevel: 0, action: 'stop', errorLog: null, lastUpdate: new Date()
         };
 
         selectedAccounts.forEach(accId => {
@@ -708,7 +708,7 @@
         if (!newId || newId === 'global') { showAlert("ID tài khoản không hợp lệ."); return; }
         if (accountsData[newId]) { showAlert("ID tài khoản đã tồn tại."); return; }
         const defaultData = {
-            action: "stop", status: "idle", totalClicks: 0, participants: 0, upgradeProgress: 0,
+            action: "stop", status: "idle", totalClicks: 0, participants: 0, upgradeProgress: 0, currentSurveyLevel: 0,
             schedule: { startTime: "00:00", endTime: "00:00" },
             credentials: { username: "", password: "" },
             gemini_api_key: "",
@@ -744,6 +744,7 @@
             totalClicks: 0,
             participants: 0,
             upgradeProgress: 0,
+            currentSurveyLevel: 0,
             status: 'idle',
             action: 'stop',
             errorLog: null,
@@ -847,5 +848,6 @@
   </script>
 </body>
 </html>
+
 
 
