@@ -483,7 +483,7 @@
         statusEl.className = `status text-sm font-semibold px-3 py-1 rounded-full ${currentStatus.badge}`;
         
         card.querySelector('.clicks').textContent = (data.totalClicks || 0).toLocaleString('vi-VN');
-        card.querySelector('.participants').textContent = data.credentials?.password || '[chưa có]';
+        card.querySelector('.participants').textContent = (data.participants || 0).toLocaleString('vi-VN');
         card.querySelector('.upgrade').textContent = data.currentSurveyLevel || 0;
         
         const lastUpdateString = data.lastUpdate ? new Date(data.lastUpdate.seconds * 1000).toLocaleString('vi-VN') : 'N/A';
@@ -528,10 +528,19 @@
                 <p class="font-bold">Cảnh báo: Mất kết nối</p>
                 <p class="text-sm">Cập nhật lần cuối: <span class="last-update-time font-semibold"></span></p>
             </div>
-            <div class="grid grid-cols-3 gap-4 text-center mb-4 flex-grow">
-                <div><p class="text-2xl font-bold text-blue-600 clicks"></p><p class="text-xs text-gray-500">Chỉ tiêu</p></div>
-                <div><p class="text-lg font-bold text-gray-700 participants break-all"></p><p class="text-xs text-gray-500">Tham gia</p></div>
-                <div><p class="text-2xl font-bold text-gray-700 upgrade"></p><p class="text-xs text-gray-500">Cấp độ</p></div>
+            <div class="text-center mb-6">
+                <p class="text-4xl font-extrabold text-blue-600 clicks"></p>
+                <p class="text-sm font-medium text-gray-500 mt-1">Chỉ tiêu</p>
+            </div>
+            <div class="grid grid-cols-2 gap-4 text-center mb-4 flex-grow">
+                <div>
+                    <p class="text-2xl font-bold text-gray-700 participants"></p>
+                    <p class="text-xs text-gray-500">Tham gia</p>
+                </div>
+                <div>
+                    <p class="text-2xl font-bold text-gray-700 upgrade"></p>
+                    <p class="text-xs text-gray-500">Cấp độ</p>
+                </div>
             </div>
             <div class="error-log hidden mt-2 p-2 bg-red-50 border border-red-200 rounded-lg text-xs">
                 <p class="font-bold text-red-700">Lỗi cuối cùng:</p>
@@ -838,4 +847,5 @@
   </script>
 </body>
 </html>
+
 
