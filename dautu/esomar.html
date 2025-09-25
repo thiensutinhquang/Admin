@@ -483,7 +483,7 @@
         statusEl.className = `status text-sm font-semibold px-3 py-1 rounded-full ${currentStatus.badge}`;
         
         card.querySelector('.clicks').textContent = (data.currentSurveyLevel || 0).toLocaleString('vi-VN');
-        card.querySelector('.participants').textContent = (data.participants || 0).toLocaleString('vi-VN');
+        card.querySelector('.participants').textContent = data.status || 'N/A';
         card.querySelector('.upgrade').textContent = (data.totalClicks || 0).toLocaleString('vi-VN');
         
         const lastUpdateString = data.lastUpdate ? new Date(data.lastUpdate.seconds * 1000).toLocaleString('vi-VN') : 'N/A';
@@ -534,7 +534,7 @@
             </div>
             <div class="grid grid-cols-2 gap-4 text-center mb-4 flex-grow">
                 <div>
-                    <p class="text-2xl font-bold text-gray-700 participants"></p>
+                    <p class="text-lg font-semibold text-gray-700 participants"></p>
                     <p class="text-xs text-gray-500">Tham gia</p>
                 </div>
                 <div>
@@ -848,6 +848,7 @@
   </script>
 </body>
 </html>
+
 
 
 
