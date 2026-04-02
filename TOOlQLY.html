@@ -11,30 +11,31 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script> <style>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <style>
+        /* ================= HỆ THỐNG GIAO DIỆN (UI/UX) ================= */
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #0f172a; color: #f8fafc; overflow-x: hidden; }
         
-        /* Custom Scrollbar */
+        /* Custom Scrollbar mượt mà */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #475569; }
 
-        /* Glassmorphism Panel */
+        /* Hiệu ứng Kính (Glassmorphism) */
         .glass-panel { background: rgba(30, 41, 59, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); }
 
-        /* Form Controls */
+        /* Form Inputs */
         .form-control {
             background-color: #1e293b; border: 1px solid #334155; color: #f8fafc;
             border-radius: 0.5rem; padding: 0.6rem 1rem; width: 100%; transition: all 0.2s; outline: none; font-size: 0.875rem;
         }
         .form-control:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25); }
 
-        /* Buttons */
+        /* Buttons Đa Năng */
         .btn { padding: 0.6rem 1rem; border-radius: 0.5rem; font-weight: 600; font-size: 0.875rem; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; transition: all 0.2s; cursor: pointer; border: none; }
         .btn:active { transform: scale(0.96); }
         .btn-primary { background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white; box-shadow: 0 4px 14px 0 rgba(37, 99, 235, 0.3); }
@@ -46,23 +47,20 @@
         .btn-ai { background: linear-gradient(135deg, #9333ea, #db2777); color: white; box-shadow: 0 4px 14px 0 rgba(219, 39, 119, 0.3); }
         .btn-ai:hover { background: linear-gradient(135deg, #7e22ce, #be185d); }
 
-        /* Spreadsheet-like Table */
+        /* Bảng Dữ Liệu (Spreadsheet) */
         .sheet-table { width: 100%; border-collapse: separate; border-spacing: 0; }
         .sheet-table th { background: #1e293b; color: #94a3b8; font-weight: 600; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.05em; padding: 12px 16px; position: sticky; top: 0; z-index: 10; border-bottom: 2px solid #3b82f6; text-align: left; }
         .sheet-table td { border-bottom: 1px solid #1e293b; padding: 12px 16px; font-size: 0.875rem; background: #0f172a; transition: background 0.2s; white-space: pre-wrap; vertical-align: top;}
         .sheet-table tr:hover td { background-color: #1e293b; }
         
-        /* Notion-style Inline Editing */
-        .editable-cell { cursor: text; }
+        /* Chỉnh sửa trực tiếp (Notion Style) */
+        .editable-cell { cursor: text; transition: all 0.2s ease; outline: none; min-width: 80px; }
         .editable-cell:focus { background: #1e1b4b !important; outline: 2px solid #818cf8; outline-offset: -2px; border-radius: 4px; color: white; }
 
-        /* SweetAlert Override for Dark Mode */
-        .swal2-popup { background: #1e293b !important; color: #f8fafc !important; border-radius: 1rem !important; border: 1px solid #334155; }
+        /* Tối ưu SweetAlert2 cho Dark Mode */
+        .swal2-popup { background: #1e293b !important; color: #f8fafc !important; border-radius: 1rem !important; border: 1px solid #334155; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;}
         .swal2-title { color: #f8fafc !important; font-family: 'Plus Jakarta Sans', sans-serif !important; }
         .swal2-input, .swal2-textarea, .swal2-select { background: #0f172a !important; color: #fff !important; border: 1px solid #334155 !important; }
-        
-        /* Hidden Print Area */
-        #printable-report { position: absolute; left: -9999px; top: -9999px; background: white; color: black; padding: 40px; width: 1200px; z-index: -1; }
     </style>
 </head>
 <body class="flex flex-col h-screen overflow-hidden">
@@ -72,46 +70,46 @@
         <div class="text-blue-400 text-sm tracking-widest font-medium animate-pulse uppercase">Đang khởi tạo hệ thống...</div>
     </div>
 
-    <header class="glass-panel mx-6 mt-4 px-6 py-4 flex flex-col lg:flex-row items-center justify-between gap-4 z-40 shrink-0 rounded-2xl">
-        <div class="flex items-center gap-4 w-full lg:w-auto justify-center lg:justify-start">
-            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg text-white">
+    <header class="glass-panel mx-4 mt-4 px-6 py-4 flex flex-col xl:flex-row items-center justify-between gap-4 z-40 shrink-0 rounded-2xl">
+        <div class="flex items-center gap-4 w-full xl:w-auto justify-center xl:justify-start">
+            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg text-white shrink-0">
                 <i class="fa-solid fa-calendar-check text-2xl"></i>
             </div>
             <div>
-                <h1 class="text-2xl font-bold tracking-tight text-white">Event CRM <span class="bg-blue-500/20 text-blue-400 text-[10px] px-2 py-0.5 rounded-md uppercase ml-1 align-top">Pro</span></h1>
+                <h1 class="text-2xl font-bold tracking-tight text-white leading-none">Event CRM <span class="bg-blue-500/20 text-blue-400 text-[10px] px-2 py-0.5 rounded-md uppercase ml-1 align-top">Enterprise</span></h1>
                 <p class="text-[11px] text-slate-400 font-semibold tracking-widest uppercase mt-1">Minh Sư Tịnh Quang</p>
             </div>
         </div>
 
-        <div class="flex flex-wrap items-center justify-center gap-2 bg-slate-800/50 p-1.5 rounded-xl border border-slate-700 w-full lg:w-auto">
+        <div class="flex flex-wrap items-center justify-center gap-2 bg-slate-800/50 p-1.5 rounded-xl border border-slate-700 w-full xl:w-auto">
             <select id="eventSelector" class="form-control border-none bg-transparent font-semibold text-white focus:box-shadow-none cursor-pointer min-w-[250px]"></select>
             <button onclick="App.db.createEvent()" class="btn btn-primary px-3" title="Tạo sự kiện mới"><i class="fa-solid fa-plus"></i></button>
             <button onclick="App.ui.renameEvent()" class="btn btn-secondary px-3" title="Đổi tên sự kiện"><i class="fa-solid fa-pen"></i></button>
-            <button onclick="App.ui.shareEvent()" class="btn btn-secondary px-3" title="Chia sẻ Link"><i class="fa-solid fa-share-nodes"></i></button>
+            <button onclick="App.ui.shareEvent()" class="btn btn-secondary px-3" title="Sao chép Link chia sẻ"><i class="fa-solid fa-share-nodes"></i></button>
             <button onclick="App.db.deleteEvent()" class="btn btn-danger px-3 hover:bg-red-500" title="Xóa sự kiện"><i class="fa-solid fa-trash"></i></button>
         </div>
 
-        <div class="flex gap-2 w-full lg:w-auto justify-center">
-            <button onclick="App.export.showOptions()" class="btn bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-900/50"><i class="fa-solid fa-file-export"></i> Xuất File</button>
+        <div class="flex gap-2 w-full xl:w-auto justify-center">
+            <button onclick="App.export.showOptions()" class="btn bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-900/50"><i class="fa-solid fa-print"></i> Xuất Báo Cáo</button>
             <button onclick="App.ai.openAssistant()" class="btn btn-ai shadow-lg shadow-purple-900/50"><i class="fa-solid fa-wand-magic-sparkles"></i> AI Copilot</button>
-            <button onclick="App.ai.configKey()" class="btn btn-secondary text-amber-400 border-amber-500/30 hover:bg-amber-500/20" title="Cài đặt API Key"><i class="fa-solid fa-key"></i></button>
+            <button onclick="App.ai.configKey()" class="btn btn-secondary text-amber-400 border-amber-500/30 hover:bg-amber-500/20" title="Cài đặt API Key AI"><i class="fa-solid fa-key"></i></button>
         </div>
     </header>
 
-    <main class="flex-1 p-6 grid grid-cols-1 xl:grid-cols-4 gap-6 max-w-[1920px] w-full mx-auto overflow-hidden">
+    <main class="flex-1 p-4 grid grid-cols-1 xl:grid-cols-4 gap-6 max-w-[1920px] w-full mx-auto overflow-hidden">
         
-        <aside class="xl:col-span-1 flex flex-col gap-6 overflow-y-auto hide-scrollbar">
+        <aside class="xl:col-span-1 flex flex-col gap-6 overflow-y-auto hide-scrollbar pb-6">
             
-            <div class="glass-panel p-5 rounded-2xl">
-                <h3 id="formTitle" class="text-sm font-bold text-blue-400 uppercase tracking-wider mb-4 pb-3 border-b border-slate-700/50 flex justify-between items-center">
-                    <span><i class="fa-solid fa-keyboard mr-2"></i> Nhập liệu</span>
+            <div class="glass-panel p-5 rounded-2xl shrink-0 border-t-4 border-t-blue-500">
+                <h3 class="text-sm font-bold text-blue-400 uppercase tracking-wider mb-4 pb-3 border-b border-slate-700/50 flex items-center">
+                    <i class="fa-solid fa-keyboard mr-2"></i> Bảng Nhập Liệu
                 </h3>
-                <select id="formSectionSelect" class="form-control text-sm mb-4" onchange="App.ui.renderForm()"></select>
+                <select id="formSectionSelect" class="form-control text-sm mb-4 font-semibold text-blue-300 bg-blue-900/20 border-blue-800" onchange="App.ui.renderForm()"></select>
                 <form id="regForm" class="space-y-4"></form>
-                <button type="button" onclick="App.ui.saveForm()" class="btn btn-primary w-full mt-5"><i class="fa-solid fa-check"></i> Lưu vào Bảng</button>
+                <button type="button" onclick="App.ui.saveForm()" class="btn btn-primary w-full mt-5 py-3 shadow-lg shadow-blue-900/50"><i class="fa-solid fa-check-double"></i> Lưu vào Bảng</button>
             </div>
 
-            <div class="glass-panel p-5 rounded-2xl flex flex-col h-[380px] shrink-0">
+            <div class="glass-panel p-5 rounded-2xl flex flex-col h-[350px] shrink-0 border-t-4 border-t-emerald-500">
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="text-sm font-bold text-emerald-400 uppercase tracking-wider"><i class="fa-solid fa-chart-pie mr-2"></i> Phân tích</h3>
                     <select id="chartColSelect" class="form-control py-1 px-2 w-32 text-xs bg-slate-900 border-slate-700" onchange="App.chart.update()"></select>
@@ -123,34 +121,29 @@
         </aside>
 
         <section class="xl:col-span-3 glass-panel p-5 rounded-2xl flex flex-col overflow-hidden">
-            <div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4 shrink-0">
-                <h2 class="text-lg font-bold text-white"><i class="fa-solid fa-table-list mr-2 text-blue-500"></i> Cơ sở dữ liệu Sự kiện</h2>
-                <button onclick="App.ui.manageSections()" class="btn btn-secondary text-sm border-dashed"><i class="fa-solid fa-layer-group"></i> Quản lý Cấu trúc (Tab/Cột)</button>
+            <div class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4 shrink-0">
+                <h2 class="text-lg font-bold text-white"><i class="fa-solid fa-database mr-2 text-blue-500"></i> Cơ sở Dữ liệu Thời gian thực</h2>
+                <button onclick="App.ui.manageSections()" class="btn btn-secondary text-sm border-dashed hover:border-solid"><i class="fa-solid fa-layer-group"></i> Quản lý Tab/Bảng</button>
             </div>
             
-            <div id="sectionsContainer" class="space-y-8 flex-1 overflow-y-auto pr-2 pb-10">
-                <div class="flex flex-col items-center justify-center h-full text-slate-500">
-                    <i class="fa-solid fa-folder-open text-6xl mb-4 opacity-50"></i>
-                    <p>Chưa có dữ liệu sự kiện.</p>
+            <div id="sectionsContainer" class="space-y-8 flex-1 overflow-y-auto pr-2 pb-10 hide-scrollbar">
                 </div>
-            </div>
         </section>
     </main>
-
-    <div id="printable-report"></div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getFirestore, doc, onSnapshot, collection, query, addDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
-        // Khởi tạo SweetAlert
-        const Toast = Swal.mixin({ toast: true, position: 'bottom-end', showConfirmButton: false, timer: 3000, timerProgressBar: true });
+        // Công cụ Thông báo
+        const Toast = Swal.mixin({ toast: true, position: 'bottom-end', showConfirmButton: false, timer: 2500, timerProgressBar: true });
 
         // ========================================================
-        // KIẾN TRÚC ENTERPRISE OOP (Object-Oriented Programming)
+        // KIẾN TRÚC ENTERPRISE OOP (Mô hình Hướng Đối Tượng)
         // ========================================================
         window.App = {
+            // 1. CẤU HÌNH MẶC ĐỊNH
             config: {
                 firebase: {
                     apiKey: "AIzaSyBVAwc637Ql73tmvCe0VjXccg9Zg5KtT_g",
@@ -158,27 +151,26 @@
                     projectId: "noidungdanang"
                 },
                 defaultCols: [
-                    { id: 'col_name', label: "Họ và Tên / Hạng mục" }, 
-                    { id: 'col_province', label: "Khu vực / Đơn vị" }, 
-                    { id: 'col_category', label: "Phân loại / Vai trò" },
+                    { id: 'col_name', label: "Họ Tên / Hạng mục" }, 
+                    { id: 'col_unit', label: "Đơn vị / Phân loại" }, 
                     { id: 'col_notes', label: "Ghi chú" }
                 ]
             },
 
+            // 2. TRẠNG THÁI HỆ THỐNG
             state: {
-                db: null, auth: null, user: null,
-                events: [], currentEventId: null, currentEventData: null,
-                activeSectionId: null, chartInstance: null,
-                unsubEvent: null, unsubList: null
+                db: null, auth: null, user: null, events: [], currentEventId: null, currentEventData: null,
+                activeSectionId: null, chartInstance: null, unsubEvent: null, unsubList: null
             },
 
-            // 1. KHỞI TẠO APP
+            // 3. KHỞI TẠO ỨNG DỤNG
             async init() {
                 try {
                     const app = initializeApp(this.config.firebase);
                     this.state.db = getFirestore(app);
                     this.state.auth = getAuth(app);
 
+                    // Lắng nghe Đăng nhập Ẩn danh
                     onAuthStateChanged(this.state.auth, async (user) => {
                         if (user) {
                             this.state.user = user;
@@ -188,16 +180,27 @@
                         }
                     });
 
-                    // Lắng nghe URL Hash để chia sẻ link
+                    // Xử lý Share Link (Routing)
                     window.addEventListener('hashchange', () => {
                         const hashId = window.location.hash.substring(1);
                         if (hashId && hashId !== this.state.currentEventId) this.db.loadEvent(hashId);
                     });
 
-                    // Lắng nghe phím Enter khi Sửa trực tiếp (Inline Edit)
-                    document.getElementById('sectionsContainer').addEventListener('keydown', (e) => {
-                        if (e.target.classList.contains('editable-cell') && e.key === 'Enter') {
-                            e.preventDefault(); e.target.blur(); 
+                    const secContainer = document.getElementById('sectionsContainer');
+
+                    // EVENT: Nhấn Enter để Lưu khi Sửa trực tiếp trên Bảng (Chống rớt dòng)
+                    secContainer.addEventListener('keydown', (e) => {
+                        if (e.target.classList.contains('editable-cell') && e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault(); e.target.blur(); // Gọi onblur để lưu Firebase
+                        }
+                    });
+
+                    // EVENT: Lọc định dạng rác (Clear Formatting) khi Copy Paste từ Word/Excel
+                    secContainer.addEventListener('paste', (e) => {
+                        if (e.target.classList.contains('editable-cell')) {
+                            e.preventDefault();
+                            const text = (e.originalEvent || e).clipboardData.getData('text/plain');
+                            document.execCommand('insertText', false, text);
                         }
                     });
                 } catch (error) {
@@ -205,7 +208,7 @@
                 }
             },
 
-            // 2. FIREBASE DATABASE LOGIC
+            // 4. QUẢN LÝ CƠ SỞ DỮ LIỆU (FIREBASE)
             db: {
                 listenToEventList() {
                     const q = query(collection(App.state.db, "events"));
@@ -213,11 +216,10 @@
 
                     App.state.unsubList = onSnapshot(q, (snapshot) => {
                         App.state.events = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a,b) => b.createdAt - a.createdAt);
-                        
                         const sel = document.getElementById('eventSelector');
                         
                         if (App.state.events.length === 0) {
-                            sel.innerHTML = '<option value="">Không có sự kiện. Hãy tạo mới!</option>';
+                            sel.innerHTML = '<option value="">(Chưa có sự kiện nào)</option>';
                             document.getElementById('loading-overlay').classList.add('opacity-0', 'pointer-events-none');
                             return;
                         }
@@ -248,7 +250,7 @@
                         
                         if (docSnap.exists()) {
                             let data = docSnap.data();
-                            // Migration tự động fix lỗi data cũ
+                            // Tự động Migration nếu Data cũ bị lỗi mảng
                             if (!data.sections) {
                                 data.sections = [{ id: `sec_1`, title: "Bảng dữ liệu chính", columns: data.columns || App.config.defaultCols, registrations: data.registrations || [], isTransposed: false }];
                                 this.saveEventState();
@@ -258,7 +260,6 @@
                             if(!App.state.activeSectionId || !data.sections.find(s => s.id === App.state.activeSectionId)) {
                                 App.state.activeSectionId = data.sections[0].id;
                             }
-                            
                             App.ui.renderWorkspace();
                         } else {
                             window.location.hash = '';
@@ -267,12 +268,12 @@
                 },
 
                 async createEvent() {
-                    const { value: name } = await Swal.fire({ title: 'Tạo Sự Kiện Mới', input: 'text', inputPlaceholder: 'Tên sự kiện (VD: Gala Dinner 2026)', showCancelButton: true, background: '#1e293b', color: '#fff' });
+                    const { value: name } = await Swal.fire({ title: 'Tạo Sự Kiện Mới', input: 'text', inputPlaceholder: 'Tên sự kiện (VD: Lễ Vu Lan 2026)', showCancelButton: true, background: '#1e293b', color: '#fff' });
                     if (!name) return;
 
                     const newEvent = {
                         name: name.trim(), createdAt: Date.now(), owner: App.state.user.uid,
-                        sections: [{ id: `sec_${Date.now()}`, title: "Báo cáo Tổng hợp", columns: App.config.defaultCols, registrations: [], isTransposed: false }]
+                        sections: [{ id: `sec_${Date.now()}`, title: "Danh sách Tham dự", columns: App.config.defaultCols, registrations: [], isTransposed: false }]
                     };
                     const docRef = await addDoc(collection(App.state.db, "events"), newEvent);
                     window.location.hash = docRef.id;
@@ -299,7 +300,7 @@
                 }
             },
 
-            // 3. GIAO DIỆN & TƯƠNG TÁC (UI)
+            // 5. GIAO DIỆN NGƯỜI DÙNG (UI/UX)
             ui: {
                 renderWorkspace() {
                     this.renderSections();
@@ -316,27 +317,27 @@
                         let tableHtml = '';
 
                         if (isTrans) {
-                            // Render Bảng ngang
+                            // Render Bảng Ngang (Horizontal)
                             tableHtml = `<thead><tr><th class="w-32 bg-slate-900 border-r border-slate-700 z-20" style="left:0">Hạng mục</th>${sec.registrations.map((r,i) => `<th class="text-center font-mono w-40 min-w-[150px]">${i+1}</th>`).join('')}</tr></thead><tbody>`;
                             sec.columns.forEach(col => {
                                 tableHtml += `<tr><td class="font-bold bg-slate-800/80 text-blue-400 sticky left-0 z-10 border-r border-slate-700">${col.label}</td>`;
                                 sec.registrations.forEach(reg => {
-                                    tableHtml += `<td class="editable-cell" contenteditable="plaintext-only" onblur="App.ui.saveInlineCell(this, '${sec.id}', '${reg.id}', '${col.id}')">${reg.values[col.id] || ''}</td>`;
+                                    tableHtml += `<td class="editable-cell" contenteditable="true" onblur="App.ui.saveInlineCell(this, '${sec.id}', '${reg.id}', '${col.id}')">${reg.values[col.id] || ''}</td>`;
                                 });
                                 tableHtml += `</tr>`;
                             });
-                            tableHtml += `<tr><td class="font-bold bg-slate-800/80 text-rose-400 sticky left-0 z-10 border-r border-slate-700">Tác vụ</td>${sec.registrations.map(r => `<td class="text-center"><button onclick="App.ui.deleteRow('${sec.id}', '${r.id}')" class="btn btn-danger py-1 px-2 text-xs"><i class="fa-solid fa-trash"></i> Xóa</button></td>`).join('')}</tr></tbody>`;
+                            tableHtml += `<tr><td class="font-bold bg-slate-800/80 text-rose-400 sticky left-0 z-10 border-r border-slate-700">Tác vụ</td>${sec.registrations.map(r => `<td class="text-center"><button onclick="App.ui.deleteRow('${sec.id}', '${r.id}')" class="btn btn-danger py-1 px-2 text-xs hover:bg-rose-600"><i class="fa-solid fa-trash"></i></button></td>`).join('')}</tr></tbody>`;
                         } else {
-                            // Render Bảng dọc chuẩn
-                            tableHtml = `<thead><tr><th class="w-12 text-center">STT</th>${sec.columns.map(c => `<th class="min-w-[150px]">${c.label}</th>`).join('')}<th class="w-20 text-center"><i class="fa-solid fa-bolt"></i></th></tr></thead><tbody>`;
-                            if (sec.registrations.length === 0) tableHtml += `<tr><td colspan="100%" class="text-center py-10 text-slate-500 italic">Bảng trống. Hãy nhập dữ liệu ở Form bên trái.</td></tr>`;
+                            // Render Bảng Dọc chuẩn (Vertical)
+                            tableHtml = `<thead><tr><th class="w-12 text-center">STT</th>${sec.columns.map(c => `<th class="min-w-[150px]">${c.label}</th>`).join('')}<th class="w-16 text-center"><i class="fa-solid fa-bolt"></i></th></tr></thead><tbody>`;
+                            if (sec.registrations.length === 0) tableHtml += `<tr><td colspan="100%" class="text-center py-10 text-slate-500 italic">Bảng trống. Sử dụng form bên trái để thêm dữ liệu.</td></tr>`;
                             
                             sec.registrations.forEach((reg, i) => {
-                                tableHtml += `<tr>
+                                tableHtml += `<tr class="group">
                                     <td class="text-center text-slate-500 font-mono text-sm">${i + 1}</td>
-                                    ${sec.columns.map(c => `<td class="editable-cell" contenteditable="plaintext-only" title="Click để sửa" onblur="App.ui.saveInlineCell(this, '${sec.id}', '${reg.id}', '${c.id}')">${reg.values[c.id] || ''}</td>`).join('')}
-                                    <td class="text-center">
-                                        <button onclick="App.ui.deleteRow('${sec.id}', '${reg.id}')" class="text-slate-500 hover:text-red-400 transition" title="Xóa dòng"><i class="fa-solid fa-trash-can"></i></button>
+                                    ${sec.columns.map(c => `<td class="editable-cell" contenteditable="true" title="Click để sửa, Enter để Lưu" onblur="App.ui.saveInlineCell(this, '${sec.id}', '${reg.id}', '${c.id}')">${reg.values[c.id] || ''}</td>`).join('')}
+                                    <td class="text-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button onclick="App.ui.deleteRow('${sec.id}', '${reg.id}')" class="text-slate-500 hover:text-red-400 p-2" title="Xóa dòng"><i class="fa-solid fa-trash-can"></i></button>
                                     </td>
                                 </tr>`;
                             });
@@ -344,12 +345,12 @@
                         }
 
                         return `
-                            <div class="bg-slate-800/40 rounded-xl border border-slate-700/80 overflow-hidden shadow-lg">
+                            <div class="bg-slate-800/40 rounded-xl border border-slate-700/80 overflow-hidden shadow-lg mb-6">
                                 <div class="bg-slate-900/80 px-5 py-4 border-b border-slate-700 flex flex-wrap justify-between items-center gap-3">
                                     <h3 class="font-bold text-lg text-white flex items-center gap-2"><i class="fa-solid fa-table-cells text-blue-500"></i> ${sec.title} <span class="bg-blue-900/50 text-blue-300 text-[10px] px-2 py-0.5 rounded-full uppercase ml-1">${sec.registrations.length}</span></h3>
                                     <div class="flex gap-2">
-                                        <button onclick="App.ui.toggleTranspose('${sec.id}')" class="btn btn-secondary !py-1.5 !px-3 text-xs" data-tooltip="Lật bảng Ngang/Dọc"><i class="fa-solid fa-retweet"></i></button>
-                                        <button onclick="App.ui.manageColumns('${sec.id}')" class="btn btn-secondary !py-1.5 !px-3 text-xs" data-tooltip="Chỉnh sửa cột"><i class="fa-solid fa-columns"></i> Cột</button>
+                                        <button onclick="App.ui.toggleTranspose('${sec.id}')" class="btn btn-secondary !py-1.5 !px-3 text-xs"><i class="fa-solid fa-retweet"></i> Lật bảng</button>
+                                        <button onclick="App.ui.manageColumns('${sec.id}')" class="btn btn-secondary !py-1.5 !px-3 text-xs"><i class="fa-solid fa-columns"></i> Sửa Cột</button>
                                     </div>
                                 </div>
                                 <div class="overflow-x-auto relative">
@@ -360,7 +361,7 @@
                     }).join('');
                 },
 
-                // Magic Inline Edit (Giống Google Sheets)
+                // Logic Lưu khi sửa trực tiếp trên bảng (Notion Style)
                 async saveInlineCell(el, secId, regId, colId) {
                     const newVal = el.innerText.trim();
                     const sec = App.state.currentEventData.sections.find(s => s.id === secId);
@@ -369,12 +370,17 @@
                     if (reg.values[colId] !== newVal) {
                         reg.values[colId] = newVal;
                         
-                        // Hiệu ứng chớp xanh khi lưu thành công
+                        // Hiệu ứng nháy xanh lá báo hiệu lưu thành công
                         const oldBg = el.style.backgroundColor;
                         el.style.backgroundColor = 'rgba(16, 185, 129, 0.2)'; 
                         
-                        await App.db.saveEventState(); // Silent Save
+                        await App.db.saveEventState(); // Lưu âm thầm vào Firebase
                         setTimeout(() => el.style.backgroundColor = oldBg, 300);
+
+                        // Nếu cột đang sửa khớp với cột đang phân tích ở Biểu đồ, cập nhật biểu đồ
+                        if (document.getElementById('chartColSelect').value === colId) {
+                            App.chart.update();
+                        }
                     }
                 },
 
@@ -382,6 +388,7 @@
                     const sec = App.state.currentEventData.sections.find(s => s.id === secId);
                     sec.registrations = sec.registrations.filter(r => r.id !== regId);
                     await App.db.saveEventState();
+                    App.chart.update(); // Refresh Biểu đồ
                 },
 
                 async toggleTranspose(secId) {
@@ -390,14 +397,13 @@
                     await App.db.saveEventState();
                 },
 
-                // Nhập liệu Form
                 renderForm() {
                     const data = App.state.currentEventData;
                     if(!data || !data.sections) return;
 
                     const secSelect = document.getElementById('formSectionSelect');
                     const oldVal = secSelect.value;
-                    secSelect.innerHTML = data.sections.map(s => `<option value="${s.id}">${s.title}</option>`).join('');
+                    secSelect.innerHTML = data.sections.map(s => `<option value="${s.id}">📝 Điền vào: ${s.title}</option>`).join('');
                     if(oldVal && data.sections.find(s=>s.id===oldVal)) secSelect.value = oldVal;
                     
                     App.state.activeSectionId = secSelect.value;
@@ -425,18 +431,19 @@
                         if(val) hasData = true;
                     });
 
-                    if(!hasData) return Toast.fire({ icon: 'warning', title: 'Vui lòng nhập ít nhất 1 ô' });
+                    if(!hasData) return Toast.fire({ icon: 'warning', title: 'Bạn chưa nhập gì cả!' });
 
                     sec.registrations.push({ id: `reg_${Date.now()}`, values });
                     await App.db.saveEventState();
+                    App.chart.update(); // Refresh Biểu đồ
                     
-                    // Reset form
+                    // Reset Form và Focus vào ô đầu tiên
                     sec.columns.forEach(c => document.getElementById(`inp_${c.id}`).value = '');
                     document.getElementById(`inp_${sec.columns[0].id}`)?.focus();
                     Toast.fire({ icon: 'success', title: 'Đã thêm dòng mới' });
                 },
 
-                // Popup Quản lý Sections & Columns (Dynamic SweetAlert)
+                // Quản lý Tab/Section (Kéo thả SweetAlert2)
                 async manageSections() {
                     let tempSecs = JSON.parse(JSON.stringify(App.state.currentEventData.sections));
                     
@@ -449,7 +456,6 @@
                             </div>
                         `).join('') + `</div><button class="btn btn-secondary w-full mt-4 border border-dashed border-slate-500" onclick="App.ui._tmpAddSec()"><i class="fa-solid fa-plus"></i> Thêm Tab Mới</button>`;
 
-                    // Define helper functions globally for SweetAlert
                     App.ui._tmpUpdateSec = (id, val) => { tempSecs.find(x => x.id === id).title = val; };
                     App.ui._tmpDelSec = (id) => { if(tempSecs.length>1) { tempSecs = tempSecs.filter(x => x.id !== id); document.getElementById('swalStructDiv').innerHTML = renderHtml(); } else Swal.showValidationMessage('Phải giữ lại ít nhất 1 Bảng'); };
                     App.ui._tmpAddSec = () => { tempSecs.push({ id: `sec_${Date.now()}`, title: 'Bảng Mới', columns: App.config.defaultCols, registrations: [], isTransposed: false }); document.getElementById('swalStructDiv').innerHTML = renderHtml(); };
@@ -462,13 +468,13 @@
                     });
 
                     if (res.isConfirmed) {
-                        // Cập nhật lại thứ tự dựa trên DOM sau khi kéo thả
                         const newOrder = [...document.getElementById('swalSortSecs').children].map(el => el.dataset.id);
                         App.state.currentEventData.sections = newOrder.map(id => tempSecs.find(s => s.id === id));
                         await App.db.saveEventState(true);
                     }
                 },
 
+                // Quản lý Cột (Kéo thả SweetAlert2)
                 async manageColumns(secId) {
                     const sec = App.state.currentEventData.sections.find(s => s.id === secId);
                     let tempCols = JSON.parse(JSON.stringify(sec.columns));
@@ -487,7 +493,7 @@
                     App.ui._tmpAddCol = () => { tempCols.push({ id: `col_${Date.now()}`, label: 'Cột mới' }); document.getElementById('swalColsDiv').innerHTML = renderHtml(); };
 
                     const res = await Swal.fire({
-                        title: `<i class="fa-solid fa-columns text-emerald-400"></i> Cột của "${sec.title}"`,
+                        title: `<i class="fa-solid fa-columns text-emerald-400"></i> Sửa cột "${sec.title}"`,
                         html: `<div id="swalColsDiv">${renderHtml()}</div>`,
                         background: '#1e293b', color: '#fff', width: '500px', showCancelButton: true, confirmButtonText: 'Lưu thay đổi',
                         didOpen: () => new Sortable(document.getElementById('swalSortCols'), { animation: 150 })
@@ -510,11 +516,11 @@
 
                 shareEvent() {
                     navigator.clipboard.writeText(window.location.href);
-                    Toast.fire({ icon: 'success', title: 'Đã copy Link sự kiện!' });
+                    Toast.fire({ icon: 'success', title: 'Đã copy Link. Sẵn sàng làm việc nhóm!' });
                 }
             },
 
-            // 4. BIỂU ĐỒ (REAL-TIME ANALYTICS)
+            // 6. PHÂN TÍCH BIỂU ĐỒ (CHART.JS - TỰ ĐỘNG CẬP NHẬT)
             chart: {
                 setup() {
                     const sec = App.state.currentEventData.sections[0];
@@ -523,14 +529,13 @@
                     const sel = document.getElementById('chartColSelect');
                     const oldVal = sel.value;
                     
-                    // Chỉ lấy những cột không phải là Tên hoặc Ghi chú để thống kê
+                    // Loại trừ cột Tên và Ghi chú khỏi biểu đồ thống kê
                     const validCols = sec.columns.filter(c => !c.id.includes('name') && !c.id.includes('note'));
                     sel.innerHTML = validCols.length > 0 
                         ? validCols.map(c => `<option value="${c.id}">${c.label}</option>`).join('')
-                        : sec.columns.map(c => `<option value="${c.id}">${c.label}</option>`).join(''); // Fallback
+                        : sec.columns.map(c => `<option value="${c.id}">${c.label}</option>`).join('');
 
                     if (oldVal && sec.columns.some(c => c.id === oldVal)) sel.value = oldVal;
-                    
                     this.update();
                 },
 
@@ -546,10 +551,9 @@
                     }
                     ctx.canvas.style.display = 'block';
 
-                    // Group Data
                     const counts = {};
                     sec.registrations.forEach(r => {
-                        const val = r.values[colId]?.trim() || 'Chưa xác định';
+                        const val = r.values[colId]?.trim() || 'Chưa phân loại';
                         counts[val] = (counts[val] || 0) + 1;
                     });
 
@@ -560,26 +564,26 @@
                             labels: Object.keys(counts),
                             datasets: [{ data: Object.values(counts), backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#64748b'], borderWidth: 0 }]
                         },
-                        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { family: 'Inter', size: 11 }, boxWidth: 12 } } }, cutout: '65%' }
+                        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { family: 'Plus Jakarta Sans', size: 11 }, boxWidth: 12 } } }, cutout: '65%' }
                     });
                 }
             },
 
-            // 5. TRÍ TUỆ NHÂN TẠO (GEMINI) - BẢO MẬT & KHÁNG LỖI
+            // 7. TRÍ TUỆ NHÂN TẠO GEMINI (Bảo mật Key & Kháng Regex Lỗi)
             ai: {
                 async configKey() {
                     const { value: key } = await Swal.fire({
                         title: '<i class="fa-solid fa-key text-amber-400"></i> Cấu hình Gemini API',
-                        html: `<p class="text-sm text-slate-400 text-left mb-4">Nhập API Key để kích hoạt AI. Mã được mã hóa và lưu an toàn trong máy bạn.</p>
-                               <input type="password" id="swalGeminiKey" class="form-control" value="${localStorage.getItem('gemini_api_key') || ''}" placeholder="AIzaSy...">
-                               <div class="text-left mt-2"><a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-xs text-blue-400 hover:underline">Nhận API Key miễn phí tại đây</a></div>`,
+                        html: `<p class="text-sm text-slate-400 text-left mb-4">Nhập API Key để kích hoạt AI. Mã được mã hóa và lưu an toàn hoàn toàn trên trình duyệt của bạn (Local Storage).</p>
+                               <input type="password" id="swalGeminiKey" class="form-control" value="${localStorage.getItem('gemini_api_key') || ''}" placeholder="Nhập API Key bắt đầu bằng AIzaSy...">
+                               <div class="text-left mt-2"><a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-xs text-blue-400 hover:underline">Nhận API Key Google miễn phí tại đây</a></div>`,
                         background: '#1e293b', color: '#fff', showCancelButton: true, confirmButtonText: 'Lưu Hệ thống',
                         preConfirm: () => document.getElementById('swalGeminiKey').value.trim()
                     });
 
                     if (key !== undefined) {
                         localStorage.setItem('gemini_api_key', key);
-                        Toast.fire({ icon: 'success', title: 'Đã lưu cấu hình AI' });
+                        Toast.fire({ icon: 'success', title: 'Đã cập nhật AI Key' });
                     }
                 },
 
@@ -594,23 +598,23 @@
                         html: `
                             <div class="text-left space-y-4">
                                 <div>
-                                    <label class="text-sm font-semibold text-slate-300 block mb-1">Chủ đề sự kiện / Lời nhắc:</label>
-                                    <textarea id="aiPrompt" class="form-control h-20" placeholder="VD: Lên danh sách 5 trò chơi Team Building..."></textarea>
+                                    <label class="text-sm font-semibold text-slate-300 block mb-1">Chủ đề / Yêu cầu của bạn:</label>
+                                    <textarea id="aiPrompt" class="form-control h-20" placeholder="VD: Liệt kê 5 loại thiết bị sự kiện cần có..."></textarea>
                                 </div>
                                 <div>
-                                    <label class="text-sm font-semibold text-slate-300 block mb-1">Loại nhiệm vụ:</label>
+                                    <label class="text-sm font-semibold text-slate-300 block mb-1">Kiểu hiển thị kết quả:</label>
                                     <select id="aiMode" class="form-control">
-                                        <option value="text">Chỉ hỏi & Trả lời (Văn bản)</option>
-                                        <option value="table">Tự động sinh dữ liệu đổ vào Bảng</option>
+                                        <option value="text">Văn bản (Đọc & Copy)</option>
+                                        <option value="table">Tự động sinh dữ liệu đổ thẳng vào Bảng</option>
                                     </select>
                                 </div>
                                 <div id="aiTargetBox" class="hidden">
-                                    <label class="text-sm font-semibold text-emerald-400 block mb-1">Chọn bảng để chèn dữ liệu:</label>
+                                    <label class="text-sm font-semibold text-emerald-400 block mb-1">Chọn bảng để AI chèn dữ liệu:</label>
                                     <select id="aiTarget" class="form-control bg-emerald-900/20 border-emerald-500/50">${secOpts}</select>
                                 </div>
                             </div>
                         `,
-                        background: '#1e293b', color: '#fff', showCancelButton: true, confirmButtonText: '<i class="fa-solid fa-paper-plane"></i> Xử lý ngay',
+                        background: '#1e293b', color: '#fff', showCancelButton: true, confirmButtonText: '<i class="fa-solid fa-paper-plane"></i> Phân tích ngay',
                         didOpen: () => {
                             document.getElementById('aiMode').onchange = (e) => {
                                 document.getElementById('aiTargetBox').style.display = e.target.value === 'table' ? 'block' : 'none';
@@ -623,16 +627,16 @@
                 },
 
                 async processAI(form, key) {
-                    Swal.fire({ title: 'AI đang phân tích...', html: 'Vui lòng chờ khoảng 5-10 giây.', allowOutsideClick: false, background: '#1e293b', color: '#fff', didOpen: () => Swal.showLoading() });
+                    Swal.fire({ title: 'AI đang suy nghĩ...', html: 'Quá trình này mất khoảng 5-10 giây.', allowOutsideClick: false, background: '#1e293b', color: '#fff', didOpen: () => Swal.showLoading() });
 
                     const sec = form.mode === 'table' ? App.state.currentEventData.sections.find(s => s.id === form.target) : null;
-                    let sysPrompt = `Bạn là chuyên gia tổ chức sự kiện. Chủ đề: "${form.prompt}". `;
+                    let sysPrompt = `Bạn là chuyên gia tổ chức sự kiện. Chủ đề/Yêu cầu: "${form.prompt}". `;
                     
                     if (form.mode === 'table') {
                         const cols = sec.columns.map(c => `"${c.id}": "[Nội dung của ${c.label}]"`).join(', ');
-                        sysPrompt += `Hãy sinh ra 5 dòng dữ liệu giả định để thêm vào bảng. YÊU CẦU BẮT BUỘC: Trả về DUY NHẤT một mảng JSON hợp lệ chứa các Object. Cấu trúc Object phải CHÍNH XÁC như sau: {${cols}}. Không giải thích gì thêm, KHÔNG bọc trong markdown.`;
+                        sysPrompt += `Hãy sinh ra 5 dòng dữ liệu giả định để thêm vào bảng. YÊU CẦU TUYỆT ĐỐI: Trả về DUY NHẤT một mảng JSON hợp lệ chứa các Object. Cấu trúc mỗi Object phải CHÍNH XÁC như sau: {${cols}}. Không giải thích gì thêm, KHÔNG bọc trong thẻ markdown.`;
                     } else {
-                        sysPrompt += `Trình bày bằng tiếng Việt, sử dụng Markdown rõ ràng (tiêu đề, in đậm, danh sách dấu chấm).`;
+                        sysPrompt += `Trình bày bằng tiếng Việt, sử dụng định dạng Markdown đẹp mắt (tiêu đề, in đậm, danh sách dấu chấm).`;
                     }
 
                     try {
@@ -646,99 +650,266 @@
                         const textResult = data.candidates[0].content.parts[0].text;
 
                         if (form.mode === 'table') {
-                            // Kỹ thuật Regex kháng lỗi bọc Markdown của Gemini (VD: ```json ... ```)
-                            const match = textResult.match(/```json\s*([\s\S]*?)\s*```/) || textResult.match(/\[([\s\S]*?)\]/);
-                            const jsonStr = match ? match[0].replace(/```json|```/g, '') : textResult;
+                            // CÔNG NGHỆ KHÁNG LỖI AI: Dùng Regex ép bóc tách lấy mảng JSON, loại bỏ rác văn bản/markdown AI hay tự sinh thêm
+                            let jsonStr = textResult;
+                            const mdMatch = textResult.match(/```(?:json)?\n?([\s\S]*?)```/);
+                            if (mdMatch) {
+                                jsonStr = mdMatch[1];
+                            } else {
+                                const arrMatch = textResult.match(/\[[\s\S]*\]/);
+                                if (arrMatch) jsonStr = arrMatch[0];
+                            }
                             
                             const arr = JSON.parse(jsonStr.trim());
                             arr.forEach(item => sec.registrations.push({ id: `reg_ai_${Date.now()}_${Math.random()}`, values: item }));
                             await App.db.saveEventState();
+                            App.chart.update(); // Refresh Biểu đồ
                             
-                            Swal.fire({ icon: 'success', title: 'Thành công', text: `Đã tự động chèn ${arr.length} dòng dữ liệu vào bảng "${sec.title}".`, background: '#1e293b', color: '#fff' });
+                            Swal.fire({ icon: 'success', title: 'Hoàn hảo!', text: `Đã tự động đổ ${arr.length} dòng dữ liệu vào bảng "${sec.title}".`, background: '#1e293b', color: '#fff' });
                         } else {
-                            // Dùng marked.js để render HTML đẹp mắt
+                            // Dùng marked.js để render Markdown sang HTML
                             Swal.fire({
                                 title: 'Kết quả từ AI', width: '800px', background: '#1e293b', color: '#fff',
-                                html: `<div class="text-left prose prose-invert prose-sm max-w-none bg-slate-900 border border-slate-700 p-5 rounded-lg overflow-y-auto max-h-[60vh]">${marked.parse(textResult)}</div>`,
+                                html: `<div class="text-left prose prose-invert prose-sm max-w-none bg-slate-900 border border-slate-700 p-6 rounded-xl overflow-y-auto max-h-[60vh]">${marked.parse(textResult)}</div>`,
                                 confirmButtonText: '<i class="fa-solid fa-copy"></i> Copy Văn bản'
-                            }).then(r => { if(r.isConfirmed) { navigator.clipboard.writeText(textResult); Toast.fire({icon: 'success', title: 'Đã copy'}); } });
+                            }).then(r => { if(r.isConfirmed) { navigator.clipboard.writeText(textResult); Toast.fire({icon: 'success', title: 'Đã lưu vào bộ nhớ tạm'}); } });
                         }
                     } catch (error) {
-                        Swal.fire('Lỗi AI', 'Không thể đọc hiểu dữ liệu từ Gemini. Hãy thử viết câu lệnh rõ ràng hơn.', 'error');
+                        Swal.fire('Lỗi AI', 'AI trả về định dạng không chuẩn hoặc bị nghẽn mạng. Hãy thử viết câu lệnh rõ ràng hơn.', 'error');
                     }
                 }
             },
 
-            // 6. XUẤT FILE XỊN SÒ
+            // 8. LÕI XUẤT BÁO CÁO THÔNG MINH (SMART PRINT ENGINE)
             export: {
                 showOptions() {
-                    if (!App.state.currentEventData || App.state.currentEventData.sections[0].registrations.length === 0) return Swal.fire('Lưu ý', 'Bảng chưa có dữ liệu để xuất!', 'warning');
+                    const data = App.state.currentEventData;
+                    if (!data || !data.sections || data.sections[0].registrations.length === 0) {
+                        return Swal.fire('Lưu ý', 'Bảng chưa có dữ liệu để xuất!', 'warning');
+                    }
+                    
                     Swal.fire({
-                        title: 'Xuất Báo Cáo', background: '#1e293b', color: '#fff',
+                        title: '<i class="fa-solid fa-file-invoice text-emerald-400"></i> Xuất Báo Cáo', 
+                        background: '#1e293b', color: '#fff', width: '750px',
                         html: `
-                            <div class="grid grid-cols-2 gap-4 mt-4">
-                                <button onclick="Swal.close(); App.export.toExcel()" class="btn bg-emerald-600 hover:bg-emerald-500 text-white py-4 flex flex-col items-center gap-2"><i class="fa-solid fa-file-excel text-3xl"></i> File Excel</button>
-                                <button onclick="Swal.close(); App.export.toPDF()" class="btn bg-rose-600 hover:bg-rose-500 text-white py-4 flex flex-col items-center gap-2"><i class="fa-solid fa-file-pdf text-3xl"></i> File PDF (In ấn)</button>
+                            <p class="text-slate-400 text-sm mb-6">Hệ thống áp dụng công nghệ In ấn Thông minh (Smart Print), tự động chia trang A4 chuẩn hành chính, lặp lại tiêu đề cột và chống đứt gãy bảng biểu.</p>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-2">
+                                <button onclick="Swal.close(); App.export.printReport()" class="btn bg-blue-600 hover:bg-blue-500 text-white py-4 flex flex-col items-center gap-2 shadow-lg shadow-blue-900/50 rounded-xl transition-transform hover:scale-105 border-0">
+                                    <i class="fa-solid fa-print text-3xl"></i> 
+                                    <span class="font-bold mt-1">In Trực Tiếp / PDF</span>
+                                    <span class="text-[10px] text-blue-200 font-normal leading-tight">(Bản A4 nét Vector<br>Chống đứt gãy bảng)</span>
+                                </button>
+                                <button onclick="Swal.close(); App.export.downloadHTML()" class="btn bg-orange-600 hover:bg-orange-500 text-white py-4 flex flex-col items-center gap-2 shadow-lg shadow-orange-900/50 rounded-xl transition-transform hover:scale-105 border-0">
+                                    <i class="fa-brands fa-html5 text-3xl"></i> 
+                                    <span class="font-bold mt-1">Tải File HTML</span>
+                                    <span class="text-[10px] text-orange-200 font-normal leading-tight">(Đa dụng: Xem Offline<br>Gửi Zalo, Paste vào Word)</span>
+                                </button>
+                                <button onclick="Swal.close(); App.export.toExcel()" class="btn bg-emerald-600 hover:bg-emerald-500 text-white py-4 flex flex-col items-center gap-2 shadow-lg shadow-emerald-900/50 rounded-xl transition-transform hover:scale-105 border-0">
+                                    <i class="fa-solid fa-file-excel text-3xl"></i> 
+                                    <span class="font-bold mt-1">Tải File Excel</span>
+                                    <span class="text-[10px] text-emerald-200 font-normal leading-tight">(Lấy dữ liệu dạng thô<br>để Kế toán tính toán)</span>
+                                </button>
                             </div>
                         `,
                         showConfirmButton: false, showCloseButton: true
                     });
                 },
 
+                // Lõi Thuật toán Render HTML Chuẩn Hành chính (Không vỡ trang)
+                generateHTML(isForPrint = false) {
+                    const data = App.state.currentEventData;
+                    const dateObj = new Date();
+                    const dateStr = `Ngày ${dateObj.getDate().toString().padStart(2, '0')} tháng ${(dateObj.getMonth() + 1).toString().padStart(2, '0')} năm ${dateObj.getFullYear()}`;
+
+                    let html = `
+                    <!DOCTYPE html>
+                    <html lang="vi">
+                    <head>
+                        <meta charset="UTF-8">
+                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                        <title>Báo Cáo - ${data.name}</title>
+                        <style>
+                            /* ================= TYPOGRAPHY CHUẨN HÀNH CHÍNH ================= */
+                            body { font-family: 'Times New Roman', Times, serif; color: #000; margin: 0; padding: ${isForPrint ? '0' : '20px'}; line-height: 1.4; background: ${isForPrint ? '#fff' : '#e2e8f0'}; font-size: 13pt; }
+                            * { box-sizing: border-box; }
+                            
+                            /* Container hiển thị giả lập khổ A4 trên Web */
+                            .document-container { background: #fff; max-width: ${isForPrint ? '100%' : '210mm'}; margin: 0 auto; padding: ${isForPrint ? '0' : '20mm'}; box-shadow: ${isForPrint ? 'none' : '0 10px 25px rgba(0,0,0,0.15)'}; border-radius: ${isForPrint ? '0' : '8px'}; }
+                            
+                            /* Header Quốc hiệu */
+                            .header-wrapper { display: flex; justify-content: space-between; margin-bottom: 30px; text-align: center; }
+                            .header-left, .header-right { width: 48%; }
+                            .org-name { font-weight: bold; text-transform: uppercase; font-size: 13pt; margin: 0; }
+                            .org-line { border-top: 1.5px solid #000; width: 40%; margin: 5px auto 0; }
+                            .republic { font-weight: bold; text-transform: uppercase; font-size: 13pt; margin: 0;}
+                            .independence { font-weight: bold; font-size: 14pt; margin-top: 2px; }
+                            
+                            /* Titles */
+                            .report-title-box { text-align: center; margin: 40px 0 30px 0; }
+                            .report-title { font-size: 18pt; font-weight: bold; margin: 0; text-transform: uppercase; }
+                            .report-subtitle { font-style: italic; margin-top: 5px; font-size: 13pt; }
+
+                            /* ================= ENGINE CHỐNG ĐỨT GÃY BẢNG BIỂU ================= */
+                            .section-title { font-size: 14pt; font-weight: bold; margin-top: 30px; margin-bottom: 10px; text-transform: uppercase; page-break-after: avoid; }
+                            table { width: 100%; border-collapse: collapse; margin-bottom: 25px; }
+                            th, td { border: 1px solid #000; padding: 8px 10px; text-align: left; vertical-align: top; word-wrap: break-word; }
+                            
+                            /* Bí quyết 1: Lặp lại Tiêu đề bảng khi qua trang giấy mới */
+                            thead { display: table-header-group; }
+                            th { font-weight: bold; text-align: center; background-color: #f2f2f2 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                            
+                            /* Bí quyết 2: Không chém đôi 1 dòng dữ liệu làm 2 nửa */
+                            tr { page-break-inside: avoid; break-inside: avoid; }
+                            .col-stt { width: 50px; text-align: center; }
+
+                            /* ================= FOOTER CHỮ KÝ ================= */
+                            .signature-box { display: flex; justify-content: space-between; margin-top: 40px; page-break-inside: avoid; break-inside: avoid; text-align: center; font-size: 13pt; }
+                            .sig-col { width: 45%; }
+                            .sig-date { font-style: italic; margin-bottom: 5px; }
+                            .sig-role { font-weight: bold; margin-bottom: 80px; text-transform: uppercase;}
+
+                            /* ================= MEDIA QUERIES KHI GỌI LỆNH IN ================= */
+                            @media print {
+                                body { background: #fff; padding: 0; }
+                                .document-container { margin: 0; padding: 0; box-shadow: none; max-width: 100%; border-radius: 0; }
+                                @page { size: A4 portrait; margin: 15mm 15mm 20mm 15mm; }
+                                .no-print { display: none !important; }
+                                a[href]:after { content: none !important; } /* Xóa link URL thừa khi in */
+                            }
+                            
+                            /* Nút Print hỗ trợ khi xem File HTML Độc lập */
+                            .btn-print { display: block; width: fit-content; margin: 0 auto 30px; padding: 12px 24px; background: #2563eb; color: white; text-decoration: none; font-family: sans-serif; font-weight: bold; border-radius: 6px; cursor: pointer; border: none; font-size: 16px; box-shadow: 0 4px 6px rgba(37,99,235,0.2);}
+                        </style>
+                    </head>
+                    <body>
+                        ${!isForPrint ? `<button onclick="window.print()" class="btn-print no-print">🖨️ Mở Máy In / Lưu PDF chuẩn A4 ngay</button>` : ''}
+                        
+                        <div class="document-container">
+                            <div class="header-wrapper">
+                                <div class="header-left">
+                                    <p class="org-name">GIA ĐÌNH</p>
+                                    <p class="org-name">MINH SƯ TỊNH QUANG</p>
+                                    <div class="org-line"></div>
+                                </div>
+                                <div class="header-right">
+                                    <p class="republic">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</p>
+                                    <p class="independence">Độc lập - Tự do - Hạnh phúc</p>
+                                    <div class="org-line"></div>
+                                </div>
+                            </div>
+
+                            <div class="report-title-box">
+                                <h1 class="report-title">BÁO CÁO TỔNG HỢP SỰ KIỆN</h1>
+                                <div class="report-subtitle">Chủ đề / Tên sự kiện: ${data.name}</div>
+                            </div>
+                    `;
+
+                    // Lặp Render từng Bảng (Sections)
+                    data.sections.forEach((sec, index) => {
+                        // ÉP TẤT CẢ VỀ BẢNG DỌC ĐỂ IN BÁO CÁO CHO CHUẨN MỰC
+                        html += `<div class="section-title">${index + 1}. ${sec.title}</div>`;
+                        html += `<table><thead><tr><th class="col-stt">STT</th>`;
+                        sec.columns.forEach(c => { html += `<th>${c.label}</th>`; });
+                        html += `</tr></thead><tbody>`;
+
+                        if (sec.registrations.length === 0) {
+                            html += `<tr><td colspan="${sec.columns.length + 1}" style="text-align: center; font-style: italic;">(Bảng chưa có dữ liệu)</td></tr>`;
+                        } else {
+                            sec.registrations.forEach((reg, i) => {
+                                html += `<tr><td class="col-stt">${i + 1}</td>`;
+                                sec.columns.forEach(c => {
+                                    // Thay \n thành <br> để chữ không bị dính liền nhau
+                                    const val = (reg.values[c.id] || '').replace(/\n/g, '<br>');
+                                    html += `<td>${val}</td>`;
+                                });
+                                html += `</tr>`;
+                            });
+                        }
+                        html += `</tbody></table>`;
+                    });
+
+                    html += `
+                            <div class="signature-box">
+                                <div class="sig-col">
+                                    <div class="sig-role">Đại diện Ban Tổ Chức</div>
+                                    <div style="font-size: 12pt; font-style: italic;">(Ký và ghi rõ họ tên)</div>
+                                </div>
+                                <div class="sig-col">
+                                    <div class="sig-date">${dateStr}</div>
+                                    <div class="sig-role">Người Lập Báo Cáo</div>
+                                    <div style="font-size: 12pt; font-style: italic;">(Ký và ghi rõ họ tên)</div>
+                                </div>
+                            </div>
+                        </div> </body>
+                    </html>`;
+
+                    return html;
+                },
+
+                // Lệnh Gọi Iframe Mở Trực Tiếp Hộp Thoại Máy In Của Hệ Điều Hành
+                printReport() {
+                    Toast.fire({ icon: 'info', title: 'Đang khởi tạo bản In chuẩn A4...' });
+                    
+                    const html = this.generateHTML(true);
+                    
+                    // Kỹ thuật Iframe tàng hình: In ngay mà không cần mở Tab trình duyệt mới
+                    const iframe = document.createElement('iframe');
+                    iframe.style.position = 'fixed';
+                    iframe.style.right = '0';
+                    iframe.style.bottom = '0';
+                    iframe.style.width = '0';
+                    iframe.style.height = '0';
+                    iframe.style.border = 'none';
+                    document.body.appendChild(iframe);
+
+                    const doc = iframe.contentWindow.document;
+                    doc.open(); doc.write(html); doc.close();
+
+                    iframe.onload = function() {
+                        iframe.contentWindow.focus();
+                        iframe.contentWindow.print(); // Kích hoạt Dialog Print OS
+                        
+                        setTimeout(() => { if (document.body.contains(iframe)) document.body.removeChild(iframe); }, 3000);
+                    };
+                },
+
+                // Lệnh Đóng gói toàn bộ cấu trúc giao diện HTML thành 1 File độc lập
+                downloadHTML() {
+                    const html = this.generateHTML(false);
+                    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+                    const url = URL.createObjectURL(blob);
+                    
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = `Bao_Cao_${App.state.currentEventData.name.replace(/\s+/g, '_')}.html`;
+                    
+                    document.body.appendChild(link); link.click(); document.body.removeChild(link);
+                    URL.revokeObjectURL(url);
+                    Toast.fire({ icon: 'success', title: 'Đã tải File HTML đa dụng!' });
+                },
+
+                // Lệnh Xuất Excel bằng thư viện SheetJS
                 toExcel() {
                     const wb = XLSX.utils.book_new();
                     App.state.currentEventData.sections.forEach((sec, idx) => {
                         const wsData = [ [sec.title.toUpperCase()], ['STT', ...sec.columns.map(c => c.label)] ];
                         sec.registrations.forEach((reg, i) => wsData.push([i + 1, ...sec.columns.map(c => reg.values[c.id] || '')]));
                         const ws = XLSX.utils.aoa_to_sheet(wsData);
-                        XLSX.utils.book_append_sheet(wb, ws, sec.title.substring(0, 30) || `Bang_${idx}`);
-                    });
-                    XLSX.writeFile(wb, `${App.state.currentEventData.name}.xlsx`);
-                    Toast.fire({ icon: 'success', title: 'Đã tải Excel' });
-                },
+                        
+                        // Định dạng độ rộng cột (Cột STT nhỏ, cột chữ to)
+                        const wscols = [{wch: 5}]; 
+                        sec.columns.forEach(() => wscols.push({wch: 25}));
+                        ws['!cols'] = wscols;
 
-                async toPDF() {
-                    Toast.fire({ icon: 'info', title: 'Đang tạo bản in PDF...' });
-                    const container = document.getElementById('printable-report');
-                    
-                    // Tạo DOM HTML tĩnh nền trắng để in PDF nét nhất
-                    let html = `<div style="font-family: Arial, sans-serif;">
-                                    <h1 style="text-align: center; color: #1e3a8a; margin-bottom: 20px; font-size: 24px; text-transform: uppercase;">BÁO CÁO: ${App.state.currentEventData.name}</h1>`;
-                    
-                    App.state.currentEventData.sections.forEach(sec => {
-                        html += `<h2 style="color: #2563eb; margin-top: 30px; font-size: 16px;">${sec.title}</h2>
-                                 <table style="width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 10px;">
-                                     <thead><tr style="background: #f1f5f9;">
-                                         <th style="border: 1px solid #94a3b8; padding: 8px; text-align: center;">STT</th>
-                                         ${sec.columns.map(c => `<th style="border: 1px solid #94a3b8; padding: 8px; text-align: left;">${c.label}</th>`).join('')}
-                                     </tr></thead><tbody>`;
-                        sec.registrations.forEach((reg, i) => {
-                            html += `<tr><td style="border: 1px solid #94a3b8; padding: 8px; text-align: center;">${i+1}</td>
-                                     ${sec.columns.map(c => `<td style="border: 1px solid #94a3b8; padding: 8px;">${reg.values[c.id] || ''}</td>`).join('')}</tr>`;
-                        });
-                        html += `</tbody></table>`;
+                        XLSX.utils.book_append_sheet(wb, ws, sec.title.substring(0, 30) || `Bang_${idx+1}`);
                     });
-                    
-                    container.innerHTML = html + `</div>`;
-                    container.classList.add('visible-for-capture');
-                    
-                    setTimeout(async () => {
-                        const canvas = await html2canvas(container.firstChild, { scale: 2 });
-                        const imgData = canvas.toDataURL('image/jpeg', 1.0);
-                        const { jsPDF } = window.jspdf;
-                        const pdf = new jsPDF('p', 'pt', 'a4');
-                        const pdfWidth = pdf.internal.pageSize.getWidth();
-                        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-                        pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
-                        pdf.save(`${App.state.currentEventData.name}.pdf`);
-                        container.classList.remove('visible-for-capture');
-                        container.innerHTML = '';
-                    }, 500);
+                    XLSX.writeFile(wb, `Du_Lieu_${App.state.currentEventData.name.replace(/\s+/g, '_')}.xlsx`);
+                    Toast.fire({ icon: 'success', title: 'Đã xuất file Excel!' });
                 }
             }
         };
 
-        // Kích hoạt Ứng dụng
+        // Kích hoạt Hệ thống khi Code tải xong
         document.addEventListener('DOMContentLoaded', () => App.init());
     </script>
 </body>
