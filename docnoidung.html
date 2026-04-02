@@ -3,14 +3,11 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    
     <meta name="referrer" content="no-referrer">
-    
-    <title>AI Reader - Trình Đọc Thông Minh & Lưu MP3</title>
+    <title>AI Reader VVIP - Đọc Thông Minh & Tải MP3</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-    
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -19,16 +16,12 @@
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
         
-        /* Hiệu ứng Highlight trượt mượt mà (Không bị nhảy xé gió) */
+        /* Highlight mượt mà, chống giật cục */
         .highlight-sentence { 
-            background-color: #fef08a; 
-            color: #1e3a8a; 
-            font-weight: 600;
+            background-color: #fef08a; color: #1e3a8a; font-weight: 600;
             transition: all 0.3s ease; 
-            border-left: 4px solid #f59e0b; 
-            padding-left: 8px !important; 
-            border-radius: 0 4px 4px 0; 
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            border-left: 4px solid #f59e0b; padding-left: 8px !important; 
+            border-radius: 0 4px 4px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
         
         #toc-container a.active { background-color: #eef2ff; color: #4338ca; font-weight: 600; border-left: 3px solid #4338ca; padding-left: 8px; }
@@ -52,13 +45,13 @@
     <div id="sidebar-overlay" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-30 hidden md:hidden transition-opacity"></div>
 
     <aside id="sidebar" class="absolute md:relative z-40 w-80 h-full bg-white border-r border-slate-200 flex flex-col transform -translate-x-full md:translate-x-0 transition-transform duration-300 shadow-2xl md:shadow-none shrink-0">
-        <div id="sidebar-content" class="flex flex-col h-full overflow-y-auto p-6 space-y-6">
+        <div id="sidebar-content" class="flex flex-col h-full overflow-y-auto p-6 space-y-6 hide-scrollbar">
             <header class="flex items-center justify-between">
                 <h1 class="text-2xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600"><i class="fas fa-book-reader mr-2 text-indigo-600"></i>AI Reader</h1>
                 <button id="close-sidebar-btn" class="md:hidden text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
             </header>
 
-            <div id="auth-section" class="p-4 border border-slate-200 rounded-xl bg-slate-50 shadow-sm space-y-4">
+            <div id="auth-section" class="p-4 border border-slate-200 rounded-xl bg-slate-50 shadow-sm space-y-4 shrink-0">
                 <div id="logged-out-view" class="space-y-3">
                     <h3 class="font-semibold text-center text-slate-700 text-sm uppercase tracking-wide"><i class="fas fa-cloud text-indigo-500 mr-1"></i> Đồng bộ Đám mây</h3>
                     <input type="email" id="auth-email" placeholder="Email của bạn" class="w-full p-2.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
@@ -77,8 +70,8 @@
                         </div>
                     </div>
                     <div class="flex gap-2">
-                        <button id="new-article-btn" class="flex-1 py-2 bg-indigo-50 text-indigo-700 rounded-lg font-semibold hover:bg-indigo-100 transition text-sm border border-indigo-100"><i class="fas fa-plus mr-1"></i> Bài mới</button>
-                        <button id="my-library-btn" class="flex-1 py-2 bg-emerald-50 text-emerald-700 rounded-lg font-semibold hover:bg-emerald-100 transition text-sm border border-emerald-100"><i class="fas fa-layer-group mr-1"></i> Thư viện</button>
+                        <button id="new-article-btn" class="flex-1 py-2 bg-indigo-50 text-indigo-700 rounded-lg font-semibold hover:bg-indigo-100 transition text-sm border border-indigo-100 flex items-center justify-center gap-1"><i class="fas fa-plus"></i> Viết bài</button>
+                        <button id="my-library-btn" class="flex-1 py-2 bg-emerald-50 text-emerald-700 rounded-lg font-semibold hover:bg-emerald-100 transition text-sm border border-emerald-100 flex items-center justify-center gap-1"><i class="fas fa-layer-group"></i> Thư viện</button>
                     </div>
                     <button id="logout-btn" class="w-full py-1.5 text-xs text-rose-500 hover:bg-rose-50 font-semibold rounded-lg transition">Đăng xuất</button>
                 </div>
@@ -88,13 +81,14 @@
                 <div class="space-y-3 p-3 bg-slate-50 border border-slate-200 rounded-xl">
                     <h3 class="text-xs font-bold text-indigo-500 uppercase tracking-wider"><i class="fas fa-headphones mr-1"></i> Studio Âm thanh</h3>
                     <select id="voice-select" class="w-full p-2 border border-slate-300 rounded-lg bg-white text-sm font-medium text-slate-700 outline-none shadow-sm cursor-pointer"></select>
+                    <p class="text-[10px] text-slate-500 italic mt-1 px-1">Mẹo: Mở Web bằng trình duyệt Microsoft Edge để có thêm 🌟 Giọng Nam Miền Bắc cực chuẩn.</p>
                     <div class="pt-2">
                         <label class="flex justify-between text-sm font-medium text-slate-600 mb-2"><span>Tốc độ đọc:</span> <span id="rate-value" class="font-bold text-indigo-600">1.0x</span></label>
                         <input id="rate-slider" type="range" min="0.5" max="2" step="0.1" value="1" class="w-full accent-indigo-600 cursor-pointer h-1.5 bg-slate-200 rounded-lg appearance-none">
                     </div>
                     <div class="flex gap-2 mt-2">
                         <button id="read-playBtn" class="flex-[2] py-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 text-white rounded-lg shadow-md hover:opacity-90 active:scale-95 transition font-semibold text-sm disabled:opacity-50">
-                            <i class="fas fa-play mr-1"></i> <span id="read-play-text">Đọc</span>
+                            <i class="fas fa-play mr-1"></i> <span id="read-play-text">Đọc bài</span>
                         </button>
                         <button id="read-stopBtn" class="flex-[1] py-2.5 bg-rose-500 text-white rounded-lg shadow-md hover:bg-rose-600 active:scale-95 transition font-semibold text-sm disabled:opacity-50" title="Dừng đọc" disabled>
                             <i class="fas fa-stop"></i>
@@ -126,7 +120,7 @@
                 </div>
             </div>
             
-            <div id="notification" class="hidden text-center text-sm font-medium p-3 rounded-lg shadow-sm transition-opacity mt-auto"></div>
+            <div id="notification" class="hidden text-center text-sm font-medium p-3 rounded-lg shadow-sm transition-opacity mt-auto z-50 relative"></div>
         </div>
     </aside>
 
@@ -143,11 +137,11 @@
                 <div class="w-24 h-24 bg-indigo-100 rounded-full flex items-center justify-center mb-6 shadow-inner text-indigo-600 text-4xl"><i class="fa-solid fa-book-open-reader"></i></div>
                 <h2 class="text-3xl font-extrabold text-slate-800 mb-3">Học Tập Hoàn Toàn Miễn Phí</h2>
                 <p class="text-slate-500 max-w-md mx-auto mb-8 leading-relaxed">Nền tảng đọc hiểu thông minh. Chuyển văn bản thành Audio MP3 để nghe Offline, tóm tắt và trắc nghiệm AI trong 1 nốt nhạc.</p>
-                <button onclick="document.getElementById('new-article-btn').click()" class="px-8 py-3.5 bg-indigo-600 text-white rounded-full font-bold shadow-xl shadow-indigo-200 hover:bg-indigo-700 hover:-translate-y-1 transition transform"><i class="fas fa-edit mr-2"></i> Bắt đầu Soạn thảo</button>
+                <button onclick="document.getElementById('new-article-btn').click()" class="px-8 py-3.5 bg-indigo-600 text-white rounded-full font-bold shadow-xl shadow-indigo-200 hover:bg-indigo-700 hover:-translate-y-1 transition transform flex items-center gap-2"><i class="fas fa-edit"></i> Bắt đầu Soạn thảo</button>
             </div>
 
             <div id="editor-view" class="hidden flex-1 flex-col gap-4 h-full">
-                <div class="bg-white p-4 md:p-5 rounded-2xl shadow-sm border border-slate-200 shrink-0">
+                <div class="bg-white p-4 md:p-5 rounded-2xl shadow-sm border border-slate-200 shrink-0 relative">
                     <div class="flex justify-between items-center mb-3">
                         <label class="font-bold text-slate-700 text-lg"><i class="fa-solid fa-pen-nib text-indigo-500 mr-2"></i>Nội dung Văn bản</label>
                         <div class="flex items-center gap-3">
@@ -157,7 +151,7 @@
                             </button>
                         </div>
                     </div>
-                    <textarea id="text-input" class="w-full h-32 md:h-40 p-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white transition resize-none text-[15px] leading-relaxed text-slate-700 outline-none" placeholder="Dán bài báo, truyện hoặc tài liệu ôn thi vào đây... Hệ thống sẽ tự động phân tách câu, lưu trữ và sẵn sàng tạo MP3..."></textarea>
+                    <textarea id="text-input" class="w-full h-32 md:h-40 p-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white transition resize-none text-[15px] leading-relaxed text-slate-700 outline-none" placeholder="Dán bài báo, truyện hoặc tài liệu ôn thi vào đây... Càng dài càng tốt, hệ thống sẽ tự động phân tách câu, lưu trữ và sẵn sàng tạo MP3..."></textarea>
                 </div>
 
                 <div id="content-wrapper" class="hidden flex-1 bg-white rounded-2xl shadow-sm border border-slate-200 flex-col overflow-hidden min-h-[300px]">
@@ -222,7 +216,7 @@
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, query, where, getDocs, doc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-        // 1. CẤU HÌNH FIREBASE CỦA BẠN
+        // CẤU HÌNH FIREBASE
         const firebaseConfig = {
             apiKey: "AIzaSyD2ZrOy5ag98LPGPw_Y2JOX52hzWoa8RqE",
             authDomain: "luutru-baiviet.firebaseapp.com",
@@ -237,7 +231,7 @@
         const synth = window.speechSynthesis;
 
         // CONSTANTS & STATE
-        const GOOGLE_TTS_NAME = "✨ Giọng Đám Mây (Google Chuẩn)";
+        const GOOGLE_TTS_NAME = "✨ Giọng Đám Mây (Google Nữ)";
         const STATE = { articleId: null, sentences: [], currentIdx: 0, isReading: false, voices: [], chatHistory: [], currentAudio: null };
         const DOM = {
             views: { welcome: document.getElementById('welcome-screen'), editor: document.getElementById('editor-view'), library: document.getElementById('library-view') },
@@ -251,7 +245,7 @@
         };
 
         // ==========================================
-        // 2. ENGINE AI CÔNG CỘNG MIỄN PHÍ
+        // 1. ENGINE AI CÔNG CỘNG MIỄN PHÍ
         // ==========================================
         const callFreeAI = async (messages, expectJson = false) => {
             try {
@@ -269,12 +263,12 @@
         };
 
         // ==========================================
-        // 3. UI HELPER
+        // 2. UI HELPER
         // ==========================================
         function showNotification(msg, type = 'success') {
             const el = document.getElementById('notification');
             el.textContent = msg; 
-            el.className = `p-3 rounded-lg text-sm font-semibold transition-opacity duration-300 ${type === 'error' ? 'bg-red-100 text-red-700 border border-red-200' : 'bg-emerald-100 text-emerald-700 border border-emerald-200'}`;
+            el.className = `p-3 rounded-lg text-sm font-semibold transition-opacity duration-300 z-50 relative ${type === 'error' ? 'bg-red-100 text-red-700 border border-red-200' : 'bg-emerald-100 text-emerald-700 border border-emerald-200'}`;
             el.classList.remove('hidden'); el.style.opacity = 1;
             setTimeout(() => { el.style.opacity = 0; setTimeout(() => el.classList.add('hidden'), 300); }, 3000);
         }
@@ -310,12 +304,10 @@
         });
 
         // ==========================================
-        // 4. PARSE VĂN BẢN VÀ MỤC LỤC
+        // 3. PARSE VĂN BẢN VÀ MỤC LỤC
         // ==========================================
-        // THUẬT TOÁN CHUNKING THÔNG MINH (Ngắt câu tự nhiên)
         function chunkTextForGoogle(text, maxLength = 150) {
             const chunks = [];
-            // Ưu tiên tách theo dấu chấm, phẩy, hỏi, than
             const clauses = text.match(/[^,.;:!?\n]+[,.;:!?\n]*/g) || [text];
             let current = '';
             
@@ -324,17 +316,15 @@
                     current += clause;
                 } else {
                     if (current.trim()) chunks.push(current.trim());
-                    // Nếu 1 vế quá dài, mới buộc phải tách theo dấu cách
                     if (clause.length > maxLength) {
                         let curWord = '';
                         clause.split(' ').forEach(w => {
                             if ((curWord + ' ' + w).length <= maxLength) curWord += (curWord ? ' ' : '') + w;
-                            else { chunks.push(curWord.trim()); curWord = w; }
+                            else { chunks.push(curWord.trim()); curWord = w + ' '; }
                         });
-                        current = curWord;
-                    } else {
-                        current = clause;
-                    }
+                        if (curWord.trim()) current = curWord;
+                        else current = '';
+                    } else { current = clause; }
                 }
             }
             if (current.trim()) chunks.push(current.trim());
@@ -400,7 +390,7 @@
         }
 
         // ==========================================
-        // 5. ENGINE ÂM THANH: ĐỌC LƯU LOÁT & TẢI MP3
+        // 4. ĐỌC THÔNG MINH (ANTI-SKIPPING AUDIO ENGINE)
         // ==========================================
         async function initVoices() {
             return new Promise(resolve => {
@@ -408,13 +398,22 @@
                     STATE.voices = synth.getVoices();
                     DOM.tts.voice.innerHTML = '';
                     
-                    const gtOpt = new Option(GOOGLE_TTS_NAME, GOOGLE_TTS_NAME);
-                    DOM.tts.voice.appendChild(gtOpt);
+                    DOM.tts.voice.appendChild(new Option(GOOGLE_TTS_NAME, GOOGLE_TTS_NAME));
 
                     const viVoices = STATE.voices.filter(v => v.lang.startsWith('vi'));
+                    
+                    // Sắp xếp đưa giọng Microsoft lên đầu
+                    viVoices.sort((a,b) => (b.name.includes('Natural') ? 1 : 0) - (a.name.includes('Natural') ? 1 : 0));
+
                     viVoices.forEach(v => {
-                        const isVip = v.name.includes('Online') || v.name.includes('Natural');
-                        const opt = new Option(`${isVip ? '✨ ' : ''}${v.name.replace('Microsoft', 'Giọng').replace('Online (Natural) - ', '')}`, v.name);
+                        let name = v.name;
+                        let icon = "💻";
+                        // Detect Giọng Nam Bắc và Nữ Nam chuẩn của Edge
+                        if (name.includes('NamMinh') || name.includes('An')) { name = "Giọng Nam Miền Bắc (Chuẩn)"; icon = "🌟"; }
+                        else if (name.includes('HoaiMy')) { name = "Giọng Nữ Miền Nam (Chuẩn)"; icon = "🌟"; }
+                        else { name = name.replace('Microsoft', 'Giọng').replace('Online (Natural) - ', '').replace('Vietnamese (Vietnam)', '').trim(); }
+                        
+                        const opt = new Option(`${icon} ${name}`, v.name);
                         DOM.tts.voice.appendChild(opt);
                     });
                     resolve();
@@ -429,12 +428,12 @@
                 const el = STATE.sentences[idx].element;
                 el.classList.add('highlight-sentence');
                 const container = DOM.editor.disp;
-                // Cuộn mượt theo câu đang đọc
+                // Cuộn mượt bám theo câu đọc
                 container.scrollTo({ top: el.offsetTop - container.offsetTop - container.clientHeight / 2 + 50, behavior: 'smooth' });
             }
         }
 
-        // SỬA LỖI NHẢY ĐIÊN CUỒNG BẰNG CƠ CHẾ ANTI-SKIPPING CHỜ LỖI
+        // FIX LỖI NHẢY ĐIÊN CUỒNG: THUẬT TOÁN CHỐNG SKIP
         function speakSentence(idx) {
             if (idx >= STATE.sentences.length || !STATE.isReading) return handleStopReading();
             STATE.currentIdx = idx; highlightSentence(idx);
@@ -447,35 +446,37 @@
                 const chunks = chunkTextForGoogle(text, 150);
                 let chunkIdx = 0;
 
-                const playNextChunk = async () => {
+                const playNextChunk = () => {
                     if (!STATE.isReading) return;
                     if (chunkIdx >= chunks.length) {
-                        // Nghỉ một khoảng nhỏ giữa các câu (giống lấy hơi tự nhiên)
-                        setTimeout(() => { if (STATE.isReading) speakSentence(idx + 1); }, 300);
+                        setTimeout(() => { if (STATE.isReading) speakSentence(idx + 1); }, 300); // Lấy hơi 300ms
                         return;
                     }
 
                     const c = chunks[chunkIdx];
-                    // THAY ĐỔI LÕI: Dùng cổng gtx KHÔNG YÊU CẦU TOKEN, không bị lỗi 403 Forbidden
                     const url = `https://translate.googleapis.com/translate_tts?client=gtx&ie=UTF-8&tl=vi-VN&q=${encodeURIComponent(c)}`;
                     
                     STATE.currentAudio = new Audio(url);
                     STATE.currentAudio.playbackRate = rate;
 
+                    // FIX TẬN GỐC CHỨNG NHẢY CÂU ĐIÊN CUỒNG: Bắt buộc đợi âm thanh phát được mới tính
+                    const playPromise = STATE.currentAudio.play();
+                    if (playPromise !== undefined) {
+                        playPromise.then(_ => {
+                            // Phát thành công, chờ event onended
+                        }).catch(error => {
+                            console.warn("Lỗi tải/Autoplay bị chặn, đợi 1s thử lại...", error);
+                            setTimeout(() => { chunkIdx++; playNextChunk(); }, 1000);
+                        });
+                    }
+
                     STATE.currentAudio.onended = () => { chunkIdx++; playNextChunk(); };
                     
-                    // CHỐNG NHẢY CÓC (ANTI-SKIP): Khi bị lỗi mạng/Google chặn, bắt buộc phải đợi 1 giây mới được đi tiếp
+                    // ANTI-SKIP: Nếu mạng yếu tải lỗi, đợi 1 giây rồi bỏ qua (không nhảy liên tục)
                     STATE.currentAudio.onerror = () => {
-                        console.warn("Lỗi mạng hoặc Google từ chối.");
-                        setTimeout(() => { chunkIdx++; playNextChunk(); }, 1000);
+                        console.warn("Lỗi mạng, chờ 1s tải lại...");
+                        setTimeout(() => { chunkIdx++; playNextChunk(); }, 1000); 
                     };
-
-                    try {
-                        await STATE.currentAudio.play();
-                    } catch (e) {
-                        console.warn("Trình duyệt chặn Autoplay.", e);
-                        setTimeout(() => { chunkIdx++; playNextChunk(); }, 1000);
-                    }
                 };
                 playNextChunk();
             } else {
@@ -491,10 +492,10 @@
         DOM.tts.play.onclick = async () => {
             if(!STATE.sentences.length) return showNotification('Chưa có nội dung để đọc', 'error');
             
-            // Ép trình duyệt cấp quyền phát âm thanh (Unlock Autoplay) bằng 1 tiếng bíp tàng hình
             if (synth.paused && STATE.isReading) {
                 synth.resume();
             } else { 
+                // Ép trình duyệt cấp quyền phát âm thanh (Unlock Autoplay) bằng 1 tiếng bíp tàng hình
                 try { await new Audio("data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA").play(); } catch(e){}
                 STATE.isReading = true; 
                 speakSentence(STATE.currentIdx); 
@@ -514,7 +515,7 @@
 
 
         // ==========================================
-        // 4.1 TÍNH NĂNG ĐỘC QUYỀN: GOM FILE VÀ TẢI MP3
+        // 4.1 TÍNH NĂNG GOM FILE VÀ TẢI MP3 (FALLBACK PROXY)
         // ==========================================
         DOM.tts.exportMp3.onclick = async () => {
             const allText = DOM.editor.inp.value.trim();
@@ -522,18 +523,17 @@
 
             const voiceName = DOM.tts.voice.value;
             if (voiceName !== GOOGLE_TTS_NAME) {
-                return Swal.fire('Lưu ý', 'Tính năng tải File MP3 hiện chỉ hỗ trợ cho [Giọng Đám Mây (Google Chuẩn)]. Vui lòng chọn giọng này ở danh sách.', 'info');
+                return Swal.fire('Lưu ý', 'Tính năng tải File MP3 hiện chỉ hỗ trợ cho [Giọng Đám Mây (Google)]. Các giọng Trình duyệt khác Microsoft không cấp quyền tải file.', 'info');
             }
 
             Swal.fire({
                 title: 'Đang tổng hợp MP3...',
-                html: '<p class="text-sm text-slate-500 mb-2">Hệ thống đang tải và ghép nối các phân đoạn âm thanh. Vui lòng không đóng trang.</p><h2 id="mp3-prog" class="text-3xl font-bold text-indigo-600 mt-2">0%</h2>',
+                html: '<p class="text-sm text-slate-500 mb-2">Hệ thống đang tải và ghép nối các phân đoạn âm thanh qua cổng Proxy bảo mật. Vui lòng không tắt Web.</p><h2 id="mp3-prog" class="text-4xl font-bold text-indigo-600 mt-4 mb-2">0%</h2>',
                 allowOutsideClick: false, showConfirmButton: false,
                 didOpen: () => Swal.showLoading()
             });
 
             try {
-                // Gom tất cả câu thành mảng chunk thông minh
                 const allChunks = [];
                 STATE.sentences.forEach(s => {
                     const c = chunkTextForGoogle(s.text, 150);
@@ -543,35 +543,42 @@
                 const audioBlobs = [];
                 let failedCount = 0;
                 
-                // Fetch từng đoạn Audio
+                // Mạng lưới Proxy xoay vòng chống nghẽn
                 for(let i=0; i < allChunks.length; i++) {
-                    const url = `https://translate.googleapis.com/translate_tts?client=gtx&ie=UTF-8&tl=vi&q=${encodeURIComponent(allChunks[i])}`;
+                    const url = `https://translate.googleapis.com/translate_tts?client=tw-ob&ie=UTF-8&tl=vi&q=${encodeURIComponent(allChunks[i])}`;
+                    const proxies = [
+                        `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+                        `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`
+                    ];
+
+                    let blob = null;
+                    for (let proxy of proxies) {
+                        try {
+                            const res = await fetch(proxy);
+                            if (res.ok) {
+                                const b = await res.blob();
+                                if (b.size > 100) { blob = b; break; }
+                            }
+                        } catch (e) { /* Thử proxy tiếp theo */ }
+                    }
                     
-                    // Dùng Proxy để lách luật CORS của Trình duyệt khi tải Binary
-                    try {
-                        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
-                        const res = await fetch(proxyUrl);
-                        if(res.ok) {
-                            audioBlobs.push(await res.blob());
-                        } else { 
-                            throw new Error("Lỗi Proxy"); 
-                        }
-                    } catch(err) {
+                    if (blob) {
+                        audioBlobs.push(blob);
+                    } else {
                         failedCount++;
                     }
                     
-                    // Cập nhật % trên màn hình
                     const progress = Math.round(((i + 1) / allChunks.length) * 100);
                     const pEl = document.getElementById('mp3-prog');
                     if(pEl) pEl.innerText = progress + '%';
                     
-                    // Rate Limit hãm tốc độ để Google không chặn IP
-                    await new Promise(r => setTimeout(r, 250)); 
+                    // Delay đệm 400ms chống Google khóa IP
+                    await new Promise(r => setTimeout(r, 400)); 
                 }
 
-                if(audioBlobs.length === 0) throw new Error("Thất bại toàn bộ");
+                if(audioBlobs.length === 0) throw new Error("Thất bại toàn bộ do mạng/Proxy bị chặn.");
 
-                // NHÀO NẶN LẠI THÀNH 1 FILE MP3 DUY NHẤT
+                // GHÉP MẢNH NHỊ PHÂN THÀNH 1 FILE MP3
                 const finalBlob = new Blob(audioBlobs, { type: 'audio/mpeg' });
                 const url = URL.createObjectURL(finalBlob);
                 
@@ -580,25 +587,23 @@
                 let title = DOM.editor.title.textContent.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 30);
                 if(!title) title = "Audio_Reader";
                 a.download = `${title}.mp3`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
+                document.body.appendChild(a); a.click(); document.body.removeChild(a);
                 URL.revokeObjectURL(url);
 
                 if (failedCount > 0) {
-                    Swal.fire({ icon: 'warning', title: 'Tải xuống hoàn tất', text: `Đã lưu file MP3, nhưng có ${failedCount} câu bị thiếu do lỗi mạng.` });
+                    Swal.fire({ icon: 'warning', title: 'Tải xuống hoàn tất', text: `Lưu file thành công, nhưng có ${failedCount} câu bị thiếu do lỗi mạng trong quá trình ghép.` });
                 } else {
                     Swal.fire({ icon: 'success', title: 'Thành công!', text: 'File Audio MP3 nguyên vẹn đã được lưu về máy bạn.' });
                 }
 
             } catch (e) {
                 console.error(e);
-                Swal.fire('Lỗi Tải MP3', 'Mạng không ổn định hoặc bị từ chối kết nối. Hãy thử lại sau.', 'error');
+                Swal.fire('Lỗi Tải MP3', 'Mạng của bạn đang chặn kết nối Proxy tải File. Hãy thử lại sau ít phút.', 'error');
             }
         };
 
         // ==========================================
-        // 6. FIREBASE STORAGE CLOUD & AI
+        // 6. FIREBASE STORAGE CLOUD & THƯ VIỆN CÓ NÚT EDIT
         // ==========================================
         onAuthStateChanged(auth, user => {
             DOM.auth.out.classList.toggle('hidden', !!user);
@@ -632,7 +637,7 @@
             try {
                 if (STATE.articleId) await updateDoc(doc(db, "articles", STATE.articleId), { title, content });
                 else { const r = await addDoc(collection(db, "articles"), { title, content, ownerId: user.uid, createdAt: new Date() }); STATE.articleId = r.id; }
-                DOM.btns.save.innerHTML = '<i class="fas fa-sync-alt mr-2"></i>Đã cập nhật Cloud';
+                DOM.btns.save.innerHTML = '<i class="fas fa-sync-alt mr-2"></i>Cập nhật Cloud';
                 DOM.editor.status.textContent = "Đã lưu an toàn"; DOM.editor.status.className = "text-xs text-emerald-500 font-bold hidden md:block";
             } catch(e) { DOM.editor.status.textContent = "Lỗi lưu file"; DOM.editor.status.className = "text-xs text-red-500 font-bold hidden md:block"; }
         };
@@ -648,28 +653,55 @@
             document.getElementById('lib-count').textContent = `${arr.length} Bài`;
             if(!arr.length) return list.innerHTML = '<div class="text-center p-10 text-slate-400"><i class="fas fa-folder-open text-4xl mb-3 opacity-50"></i><p>Thư viện trống.</p></div>';
 
+            // GIẢI QUYẾT YÊU CẦU 3: BỔ SUNG NÚT EDIT (CHỈNH SỬA MÀU XANH) RÕ RÀNG
             list.innerHTML = arr.map(a => `
-                <div class="bg-white p-4 rounded-xl border border-slate-200 hover:border-emerald-300 hover:shadow-md cursor-pointer flex justify-between items-center group transition" onclick="window.loadArticle('${a.id}')">
-                    <div class="flex items-center gap-4 overflow-hidden pr-4">
-                        <div class="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0"><i class="fas fa-file-alt"></i></div>
+                <div class="bg-white p-4 rounded-xl border border-slate-200 hover:border-indigo-300 hover:shadow-md flex justify-between items-center group transition">
+                    <div class="flex items-center gap-4 overflow-hidden pr-4 flex-1 cursor-pointer" onclick="window.readArticle('${a.id}')">
+                        <div class="w-10 h-10 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0"><i class="fas fa-file-alt"></i></div>
                         <div class="truncate">
-                            <h4 class="font-bold text-slate-700 group-hover:text-emerald-700 transition truncate">${a.title}</h4>
+                            <h4 class="font-bold text-slate-700 group-hover:text-indigo-700 transition truncate">${a.title}</h4>
                             <p class="text-xs text-slate-400 mt-1"><i class="far fa-clock mr-1"></i>${new Date(a.createdAt.toDate()).toLocaleDateString('vi-VN')}</p>
                         </div>
                     </div>
-                    <button onclick="event.stopPropagation(); window.delArticle('${a.id}')" class="w-8 h-8 rounded-full bg-rose-50 text-rose-500 hover:bg-rose-500 hover:text-white transition opacity-0 group-hover:opacity-100 shrink-0"><i class="fas fa-trash"></i></button>
+                    <div class="flex items-center gap-2 shrink-0 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                        <button onclick="event.stopPropagation(); window.editArticle('${a.id}')" class="px-3 py-1.5 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition text-xs font-semibold flex items-center shadow-sm" title="Sửa nội dung"><i class="fas fa-pen mr-1"></i> Sửa</button>
+                        <button onclick="event.stopPropagation(); window.delArticle('${a.id}')" class="px-3 py-1.5 rounded-lg bg-rose-50 text-rose-500 hover:bg-rose-500 hover:text-white transition text-xs font-semibold flex items-center shadow-sm" title="Xóa bài"><i class="fas fa-trash mr-1"></i> Xóa</button>
+                    </div>
                 </div>
             `).join('');
         };
 
-        window.loadArticle = async (id) => {
+        // Chức năng Xem và Sửa độc lập nhưng cùng gọi 1 hàm nạp dữ liệu
+        window.loadArticle = async (id, isEditMode = false) => {
             const snap = await getDocs(query(collection(db, "articles"))); const data = snap.docs.find(d => d.id === id)?.data();
-            if(data) { DOM.editor.inp.value = data.content; STATE.articleId = id; DOM.btns.save.innerHTML = '<i class="fas fa-sync-alt mr-2"></i>Cập nhật Cloud'; DOM.editor.status.textContent="Đã tải dữ liệu"; DOM.editor.status.className="text-xs text-emerald-500 font-bold hidden md:block"; switchView('editor'); processContent(); }
+            if(data) { 
+                DOM.editor.inp.value = data.content; 
+                STATE.articleId = id; 
+                DOM.btns.save.innerHTML = '<i class="fas fa-sync-alt mr-2"></i>Cập nhật Cloud'; 
+                DOM.editor.status.textContent = isEditMode ? "Đang ở chế độ Sửa" : "Đã tải dữ liệu"; 
+                DOM.editor.status.className = `text-xs font-bold hidden md:block ${isEditMode ? 'text-blue-500' : 'text-emerald-500'}`; 
+                
+                switchView('editor'); 
+                processContent(); 
+                
+                // Nếu bấm nút Sửa thì tự động nhảy lên đầu trang và Focus vào khung chữ
+                if (isEditMode) {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    setTimeout(() => DOM.editor.inp.focus(), 300);
+                }
+            }
         };
+
+        window.readArticle = (id) => window.loadArticle(id, false);
+        window.editArticle = (id) => window.loadArticle(id, true);
+
         window.delArticle = async (id) => {
             if(confirm('Xóa vĩnh viễn tài liệu này khỏi đám mây?')) { await deleteDoc(doc(db, "articles", id)); showNotification('Đã xóa', 'success'); if(STATE.articleId === id) DOM.btns.new.click(); DOM.btns.lib.click(); }
         };
 
+        // ==========================================
+        // 7. CÔNG CỤ AI MIỄN PHÍ
+        // ==========================================
         const openModal = (title) => {
             DOM.modal.title.innerHTML = title; DOM.modal.content.innerHTML = '<div class="flex flex-col items-center justify-center py-16"><i class="fas fa-circle-notch fa-spin fa-3x text-indigo-500 mb-4"></i><p class="font-bold text-slate-500 animate-pulse">AI đang phân tích tài liệu...</p></div>';
             DOM.modal.wrap.classList.remove('hidden'); DOM.modal.wrap.classList.add('flex');
