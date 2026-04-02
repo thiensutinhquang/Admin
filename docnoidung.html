@@ -3,735 +3,661 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Trình Đọc Thông Minh với Lưu trữ & Đăng nhập</title>
+    <title>AI Reader - Đọc Thông Minh & Miễn Phí 100%</title>
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
     <style>
-        body { font-family: 'Inter', sans-serif; }
-        .highlight-sentence { background-color: #fef9c3; color: #374151; transition: all 0.3s ease-in-out; border-left: 4px solid #f59e0b; padding-left: 12px !important; }
-        #toc-container a.active { background-color: #eef2ff; color: #4338ca; font-weight: 600; transform: translateX(4px); }
-        #library-view::-webkit-scrollbar, #modal-content::-webkit-scrollbar, #chat-messages::-webkit-scrollbar, #sidebar-content::-webkit-scrollbar { width: 6px; }
-        #library-view::-webkit-scrollbar-track, #modal-content::-webkit-scrollbar-track, #chat-messages::-webkit-scrollbar-track, #sidebar-content::-webkit-scrollbar-track { background: #f1f5f9; }
-        #library-view::-webkit-scrollbar-thumb, #modal-content::-webkit-scrollbar-thumb, #chat-messages::-webkit-scrollbar-thumb, #sidebar-content::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 10px; }
-        /* Sửa đổi: Style cho phần đáp án mở rộng */
-        details > summary {
-            list-style: none;
-            cursor: pointer;
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        
+        /* Hiệu ứng Highlight câu đang đọc (Karaoke effect) */
+        .highlight-sentence { 
+            background-color: #fef08a; 
+            color: #1e3a8a; 
+            font-weight: 600;
+            transition: all 0.2s ease-in-out; 
+            border-left: 4px solid #f59e0b; 
+            padding-left: 8px !important; 
+            border-radius: 0 4px 4px 0; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
-        details > summary::-webkit-details-marker {
-            display: none;
-        }
+        
+        #toc-container a.active { background-color: #eef2ff; color: #4338ca; font-weight: 600; border-left: 3px solid #4338ca; padding-left: 8px; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        details > summary { list-style: none; cursor: pointer; outline: none; user-select: none; }
+        details > summary::-webkit-details-marker { display: none; }
+        details[open] summary { color: #4338ca; margin-bottom: 8px; }
+
+        .typing-dot { display: inline-block; width: 6px; height: 6px; background-color: #818cf8; border-radius: 50%; margin: 0 2px; animation: typing 1.4s infinite ease-in-out both; }
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes typing { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
     </style>
 </head>
-<body class="bg-slate-100 text-slate-800">
+<body class="text-slate-800 overflow-hidden h-screen flex relative">
 
-    <div class="relative min-h-screen md:flex">
-        <!-- Sidebar -->
-        <aside id="sidebar" class="fixed inset-y-0 left-0 z-40 w-80 bg-white p-6 border-r border-slate-200 flex flex-col transform -translate-x-full transition-transform duration-300 ease-in-out md:relative md:translate-x-0">
-            <div id="sidebar-content" class="flex flex-col space-y-6 overflow-y-auto">
-                <header class="text-center md:text-left">
-                    <h1 class="text-2xl font-bold text-indigo-600">Trình Đọc Thông Minh</h1>
-                </header>
+    <div id="sidebar-overlay" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-30 hidden md:hidden transition-opacity"></div>
 
-                <div id="auth-section" class="p-4 border rounded-lg bg-slate-50 space-y-3">
-                    <div id="logged-out-view">
-                        <h3 class="font-semibold text-center text-slate-700">Đăng nhập để lưu bài viết</h3>
-                        <div class="space-y-2">
-                            <input type="email" id="auth-email" placeholder="Email" class="w-full p-2 border rounded-md text-sm">
-                            <input type="password" id="auth-password" placeholder="Mật khẩu" class="w-full p-2 border rounded-md text-sm">
-                        </div>
-                        <div class="flex space-x-2 mt-2">
-                            <button id="login-btn" class="flex-1 py-2 bg-indigo-600 text-white rounded-md text-sm font-semibold hover:bg-indigo-700">Đăng nhập</button>
-                            <button id="register-btn" class="flex-1 py-2 bg-slate-600 text-white rounded-md text-sm font-semibold hover:bg-slate-700">Đăng ký</button>
-                        </div>
-                    </div>
-                    <div id="logged-in-view" class="hidden space-y-3">
-                         <p class="text-sm text-center">Xin chào, <strong id="user-email" class="truncate"></strong></p>
-                         <div class="flex space-x-2">
-                            <button id="new-article-btn" class="flex-1 py-2 bg-indigo-600 text-white rounded-md font-semibold hover:bg-indigo-700"><i class="fas fa-plus mr-2"></i>Bài mới</button>
-                            <button id="my-library-btn" class="flex-1 py-2 bg-green-600 text-white rounded-md font-semibold hover:bg-green-700"><i class="fas fa-book-open mr-2"></i>Thư viện</button>
-                         </div>
-                         <button id="logout-btn" class="w-full py-2 bg-red-500 text-white rounded-md font-semibold hover:bg-red-600">Đăng xuất</button>
+    <aside id="sidebar" class="absolute md:relative z-40 w-80 h-full bg-white border-r border-slate-200 flex flex-col transform -translate-x-full md:translate-x-0 transition-transform duration-300 shadow-2xl md:shadow-none shrink-0">
+        <div id="sidebar-content" class="flex flex-col h-full overflow-y-auto p-6 space-y-6">
+            <header class="flex items-center justify-between">
+                <h1 class="text-2xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600"><i class="fas fa-book-reader mr-2 text-indigo-600"></i>AI Reader</h1>
+                <button id="close-sidebar-btn" class="md:hidden text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
+            </header>
+
+            <div id="auth-section" class="p-4 border border-slate-200 rounded-xl bg-slate-50 shadow-sm space-y-4">
+                <div id="logged-out-view" class="space-y-3">
+                    <h3 class="font-semibold text-center text-slate-700 text-sm uppercase tracking-wide"><i class="fas fa-cloud text-indigo-500 mr-1"></i> Đồng bộ Đám mây</h3>
+                    <input type="email" id="auth-email" placeholder="Email của bạn" class="w-full p-2.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                    <input type="password" id="auth-password" placeholder="Mật khẩu" class="w-full p-2.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                    <div class="flex gap-2 pt-1">
+                        <button id="login-btn" class="flex-1 py-2 bg-indigo-600 text-white rounded-lg text-sm font-semibold hover:bg-indigo-700 transition shadow-sm">Đăng nhập</button>
+                        <button id="register-btn" class="flex-1 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg text-sm font-semibold hover:bg-slate-50 transition shadow-sm">Đăng ký</button>
                     </div>
                 </div>
-
-                <div id="features-panel" class="space-y-6 pt-4 border-t hidden">
-                    <div class="space-y-3">
-                        <h3 class="text-md font-semibold text-slate-700 text-center">Điều khiển đọc</h3>
-                        <div class="space-y-2">
-                            <label for="voice-select" class="block text-sm font-medium text-slate-700">🔊 Giọng đọc</label>
-                            <select id="voice-select" class="w-full p-2 border border-slate-300 rounded-md bg-white focus:ring-2 focus:ring-indigo-500 transition"></select>
-                        </div>
-                         <div class="space-y-2">
-                            <label for="rate-slider" class="block text-sm font-medium text-slate-700">🏃 Tốc độ: <span id="rate-value" class="font-semibold">1.0</span>x</label>
-                            <input id="rate-slider" type="range" min="0.5" max="2" step="0.1" value="1" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer">
-                        </div>
-                        <div class="flex items-center justify-center space-x-3">
-                            <button id="read-playBtn" class="flex-1 flex items-center justify-center py-2.5 bg-indigo-600 text-white rounded-lg shadow-sm hover:bg-indigo-700 active:scale-95 transition-all duration-200 font-semibold disabled:bg-indigo-300">
-                                <i class="fas fa-play mr-2"></i> <span id="read-play-text">Đọc</span>
-                            </button>
-                            <button id="read-stopBtn" class="flex-1 flex items-center justify-center py-2.5 bg-red-500 text-white rounded-lg shadow-sm hover:bg-red-600 active:scale-95 transition-all duration-200 font-semibold disabled:bg-red-300" disabled>
-                                <i class="fas fa-stop mr-2"></i> Dừng
-                            </button>
+                <div id="logged-in-view" class="hidden space-y-3">
+                    <div class="flex items-center gap-3 p-2 bg-white rounded-lg border border-slate-200">
+                        <div class="w-9 h-9 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold"><i class="fas fa-user"></i></div>
+                        <div class="overflow-hidden flex-1">
+                            <p class="text-xs text-slate-500 font-medium">Xin chào,</p>
+                            <p id="user-email" class="text-sm font-bold text-slate-700 truncate"></p>
                         </div>
                     </div>
-                    <div class="space-y-3 pt-4 border-t">
-                        <h3 class="text-md font-semibold text-slate-700 text-center">Công cụ AI</h3>
-                        <button id="summarize-btn" class="w-full flex items-center justify-center py-2.5 bg-sky-500 text-white rounded-lg shadow-sm hover:bg-sky-600 active:scale-95 transition-all font-semibold">
-                            <i class="fas fa-wand-magic-sparkles mr-2"></i> Tóm tắt
+                    <div class="flex gap-2">
+                        <button id="new-article-btn" class="flex-1 py-2 bg-indigo-50 text-indigo-700 rounded-lg font-semibold hover:bg-indigo-100 transition text-sm border border-indigo-100"><i class="fas fa-plus mr-1"></i> Bài mới</button>
+                        <button id="my-library-btn" class="flex-1 py-2 bg-emerald-50 text-emerald-700 rounded-lg font-semibold hover:bg-emerald-100 transition text-sm border border-emerald-100"><i class="fas fa-layer-group mr-1"></i> Thư viện</button>
+                    </div>
+                    <button id="logout-btn" class="w-full py-1.5 text-xs text-rose-500 hover:bg-rose-50 font-semibold rounded-lg transition">Đăng xuất</button>
+                </div>
+            </div>
+
+            <div id="features-panel" class="space-y-6 hidden flex-1 flex-col">
+                <div class="space-y-3">
+                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider"><i class="fas fa-headphones text-indigo-500 mr-1"></i> Trình Đọc Chuyên Nghiệp</h3>
+                    <select id="voice-select" class="w-full p-2 border border-slate-200 rounded-lg bg-white text-sm font-medium text-slate-700 outline-none shadow-sm cursor-pointer"></select>
+                    <div class="pt-2">
+                        <label class="flex justify-between text-sm font-medium text-slate-600 mb-2"><span>Tốc độ:</span> <span id="rate-value" class="font-bold text-indigo-600">1.0x</span></label>
+                        <input id="rate-slider" type="range" min="0.5" max="2" step="0.1" value="1" class="w-full accent-indigo-600 cursor-pointer h-1.5 bg-slate-200 rounded-lg appearance-none">
+                    </div>
+                    <div class="flex gap-2 mt-2">
+                        <button id="read-playBtn" class="flex-[2] py-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 text-white rounded-lg shadow-md hover:opacity-90 active:scale-95 transition font-semibold disabled:opacity-50">
+                            <i class="fas fa-play mr-2"></i> <span id="read-play-text">Bắt đầu Đọc</span>
                         </button>
-                        <button id="questions-btn" class="w-full flex items-center justify-center py-2.5 bg-teal-500 text-white rounded-lg shadow-sm hover:bg-teal-600 active:scale-95 transition-all font-semibold">
-                            <i class="fas fa-circle-question mr-2"></i> Tạo câu hỏi
+                        <button id="read-stopBtn" class="flex-1 py-2.5 bg-rose-500 text-white rounded-lg shadow-md hover:bg-rose-600 active:scale-95 transition font-semibold disabled:opacity-50" disabled>
+                            <i class="fas fa-stop"></i>
                         </button>
                     </div>
                 </div>
                 
-                <div id="toc-panel" class="flex-grow flex-col min-h-0 hidden">
-                    <h2 class="text-lg font-semibold text-slate-800 border-b pb-2 mb-3">📖 Mục lục</h2>
-                    <nav id="toc-container" class="flex-grow overflow-y-auto space-y-1 pr-2"></nav>
+                <div class="space-y-3 pt-4 border-t border-slate-200">
+                    <div class="flex justify-between items-center mb-1">
+                        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider"><i class="fas fa-wand-magic-sparkles text-amber-500 mr-1"></i> AI MIỄN PHÍ TÍCH HỢP</h3>
+                        <span class="text-[10px] bg-emerald-100 text-emerald-600 px-2 py-0.5 rounded-full font-bold">HOẠT ĐỘNG</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button id="summarize-btn" class="py-2.5 bg-sky-50 text-sky-700 border border-sky-200 rounded-lg hover:bg-sky-100 active:scale-95 transition font-semibold text-sm flex flex-col items-center gap-1 shadow-sm">
+                            <i class="fas fa-compress-alt text-lg"></i> Tóm tắt
+                        </button>
+                        <button id="questions-btn" class="py-2.5 bg-teal-50 text-teal-700 border border-teal-200 rounded-lg hover:bg-teal-100 active:scale-95 transition font-semibold text-sm flex flex-col items-center gap-1 shadow-sm">
+                            <i class="fas fa-clipboard-question text-lg"></i> Bài tập
+                        </button>
+                    </div>
                 </div>
-                <div id="notification" class="hidden text-center text-sm text-amber-700 p-2 bg-amber-100 rounded-lg"></div>
+
+                <div id="toc-panel" class="pt-4 border-t border-slate-200 flex-grow flex-col min-h-0 hidden">
+                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3"><i class="fas fa-list-ul mr-1"></i> Mục lục bài viết</h3>
+                    <nav id="toc-container" class="flex-grow overflow-y-auto space-y-1 pr-2 text-sm font-medium"></nav>
+                </div>
             </div>
-        </aside>
+            
+            <div id="notification" class="hidden text-center text-sm font-medium p-3 rounded-lg shadow-sm transition-opacity mt-auto"></div>
+        </div>
+    </aside>
 
-        <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-30 hidden md:hidden"></div>
+    <main class="flex-1 flex flex-col h-full bg-slate-100 relative min-w-0">
+        <header class="md:hidden flex items-center justify-between p-4 bg-white border-b shadow-sm z-20 shrink-0">
+            <button id="menu-btn" class="text-slate-600 text-xl px-2"><i class="fas fa-bars"></i></button>
+            <h1 class="font-bold text-indigo-600">AI Reader</h1>
+            <div class="w-8"></div>
+        </header>
 
-        <div class="flex-1 flex flex-col">
-            <header class="md:hidden flex items-center justify-between p-4 bg-white border-b sticky top-0 z-20">
-                <button id="menu-btn" class="p-2 -ml-2">
-                    <i class="fas fa-bars text-2xl text-slate-600"></i>
-                </button>
-                <h1 class="text-lg font-bold text-indigo-600">Trình Đọc Thông Minh</h1>
-                <div class="w-8"></div> <!-- Spacer -->
-            </header>
+        <div class="flex-1 p-4 md:p-6 lg:p-8 overflow-hidden flex flex-col max-w-[1400px] mx-auto w-full relative">
+            
+            <div id="welcome-screen" class="flex-1 flex flex-col justify-center items-center text-center p-6 h-full">
+                <div class="w-24 h-24 bg-indigo-100 rounded-full flex items-center justify-center mb-6 shadow-inner text-indigo-600 text-4xl"><i class="fa-solid fa-book-open-reader"></i></div>
+                <h2 class="text-3xl font-extrabold text-slate-800 mb-3">Học Tập Hoàn Toàn Miễn Phí</h2>
+                <p class="text-slate-500 max-w-md mx-auto mb-8 leading-relaxed">Nền tảng đọc hiểu thông minh. Không cần cài đặt, không cần API Key. Mở lên là dùng, tóm tắt và trắc nghiệm trong 1 nốt nhạc.</p>
+                <button onclick="document.getElementById('new-article-btn').click()" class="px-8 py-3.5 bg-indigo-600 text-white rounded-full font-bold shadow-xl shadow-indigo-200 hover:bg-indigo-700 hover:-translate-y-1 transition transform"><i class="fas fa-edit mr-2"></i> Bắt đầu Soạn thảo</button>
+            </div>
 
-            <main class="p-4 sm:p-6 md:p-8 lg:p-10 flex flex-col flex-grow">
-                <div id="editor-view" class="hidden flex-grow flex-col">
-                    <div class="mb-4">
-                        <div class="flex justify-between items-center">
-                            <label for="text-input" class="block text-lg font-semibold text-slate-700">Nội dung</label>
-                            <button id="save-article-btn" class="px-4 py-2 bg-blue-600 text-white rounded-md font-semibold hover:bg-blue-700 disabled:bg-blue-300 disabled:cursor-not-allowed min-w-[160px]">
+            <div id="editor-view" class="hidden flex-1 flex-col gap-4 h-full">
+                <div class="bg-white p-4 md:p-5 rounded-2xl shadow-sm border border-slate-200 shrink-0">
+                    <div class="flex justify-between items-center mb-3">
+                        <label class="font-bold text-slate-700 text-lg"><i class="fa-solid fa-pen-nib text-indigo-500 mr-2"></i>Nội dung Văn bản</label>
+                        <div class="flex items-center gap-3">
+                            <span id="save-status" class="text-xs text-amber-500 font-medium hidden md:block">Chưa lưu...</span>
+                            <button id="save-article-btn" class="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg font-semibold hover:bg-blue-700 transition disabled:opacity-50 shadow-sm flex items-center gap-2">
+                                <i class="fas fa-save"></i> Lưu lên mây
                             </button>
                         </div>
-                        <textarea id="text-input" class="mt-2 w-full h-48 p-4 border-2 border-slate-200 rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition resize-y" placeholder="Dán văn bản của bạn vào đây..."></textarea>
                     </div>
-                    <div class="relative flex-grow flex flex-col min-h-0 bg-white rounded-lg shadow-inner border border-slate-200">
-                        <div id="content-wrapper" class="hidden flex-grow flex-col min-h-0">
-                            <div class="p-4 border-b">
-                                <h2 id="article-title" class="text-xl font-semibold text-slate-800">Nội dung đọc</h2>
-                            </div>
-                            <article id="content-display" class="text-lg leading-relaxed p-6 flex-grow overflow-y-auto"></article>
-                        </div>
+                    <textarea id="text-input" class="w-full h-32 md:h-40 p-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white transition resize-none text-[15px] leading-relaxed text-slate-700 outline-none" placeholder="Dán bài báo, truyện hoặc tài liệu ôn thi vào đây... Hệ thống sẽ tự động phân tách câu và lưu trữ..."></textarea>
+                </div>
+
+                <div id="content-wrapper" class="hidden flex-1 bg-white rounded-2xl shadow-sm border border-slate-200 flex-col overflow-hidden min-h-[300px]">
+                    <div class="px-6 py-4 border-b border-slate-100 bg-slate-50 flex items-center justify-between shrink-0">
+                        <h2 id="article-title" class="text-xl font-bold text-slate-800 truncate pr-4">Bản xem trước</h2>
+                        <span class="flex h-3 w-3 shrink-0 relative" title="Sẵn sàng đọc">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                        </span>
                     </div>
+                    <article id="content-display" class="flex-1 p-6 md:p-8 overflow-y-auto text-lg leading-loose text-slate-700 text-justify pb-24 scroll-smooth"></article>
                 </div>
-                <div id="library-view" class="hidden flex-grow flex-col bg-white rounded-lg shadow-inner border border-slate-200">
-                     <div class="p-4 border-b">
-                        <h2 class="text-xl font-semibold text-slate-800"><i class="fas fa-book-open mr-2"></i>Thư viện của tôi</h2>
-                     </div>
-                     <div id="library-list" class="overflow-y-auto p-2">
-                     </div>
+            </div>
+
+            <div id="library-view" class="hidden flex-1 bg-white rounded-2xl shadow-sm border border-slate-200 flex-col h-full overflow-hidden max-w-4xl mx-auto w-full">
+                <div class="px-6 py-5 border-b border-slate-100 bg-slate-50 flex justify-between items-center shrink-0">
+                    <div>
+                        <h2 class="text-2xl font-bold text-slate-800"><i class="fas fa-layer-group text-emerald-500 mr-2"></i> Kho Tài Liệu</h2>
+                        <p class="text-sm text-slate-500 mt-1">Dữ liệu được đồng bộ an toàn trên Cloud.</p>
+                    </div>
+                    <span id="lib-count" class="text-sm font-bold text-emerald-600 bg-emerald-100 border border-emerald-200 px-3 py-1 rounded-full">0 Bài</span>
                 </div>
-                <div id="welcome-screen" class="p-10 text-center flex-col justify-center items-center h-full hidden">
-                     <h2 class="text-2xl font-bold text-slate-700">Chào mừng bạn!</h2>
-                     <p class="mt-2 text-slate-500">Bắt đầu bằng cách tạo một <strong class="text-indigo-600">Bài viết mới</strong> hoặc mở <strong class="text-green-600">Thư viện</strong>.</p>
-                </div>
-            </main>
+                <div id="library-list" class="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50/50"></div>
+            </div>
         </div>
-    </div>
-    
-    <div id="gemini-modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center p-4 z-50">
-         <div class="bg-white rounded-lg shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col">
-            <header class="flex items-center justify-between p-4 border-b">
-                <h3 id="modal-title" class="text-xl font-bold text-slate-800"></h3>
-                <button id="modal-close-btn" class="w-8 h-8 rounded-full hover:bg-slate-200 transition"><i class="fas fa-times"></i></button>
+
+        <div id="chat-container" class="fixed bottom-6 right-6 flex flex-col items-end z-40 hidden">
+            <div id="chat-window" class="w-[360px] sm:w-[400px] h-[550px] max-h-[75vh] bg-white rounded-2xl shadow-2xl flex flex-col hidden border border-slate-200 overflow-hidden transform origin-bottom-right transition-all scale-0 duration-300">
+                <header class="flex items-center justify-between p-4 bg-gradient-to-r from-indigo-600 to-blue-600 text-white shrink-0 shadow-md z-10">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm"><i class="fas fa-robot"></i></div>
+                        <div><h3 class="font-bold text-sm">Gia sư Trực Tuyến</h3><p class="text-[10px] text-indigo-100">AI Miễn phí đã học thuộc bài viết</p></div>
+                    </div>
+                    <button id="close-chat-btn" class="w-8 h-8 rounded-full hover:bg-white/20 transition flex items-center justify-center"><i class="fas fa-chevron-down"></i></button>
+                </header>
+                <main id="chat-messages" class="flex-1 p-4 overflow-y-auto flex flex-col gap-4 bg-slate-50 hide-scrollbar"></main>
+                <footer class="p-3 bg-white border-t border-slate-100 shrink-0">
+                    <form id="chat-form" class="flex items-center gap-2 bg-slate-100 p-1.5 rounded-xl border border-slate-200 focus-within:border-indigo-400 focus-within:ring-1 focus-within:ring-indigo-400 transition">
+                        <input type="text" id="chat-input" placeholder="Hỏi tôi bất cứ điều gì về tài liệu..." class="flex-1 bg-transparent p-2 text-sm outline-none text-slate-700" autocomplete="off">
+                        <button type="submit" class="w-9 h-9 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition shadow-sm flex items-center justify-center shrink-0 disabled:opacity-50"><i class="fas fa-paper-plane"></i></button>
+                    </form>
+                </footer>
+            </div>
+            <button id="open-chat-btn" class="mt-4 w-16 h-16 bg-indigo-600 text-white rounded-full shadow-[0_10px_25px_rgba(79,70,229,0.5)] flex items-center justify-center text-2xl hover:scale-110 active:scale-95 transition-transform border-2 border-white z-50">
+                <i class="fas fa-comment-dots"></i>
+            </button>
+        </div>
+    </main>
+
+    <div id="gemini-modal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm hidden items-center justify-center p-4 z-[60] transition-opacity">
+         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[85vh] flex flex-col transform transition-transform scale-95 duration-300" id="modal-box">
+            <header class="flex items-center justify-between p-5 border-b bg-slate-50 rounded-t-2xl shrink-0">
+                <h3 id="modal-title" class="text-xl font-bold text-slate-800 flex items-center gap-2"></h3>
+                <button id="modal-close-btn" class="w-8 h-8 rounded-full bg-slate-200 hover:bg-rose-500 hover:text-white text-slate-600 transition flex items-center justify-center"><i class="fas fa-times"></i></button>
             </header>
-            <main id="modal-content" class="p-6 overflow-y-auto prose max-w-none"></main>
+            <main id="modal-content" class="p-6 md:p-8 overflow-y-auto flex-1 prose prose-indigo max-w-none text-slate-700 leading-relaxed"></main>
         </div>
-    </div>
-    
-    <div id="chat-container" class="fixed bottom-5 right-5 flex flex-col items-end space-y-2 z-30">
-        <div id="chat-window" class="w-96 h-[60vh] bg-white rounded-lg shadow-2xl flex-col hidden">
-            <header class="flex items-center justify-between p-3 bg-indigo-600 text-white rounded-t-lg">
-                <h3 class="font-semibold"><i class="fas fa-robot mr-2"></i>Trợ lý AI</h3>
-                <button id="close-chat-btn" class="w-7 h-7 rounded-full hover:bg-indigo-700 transition"><i class="fas fa-times"></i></button>
-            </header>
-            <main id="chat-messages" class="flex-grow p-3 overflow-y-auto space-y-4"></main>
-            <footer class="p-3 border-t">
-                <form id="chat-form" class="flex items-center space-x-2">
-                    <input type="text" id="chat-input" placeholder="Hỏi về nội dung bài viết..." class="flex-grow p-2 border rounded-md text-sm focus:ring-2 focus:ring-indigo-500">
-                    <button type="submit" class="w-10 h-10 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition"><i class="fas fa-paper-plane"></i></button>
-                </form>
-            </footer>
-        </div>
-        <button id="open-chat-btn" class="w-16 h-16 bg-indigo-600 text-white rounded-full shadow-lg flex items-center justify-center text-2xl hover:bg-indigo-700 transition transform hover:scale-110 hidden">
-            <i class="fas fa-robot"></i>
-        </button>
     </div>
 
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.19.1/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.19.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, query, where, getDocs, doc, deleteDoc, orderBy, updateDoc } from "https://www.gstatic.com/firebasejs/9.19.1/firebase-firestore.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, query, where, getDocs, doc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
+        // CẤU HÌNH FIREBASE
         const firebaseConfig = {
             apiKey: "AIzaSyD2ZrOy5ag98LPGPw_Y2JOX52hzWoa8RqE",
             authDomain: "luutru-baiviet.firebaseapp.com",
             projectId: "luutru-baiviet",
             storageBucket: "luutru-baiviet.appspot.com",
             messagingSenderId: "475363283491",
-            appId: "1:475363283491:web:0615c8bfb62adec6c21796",
-            measurementId: "G-MLLP8GGCZ4"
+            appId: "1:475363283491:web:0615c8bfb62adec6c21796"
         };
-
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
         const synth = window.speechSynthesis;
 
-        // DOM Elements
-        const sidebar = document.getElementById('sidebar');
-        const sidebarOverlay = document.getElementById('sidebar-overlay');
-        const menuBtn = document.getElementById('menu-btn');
-        const loggedOutView = document.getElementById('logged-out-view');
-        const loggedInView = document.getElementById('logged-in-view');
-        const authEmailInput = document.getElementById('auth-email');
-        const authPasswordInput = document.getElementById('auth-password');
-        const loginBtn = document.getElementById('login-btn');
-        const registerBtn = document.getElementById('register-btn');
-        const logoutBtn = document.getElementById('logout-btn');
-        const userEmailDisplay = document.getElementById('user-email');
-        const saveArticleBtn = document.getElementById('save-article-btn');
-        const myLibraryBtn = document.getElementById('my-library-btn');
-        const newArticleBtn = document.getElementById('new-article-btn');
-        const textInput = document.getElementById('text-input');
-        const notification = document.getElementById('notification');
-        const articleTitle = document.getElementById('article-title');
-        const welcomeScreen = document.getElementById('welcome-screen');
-        const editorView = document.getElementById('editor-view');
-        const libraryView = document.getElementById('library-view');
-        const libraryList = document.getElementById('library-list');
-        const featuresPanel = document.getElementById('features-panel');
-        const geminiModal = document.getElementById('gemini-modal');
-        const modalTitle = document.getElementById('modal-title');
-        const modalContent = document.getElementById('modal-content');
-        const modalCloseBtn = document.getElementById('modal-close-btn');
-        const summarizeBtn = document.getElementById('summarize-btn');
-        const questionsBtn = document.getElementById('questions-btn');
-        const tocPanel = document.getElementById('toc-panel');
-        const contentWrapper = document.getElementById('content-wrapper');
-        const contentDisplay = document.getElementById('content-display');
-        const readPlayBtn = document.getElementById('read-playBtn');
-        const readPlayText = document.getElementById('read-play-text');
-        const readStopBtn = document.getElementById('read-stopBtn');
-        const voiceSelect = document.getElementById('voice-select');
-        const rateSlider = document.getElementById('rate-slider');
-        const rateValue = document.getElementById('rate-value');
-        const openChatBtn = document.getElementById('open-chat-btn');
-        const chatWindow = document.getElementById('chat-window');
-        const closeChatBtn = document.getElementById('close-chat-btn');
-        const chatMessages = document.getElementById('chat-messages');
-        const chatForm = document.getElementById('chat-form');
-        const chatInput = document.getElementById('chat-input');
-        
-        // State
-        let currentArticleId = null;
-        let sentences = [];
-        let currentSentenceIndex = 0;
-        let isReading = false;
-        let voices = [];
+        // CONSTANTS & STATE
+        const GOOGLE_TTS_NAME = "✨ Giọng Đám Mây (Google Online)";
+        const STATE = { articleId: null, sentences: [], currentIdx: 0, isReading: false, voices: [], chatHistory: [], currentAudio: null };
+        const DOM = {
+            views: { welcome: document.getElementById('welcome-screen'), editor: document.getElementById('editor-view'), library: document.getElementById('library-view') },
+            auth: { out: document.getElementById('logged-out-view'), in: document.getElementById('logged-in-view'), email: document.getElementById('auth-email'), pass: document.getElementById('auth-password'), name: document.getElementById('user-email') },
+            btns: { save: document.getElementById('save-article-btn'), new: document.getElementById('new-article-btn'), lib: document.getElementById('my-library-btn') },
+            editor: { inp: document.getElementById('text-input'), wrap: document.getElementById('content-wrapper'), disp: document.getElementById('content-display'), title: document.getElementById('article-title'), tocPanel: document.getElementById('toc-panel'), toc: document.getElementById('toc-container'), status: document.getElementById('save-status') },
+            tts: { panel: document.getElementById('features-panel'), voice: document.getElementById('voice-select'), rate: document.getElementById('rate-slider'), rateVal: document.getElementById('rate-value'), play: document.getElementById('read-playBtn'), stop: document.getElementById('read-stopBtn') },
+            ai: { sum: document.getElementById('summarize-btn'), quiz: document.getElementById('questions-btn') },
+            modal: { wrap: document.getElementById('gemini-modal'), box: document.getElementById('modal-box'), title: document.getElementById('modal-title'), content: document.getElementById('modal-content'), close: document.getElementById('modal-close-btn') },
+            chat: { wrap: document.getElementById('chat-container'), win: document.getElementById('chat-window'), btn: document.getElementById('open-chat-btn'), close: document.getElementById('close-chat-btn'), msgs: document.getElementById('chat-messages'), form: document.getElementById('chat-form'), inp: document.getElementById('chat-input') }
+        };
 
-        // =======================================================
-        // UI Logic for Mobile
-        // =======================================================
-        function openSidebar() {
-            sidebar.classList.remove('-translate-x-full');
-            sidebarOverlay.classList.remove('hidden');
-        }
+        // ==========================================
+        // 1. ENGINE AI CÔNG CỘNG MIỄN PHÍ (Zero-Config)
+        // ==========================================
+        const callFreeAI = async (messages, expectJson = false) => {
+            try {
+                const payload = {
+                    messages: messages,
+                    model: "openai", // Định tuyến ngầm sang OpenAI GPT
+                    jsonMode: expectJson
+                };
 
-        function closeSidebar() {
-            sidebar.classList.add('-translate-x-full');
-            sidebarOverlay.classList.add('hidden');
-        }
-
-        menuBtn.addEventListener('click', openSidebar);
-        sidebarOverlay.addEventListener('click', closeSidebar);
-
-
-        // =======================================================
-        // UI Logic
-        // =======================================================
-        function switchView(viewName) {
-            editorView.classList.add('hidden');
-            libraryView.classList.add('hidden');
-            welcomeScreen.classList.add('hidden');
-            welcomeScreen.classList.remove('flex');
-
-            if (viewName === 'editor') {
-                editorView.classList.remove('hidden');
-                editorView.classList.add('flex');
-                if (textInput.value.trim()){
-                    featuresPanel.classList.remove('hidden');
-                    contentWrapper.classList.remove('hidden');
-                    contentWrapper.classList.add('flex');
-                    openChatBtn.classList.remove('hidden');
-                } else {
-                    featuresPanel.classList.add('hidden');
-                    contentWrapper.classList.add('hidden');
-                    contentWrapper.classList.remove('flex');
-                    openChatBtn.classList.add('hidden');
-                    chatWindow.classList.add('hidden');
-                }
-            } else if (viewName === 'library') {
-                libraryView.classList.remove('hidden');
-                libraryView.classList.add('flex');
-                featuresPanel.classList.add('hidden');
-                openChatBtn.classList.add('hidden');
-                chatWindow.classList.add('hidden');
-            } else { // welcome
-                welcomeScreen.classList.remove('hidden');
-                welcomeScreen.classList.add('flex');
-                featuresPanel.classList.add('hidden');
-                openChatBtn.classList.add('hidden');
-                chatWindow.classList.add('hidden');
-            }
-
-            if (window.innerWidth < 768) {
-                closeSidebar();
-            }
-        }
-
-        function updateSaveButtonState() {
-            if (currentArticleId) {
-                saveArticleBtn.innerHTML = '<i class="fas fa-sync-alt mr-2"></i>Cập nhật';
-                saveArticleBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
-                saveArticleBtn.classList.add('bg-purple-600', 'hover:bg-purple-700');
-            } else {
-                saveArticleBtn.innerHTML = '<i class="fas fa-save mr-2"></i>Lưu bài viết';
-                saveArticleBtn.classList.remove('bg-purple-600', 'hover:bg-purple-700');
-                saveArticleBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
-            }
-        }
-        
-        // =======================================================
-        // Speech Synthesis Logic
-        // =======================================================
-        function processAndDisplayContent() {
-            handleStopReading();
-            const rawText = textInput.value;
-            contentDisplay.innerHTML = '';
-            sentences = [];
-            
-            if (!rawText.trim()) {
-                articleTitle.textContent = 'Bài viết mới';
-                featuresPanel.classList.add('hidden');
-                openChatBtn.classList.add('hidden');
-                chatWindow.classList.add('hidden');
-                return;
-            }
-            featuresPanel.classList.remove('hidden');
-            openChatBtn.classList.remove('hidden');
-            articleTitle.textContent = rawText.split('\n')[0].trim().slice(0, 50) || "Bài viết không có tiêu đề";
-            
-            const sentenceRegex = /[^.?!]+(?:[.?!]|$)(?=\s|$)/g;
-            const foundSentences = rawText.match(sentenceRegex);
-            
-            if (foundSentences) {
-                foundSentences.forEach(sentenceText => {
-                    const trimmedText = sentenceText.trim();
-                    if(trimmedText.length > 0) {
-                        const p = document.createElement('p');
-                        p.textContent = trimmedText;
-                        p.className = 'mb-3 p-2 rounded-md';
-                        contentDisplay.appendChild(p);
-                        sentences.push({ element: p, text: trimmedText });
-                    }
+                const res = await fetch('https://text.pollinations.ai/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
                 });
+
+                if (!res.ok) throw new Error("Máy chủ AI đang bận.");
+                let text = await res.text();
+                
+                // Kháng lỗi khi AI miễn phí tự ý nhét thẻ Markdown ```json vào kết quả
+                if (expectJson) {
+                    const mdMatch = text.match(/```(?:json)?\n?([\s\S]*?)```/);
+                    if (mdMatch) {
+                        text = mdMatch[1];
+                    } else {
+                        // Tìm mảng JSON bằng Regex
+                        const match = text.match(/\[[\s\S]*\]/);
+                        if (match) text = match[0];
+                    }
+                }
+                return text;
+            } catch (e) {
+                console.error(e);
+                return null;
             }
+        };
+
+        // ==========================================
+        // 2. HELPER & UI NAVIGATION
+        // ==========================================
+        function showNotification(msg, type = 'success') {
+            const el = document.getElementById('notification');
+            el.textContent = msg; 
+            el.className = `p-3 rounded-lg text-sm font-semibold transition-opacity duration-300 ${type === 'error' ? 'bg-red-100 text-red-700 border border-red-200' : 'bg-emerald-100 text-emerald-700 border border-emerald-200'}`;
+            el.classList.remove('hidden'); el.style.opacity = 1;
+            setTimeout(() => { el.style.opacity = 0; setTimeout(() => el.classList.add('hidden'), 300); }, 3000);
         }
 
-        async function populateVoiceList() {
-            return new Promise(resolve => {
-                const checkVoices = () => {
-                    voices = synth.getVoices();
-                    voiceSelect.innerHTML = '';
-                    
-                    const vietnameseVoices = voices.filter(v => v.lang.startsWith('vi'));
-                    const otherVoices = voices.filter(v => !v.lang.startsWith('vi'));
-                    const sortedVoices = [...vietnameseVoices, ...otherVoices];
-                    
-                    let firstVietnameseVoiceFound = false;
+        const toggleSidebar = (show) => { document.getElementById('sidebar').classList.toggle('-translate-x-full', !show); document.getElementById('sidebar-overlay').classList.toggle('hidden', !show); };
+        document.getElementById('menu-btn').onclick = () => toggleSidebar(true);
+        document.getElementById('sidebar-overlay').onclick = document.getElementById('close-sidebar-btn').onclick = () => toggleSidebar(false);
 
-                    sortedVoices.forEach(voice => {
-                        const option = document.createElement('option');
-                        option.textContent = `${voice.name} (${voice.lang})`;
-                        option.setAttribute('data-lang', voice.lang);
-                        option.setAttribute('data-name', voice.name);
-                        
-                        if (voice.lang.startsWith('vi') && !firstVietnameseVoiceFound) {
-                            option.selected = true;
-                            firstVietnameseVoiceFound = true;
-                        }
-                        
-                        voiceSelect.appendChild(option);
+        function switchView(view) {
+            Object.values(DOM.views).forEach(v => { v.classList.add('hidden'); v.classList.remove('flex'); });
+            DOM.views[view].classList.remove('hidden'); DOM.views[view].classList.add('flex');
+            
+            if (view === 'editor' && DOM.editor.inp.value.trim()) {
+                DOM.tts.panel.classList.remove('hidden'); DOM.tts.panel.classList.add('flex');
+                DOM.editor.wrap.classList.remove('hidden'); DOM.editor.wrap.classList.add('flex');
+                DOM.chat.wrap.classList.remove('hidden');
+            } else {
+                DOM.tts.panel.classList.add('hidden'); DOM.tts.panel.classList.remove('flex');
+                DOM.editor.wrap.classList.add('hidden'); DOM.editor.wrap.classList.remove('flex');
+                DOM.chat.wrap.classList.add('hidden'); DOM.chat.win.classList.add('hidden'); DOM.chat.btn.classList.remove('hidden');
+            }
+            if (window.innerWidth < 768) toggleSidebar(false);
+        }
+
+        let typingTimer;
+        DOM.editor.inp.addEventListener('input', () => {
+            DOM.editor.status.textContent = "Chưa lưu..."; DOM.editor.status.className = "text-xs text-amber-500 font-medium hidden md:block";
+            clearTimeout(typingTimer);
+            typingTimer = setTimeout(() => {
+                processContent();
+                if (auth.currentUser && DOM.editor.inp.value.trim().length > 20) DOM.btns.save.click(); 
+            }, 800);
+        });
+
+        // ==========================================
+        // 3. PARSE VĂN BẢN VÀ MỤC LỤC
+        // ==========================================
+        function processContent() {
+            handleStopReading();
+            const text = DOM.editor.inp.value;
+            DOM.editor.disp.innerHTML = ''; DOM.editor.toc.innerHTML = ''; STATE.sentences = [];
+            
+            if (!text.trim()) { switchView('editor'); DOM.editor.title.textContent = 'Bản Xem Trước'; return; }
+            switchView('editor');
+            
+            const lines = text.split('\n');
+            DOM.editor.title.textContent = lines[0].replace(/^#+\s*/, '').slice(0, 50) || "Tài liệu";
+            
+            let hasHeading = false;
+            lines.forEach((line, idx) => {
+                const trimLine = line.trim();
+                if (!trimLine) return;
+
+                if (trimLine.startsWith('#') || (trimLine.length > 5 && trimLine.length < 70 && trimLine === trimLine.toUpperCase())) {
+                    hasHeading = true;
+                    const hText = trimLine.replace(/^#+\s*/, '');
+                    const hId = `heading-${idx}`;
+                    
+                    const h = document.createElement('h3');
+                    h.textContent = hText; h.id = hId; h.className = 'text-xl font-bold text-indigo-700 mt-6 mb-2';
+                    DOM.editor.disp.appendChild(h);
+                    STATE.sentences.push({ element: h, text: hText }); 
+
+                    const tLink = document.createElement('a');
+                    tLink.href = `#${hId}`; tLink.textContent = hText;
+                    tLink.className = 'block p-2 rounded-lg text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 truncate transition cursor-pointer';
+                    tLink.onclick = (e) => { e.preventDefault(); h.scrollIntoView({ behavior: 'smooth', block: 'start' }); document.querySelectorAll('#toc-container a').forEach(a => a.classList.remove('active')); tLink.classList.add('active'); if (window.innerWidth < 768) toggleSidebar(false); };
+                    DOM.editor.toc.appendChild(tLink);
+                } else {
+                    const p = document.createElement('p');
+                    p.className = 'mb-4 text-justify leading-relaxed';
+                    const chunks = trimLine.match(/[^.?!]+(?:[.?!]+["']?|$)(?=\s|$)/g);
+                    if (chunks) {
+                        chunks.forEach(s => {
+                            const sTrim = s.trim();
+                            if(sTrim) {
+                                const span = document.createElement('span');
+                                span.textContent = sTrim + " "; span.className = 'transition-colors duration-200 cursor-pointer rounded hover:bg-indigo-50';
+                                span.onclick = () => { handleStopReading(); STATE.isReading = true; speakSentence(STATE.sentences.findIndex(x => x.element === span)); DOM.tts.play.disabled = true; document.getElementById('read-play-text').textContent = "Đang đọc..."; DOM.tts.stop.disabled = false; };
+                                p.appendChild(span);
+                                STATE.sentences.push({ element: span, text: sTrim });
+                            }
+                        });
+                    }
+                    DOM.editor.disp.appendChild(p);
+                }
+            });
+            DOM.editor.tocPanel.classList.toggle('hidden', !hasHeading); DOM.editor.tocPanel.classList.toggle('flex', hasHeading);
+        }
+
+        // ==========================================
+        // 4. ĐỌC THÔNG MINH (DUAL TTS ENGINE)
+        // ==========================================
+        async function initVoices() {
+            return new Promise(resolve => {
+                const build = () => {
+                    STATE.voices = synth.getVoices();
+                    DOM.tts.voice.innerHTML = '';
+                    
+                    const gtOpt = new Option(GOOGLE_TTS_NAME, GOOGLE_TTS_NAME);
+                    DOM.tts.voice.appendChild(gtOpt);
+
+                    const viVoices = STATE.voices.filter(v => v.lang.startsWith('vi'));
+                    viVoices.forEach(v => {
+                        const isVip = v.name.includes('Online') || v.name.includes('Natural');
+                        const opt = new Option(`${isVip ? '✨ ' : ''}${v.name.replace('Microsoft', 'Giọng').replace('Online (Natural) - ', '')}`, v.name);
+                        DOM.tts.voice.appendChild(opt);
                     });
                     resolve();
                 };
-                if (synth.getVoices().length) {
-                    checkVoices();
-                } else {
-                    synth.onvoiceschanged = () => { 
-                        checkVoices(); 
-                        synth.onvoiceschanged = null;
-                    };
-                }
+                if (synth.getVoices().length) build(); else synth.onvoiceschanged = () => { build(); synth.onvoiceschanged = null; };
             });
         }
 
-        function handlePlayReading() {
-            if (isReading && synth.paused) {
-                synth.resume();
-            } else {
-                isReading = true;
-                speakSentence(currentSentenceIndex);
+        function highlightSentence(idx) {
+            STATE.sentences.forEach(s => s.element.classList.remove('highlight-sentence'));
+            if (idx >= 0 && idx < STATE.sentences.length) {
+                const el = STATE.sentences[idx].element;
+                el.classList.add('highlight-sentence');
+                const container = DOM.editor.disp;
+                // Cuộn mượt mà trượt theo câu đang đọc
+                container.scrollTo({ top: el.offsetTop - container.offsetTop - container.clientHeight / 2 + 50, behavior: 'smooth' });
             }
-            readPlayBtn.disabled = true;
-            readPlayText.textContent = "Đang đọc";
-            readStopBtn.disabled = false;
         }
+
+        function speakSentence(idx) {
+            if (idx >= STATE.sentences.length || !STATE.isReading) return handleStopReading();
+            STATE.currentIdx = idx; highlightSentence(idx);
+            
+            const text = STATE.sentences[idx].text;
+            const voiceName = DOM.tts.voice.value;
+            const rate = parseFloat(DOM.tts.rate.value);
+
+            if (voiceName === GOOGLE_TTS_NAME) {
+                // Thuật toán: Băm nhỏ văn bản <= 150 ký tự để lách giới hạn của Google Translate (Bypass)
+                const chunks = []; let cur = '';
+                text.split(' ').forEach(w => { if((cur + ' ' + w).length <= 150) cur += (cur ? ' ' : '') + w; else { chunks.push(cur); cur = w; } });
+                if(cur) chunks.push(cur);
+
+                const playChunks = async () => {
+                    for (let c of chunks) {
+                        if (!STATE.isReading) break;
+                        const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=vi-VN&client=tw-ob&q=${encodeURIComponent(c)}`;
+                        STATE.currentAudio = new Audio(url);
+                        STATE.currentAudio.playbackRate = rate;
+                        await new Promise(res => { STATE.currentAudio.onended = res; STATE.currentAudio.onerror = res; STATE.currentAudio.play().catch(res); });
+                    }
+                    if (STATE.isReading) speakSentence(idx + 1);
+                };
+                playChunks();
+            } else {
+                const u = new SpeechSynthesisUtterance(text);
+                u.voice = STATE.voices.find(v => v.name === voiceName);
+                u.rate = rate * 0.9;
+                u.onend = () => { if(STATE.isReading) speakSentence(idx + 1); };
+                u.onerror = () => { if(STATE.isReading) speakSentence(idx + 1); }; 
+                synth.speak(u);
+            }
+        }
+
+        DOM.tts.play.onclick = () => {
+            if(!STATE.sentences.length) return showNotification('Chưa có nội dung để đọc', 'error');
+            if(STATE.isReading && synth.paused) synth.resume();
+            else { STATE.isReading = true; speakSentence(STATE.currentIdx); }
+            DOM.tts.play.disabled = true; DOM.tts.play.classList.add('opacity-50'); document.getElementById('read-play-text').textContent = "Đang đọc...";
+            DOM.tts.stop.disabled = false;
+        };
 
         function handleStopReading() {
-            isReading = false;
-            synth.cancel();
-            currentSentenceIndex = 0;
-            readPlayBtn.disabled = false;
-            readStopBtn.disabled = true;
-            readPlayText.textContent = "Đọc";
-            highlightSentence(-1);
+            STATE.isReading = false; synth.cancel();
+            if (STATE.currentAudio) { STATE.currentAudio.pause(); STATE.currentAudio = null; }
+            DOM.tts.play.disabled = false; DOM.tts.play.classList.remove('opacity-50'); document.getElementById('read-play-text').textContent = "Bắt đầu Đọc";
+            DOM.tts.stop.disabled = true; highlightSentence(-1);
         }
-        
-        function speakSentence(index) {
-            if (index >= sentences.length || !isReading) {
-                handleStopReading();
-                return;
-            }
-            currentSentenceIndex = index;
-            highlightSentence(index);
-            
-            const { text } = sentences[index];
-            const utterance = new SpeechSynthesisUtterance(text);
-            const selectedVoiceName = voiceSelect.selectedOptions[0]?.getAttribute('data-name');
-            utterance.voice = voices.find(v => v.name === selectedVoiceName);
-            utterance.rate = parseFloat(rateSlider.value);
-            
-            utterance.onend = () => {
-                if (isReading) {
-                    speakSentence(index + 1);
-                }
-            };
-            synth.speak(utterance);
-        }
-        
-        function highlightSentence(index) {
-            sentences.forEach(s => s.element.classList.remove('highlight-sentence'));
-            const sentenceData = sentences[index];
-            if (sentenceData) {
-                sentenceData.element.classList.add('highlight-sentence');
-                sentenceData.element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-        }
-        
-        // =======================================================
-        // Authentication Logic
-        // =======================================================
-        
+        DOM.tts.stop.onclick = handleStopReading;
+        DOM.tts.rate.oninput = (e) => DOM.tts.rateVal.textContent = parseFloat(e.target.value).toFixed(1) + 'x';
+
+        // ==========================================
+        // 5. FIREBASE STORAGE CLOUD
+        // ==========================================
         onAuthStateChanged(auth, user => {
+            DOM.auth.out.classList.toggle('hidden', !!user);
+            DOM.auth.in.classList.toggle('hidden', !user);
+            DOM.btns.save.disabled = !user;
+            
             if (user) {
-                loggedOutView.classList.add('hidden');
-                loggedInView.classList.remove('hidden');
-                userEmailDisplay.textContent = user.email;
-                saveArticleBtn.disabled = false;
-                newArticleBtn.click();
+                DOM.auth.name.textContent = user.email;
+                DOM.btns.new.click();
             } else {
-                loggedOutView.classList.remove('hidden');
-                loggedInView.classList.add('hidden');
-                userEmailDisplay.textContent = '';
-                saveArticleBtn.disabled = true;
-                saveArticleBtn.innerHTML = 'Chờ đăng nhập';
-                switchView('editor');
-                textInput.value = '';
-                processAndDisplayContent();
+                DOM.btns.save.innerHTML = '<i class="fas fa-lock mr-2"></i>Chờ Đăng nhập';
+                switchView('welcome');
             }
         });
 
-        registerBtn.addEventListener('click', async () => {
-            const email = authEmailInput.value;
-            const password = authPasswordInput.value;
-            if (!email || !password) {
-                showNotification('Vui lòng nhập email và mật khẩu.', 'error');
-                return;
-            }
+        const authAction = async (isLogin) => {
+            const e = DOM.auth.email.value, p = DOM.auth.pass.value;
+            if(!e || !p) return showNotification('Nhập đủ Email và Mật khẩu', 'error');
             try {
-                await createUserWithEmailAndPassword(auth, email, password);
-                showNotification('Đăng ký thành công! Chào mừng bạn.', 'success');
-            } catch (error) {
-                showNotification(`Lỗi đăng ký: ${error.message}`, 'error');
-            }
-        });
+                isLogin ? await signInWithEmailAndPassword(auth, e, p) : await createUserWithEmailAndPassword(auth, e, p);
+                Swal.fire({ toast: true, position: 'bottom-end', icon: 'success', title: 'Thành công!', showConfirmButton: false, timer: 2000 });
+                DOM.auth.pass.value = '';
+            } catch(err) { Swal.fire('Lỗi', 'Sai thông tin đăng nhập hoặc email đã tồn tại.', 'error'); }
+        };
+        document.getElementById('login-btn').onclick = () => authAction(true);
+        document.getElementById('register-btn').onclick = () => authAction(false);
+        document.getElementById('logout-btn').onclick = () => signOut(auth);
 
-        loginBtn.addEventListener('click', async () => {
-            const email = authEmailInput.value;
-            const password = authPasswordInput.value;
-            if (!email || !password) {
-                showNotification('Vui lòng nhập email và mật khẩu.', 'error');
-                return;
-            }
-            try {
-                await signInWithEmailAndPassword(auth, email, password);
-                showNotification('Đăng nhập thành công!', 'success');
-            } catch (error) {
-                showNotification(`Lỗi đăng nhập: Email hoặc mật khẩu không đúng.`, 'error');
-            }
-        });
+        DOM.btns.new.onclick = () => { DOM.editor.inp.value = ''; STATE.articleId = null; DOM.btns.save.innerHTML = '<i class="fas fa-cloud-upload-alt mr-2"></i>Lưu Cloud'; DOM.editor.status.textContent=''; switchView('editor'); processContent(); };
 
-        logoutBtn.addEventListener('click', async () => {
-            try {
-                await signOut(auth);
-                showNotification('Đã đăng xuất.', 'success');
-            } catch (error) {
-                showNotification(`Lỗi đăng xuất: ${error.message}`, 'error');
-            }
-        });
-
-        // =======================================================
-        // Firestore Logic (Library)
-        // =======================================================
-        
-        saveArticleBtn.addEventListener('click', async () => {
-            const user = auth.currentUser;
-            if (!user) { showNotification('Bạn cần đăng nhập.', 'error'); return; }
-            const content = textInput.value;
-            if (content.trim().length < 20) { showNotification('Nội dung quá ngắn.', 'error'); return; }
-
-            const title = content.split('\n')[0].trim().slice(0, 50) || "Bài viết không có tiêu đề";
+        DOM.btns.save.onclick = async () => {
+            const user = auth.currentUser; const content = DOM.editor.inp.value.trim();
+            if(!user || content.length < 20) return;
             
-            saveArticleBtn.disabled = true;
-            saveArticleBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Đang xử lý...';
+            DOM.btns.save.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i>'; DOM.editor.status.textContent = "Đang lưu..."; DOM.editor.status.className = "text-xs text-indigo-500 font-bold hidden md:block";
+            const title = content.split('\n')[0].replace(/^#+\s*/, '').slice(0, 60);
 
             try {
-                if (currentArticleId) {
-                    const articleRef = doc(db, "articles", currentArticleId);
-                    await updateDoc(articleRef, { title, content });
-                    showNotification('Đã cập nhật bài viết!', 'success');
+                if (STATE.articleId) {
+                    await updateDoc(doc(db, "articles", STATE.articleId), { title, content });
                 } else {
-                    const docRef = await addDoc(collection(db, "articles"), {
-                        title, content, ownerId: user.uid, createdAt: new Date()
-                    });
-                    currentArticleId = docRef.id;
-                    showNotification('Đã lưu bài viết thành công!', 'success');
+                    const r = await addDoc(collection(db, "articles"), { title, content, ownerId: user.uid, createdAt: new Date() });
+                    STATE.articleId = r.id;
                 }
-            } catch (error) {
-                showNotification(`Lỗi: ${error.message}`, 'error');
-            } finally {
-                saveArticleBtn.disabled = false;
-                updateSaveButtonState();
-            }
-        });
+                DOM.btns.save.innerHTML = '<i class="fas fa-sync-alt mr-2"></i>Đã cập nhật Cloud';
+                DOM.editor.status.textContent = "Đã lưu an toàn"; DOM.editor.status.className = "text-xs text-emerald-500 font-bold hidden md:block";
+            } catch(e) { DOM.editor.status.textContent = "Lỗi lưu file"; DOM.editor.status.className = "text-xs text-red-500 font-bold hidden md:block"; }
+        };
 
-        myLibraryBtn.addEventListener('click', async () => {
-            const user = auth.currentUser;
-            if (!user) return;
-
+        DOM.btns.lib.onclick = async () => {
+            if(!auth.currentUser) return;
             switchView('library');
-            libraryList.innerHTML = '<p class="text-center p-4"><i class="fas fa-spinner fa-spin"></i> Đang tải thư viện...</p>';
+            const list = document.getElementById('library-list');
+            list.innerHTML = '<div class="flex justify-center p-12"><i class="fas fa-spinner fa-spin text-4xl text-emerald-500"></i></div>';
 
-            const q = query(collection(db, "articles"), where("ownerId", "==", user.uid));
-            const querySnapshot = await getDocs(q);
-
-            const articles = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            articles.sort((a, b) => b.createdAt.toDate() - a.createdAt.toDate());
+            const snap = await getDocs(query(collection(db, "articles"), where("ownerId", "==", auth.currentUser.uid)));
+            const arr = snap.docs.map(d => ({id: d.id, ...d.data()})).sort((a,b) => b.createdAt.toDate() - a.createdAt.toDate());
             
-            if (articles.length === 0) {
-                libraryList.innerHTML = '<p class="p-4 text-center text-slate-500">Thư viện của bạn trống.</p>';
-                return;
-            }
+            document.getElementById('lib-count').textContent = `${arr.length} Bài`;
+            if(!arr.length) return list.innerHTML = '<div class="text-center p-10 text-slate-400"><i class="fas fa-folder-open text-4xl mb-3 opacity-50"></i><p>Thư viện trống.</p></div>';
 
-            libraryList.innerHTML = '';
-            articles.forEach((articleData) => {
-                const articleEl = document.createElement('div');
-                articleEl.className = 'p-4 border-b hover:bg-slate-100 cursor-pointer flex justify-between items-center group';
-                
-                const titleEl = document.createElement('span');
-                titleEl.textContent = articleData.title;
-                titleEl.className = "font-semibold text-slate-700";
-                articleEl.appendChild(titleEl);
+            list.innerHTML = arr.map(a => `
+                <div class="bg-white p-4 rounded-xl border border-slate-200 hover:border-emerald-300 hover:shadow-md cursor-pointer flex justify-between items-center group transition" onclick="window.loadArticle('${a.id}')">
+                    <div class="flex items-center gap-4 overflow-hidden pr-4">
+                        <div class="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0"><i class="fas fa-file-alt"></i></div>
+                        <div class="truncate">
+                            <h4 class="font-bold text-slate-700 group-hover:text-emerald-700 transition truncate">${a.title}</h4>
+                            <p class="text-xs text-slate-400 mt-1"><i class="far fa-clock mr-1"></i>${new Date(a.createdAt.toDate()).toLocaleDateString('vi-VN')}</p>
+                        </div>
+                    </div>
+                    <button onclick="event.stopPropagation(); window.delArticle('${a.id}')" class="w-8 h-8 rounded-full bg-rose-50 text-rose-500 hover:bg-rose-500 hover:text-white transition opacity-0 group-hover:opacity-100 shrink-0"><i class="fas fa-trash"></i></button>
+                </div>
+            `).join('');
+        };
 
-                const deleteBtn = document.createElement('button');
-                deleteBtn.innerHTML = '<i class="fas fa-trash text-slate-400 group-hover:text-red-500 transition-colors"></i>';
-                deleteBtn.className = 'p-2 rounded-full hover:bg-red-100';
-                deleteBtn.onclick = async (e) => {
-                    e.stopPropagation();
-                    if (window.confirm(`Bạn có chắc muốn xóa bài viết "${articleData.title}"?`)) {
-                        await deleteDoc(doc(db, "articles", articleData.id));
-                        articleEl.remove();
-                        showNotification('Đã xóa bài viết.', 'success');
-                        if (currentArticleId === articleData.id) {
-                            newArticleBtn.click();
-                        }
-                    }
-                };
-                articleEl.appendChild(deleteBtn);
+        window.loadArticle = async (id) => {
+            const snap = await getDocs(query(collection(db, "articles"))); const data = snap.docs.find(d => d.id === id)?.data();
+            if(data) { DOM.editor.inp.value = data.content; STATE.articleId = id; DOM.btns.save.innerHTML = '<i class="fas fa-sync-alt mr-2"></i>Cập nhật Cloud'; DOM.editor.status.textContent="Đã tải dữ liệu"; DOM.editor.status.className="text-xs text-emerald-500 font-bold hidden md:block"; switchView('editor'); processContent(); }
+        };
+        window.delArticle = async (id) => {
+            if(confirm('Xóa vĩnh viễn tài liệu này khỏi đám mây?')) { await deleteDoc(doc(db, "articles", id)); showNotification('Đã xóa', 'success'); if(STATE.articleId === id) DOM.btns.new.click(); DOM.btns.lib.click(); }
+        };
 
-                articleEl.onclick = () => {
-                    textInput.value = articleData.content;
-                    currentArticleId = articleData.id;
-                    updateSaveButtonState();
-                    switchView('editor');
-                    processAndDisplayContent();
-                };
+        // ==========================================
+        // 6. AI CÔNG CỤ (TÓM TẮT & TRẮC NGHIỆM MIỄN PHÍ)
+        // ==========================================
+        const openModal = (title) => {
+            DOM.modal.title.innerHTML = title; DOM.modal.content.innerHTML = '<div class="flex flex-col items-center justify-center py-16"><i class="fas fa-circle-notch fa-spin fa-3x text-indigo-500 mb-4"></i><p class="font-bold text-slate-500 animate-pulse">AI đang phân tích tài liệu...</p></div>';
+            DOM.modal.wrap.classList.remove('hidden'); DOM.modal.wrap.classList.add('flex');
+            setTimeout(() => DOM.modal.box.classList.replace('scale-95', 'scale-100'), 10);
+        };
+        DOM.modal.close.onclick = () => { DOM.modal.box.classList.replace('scale-100', 'scale-95'); setTimeout(() => { DOM.modal.wrap.classList.remove('flex'); DOM.modal.wrap.classList.add('hidden'); }, 200); };
 
-                libraryList.appendChild(articleEl);
-            });
-        });
-
-        newArticleBtn.addEventListener('click', () => {
-            textInput.value = '';
-            currentArticleId = null;
-            updateSaveButtonState();
-            switchView('editor');
-            processAndDisplayContent();
-        });
-
-        // =======================================================
-        // Gemini AI Logic
-        // =======================================================
-        async function callGemini(prompt, title, isQuestion = false) {
-            modalTitle.textContent = title;
-            modalContent.innerHTML = '<div class="flex justify-center items-center h-40"><i class="fas fa-spinner fa-spin fa-3x text-indigo-500"></i><p class="ml-4 text-slate-600">Gemini đang suy nghĩ...</p></div>';
-            geminiModal.classList.remove('hidden');
-            geminiModal.classList.add('flex');
-
-            const apiKey = "";
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-
-            try {
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-                });
-                if (!response.ok) throw new Error(`Lỗi API: ${response.statusText}`);
-                const result = await response.json();
-                if (result.candidates && result.candidates.length > 0) {
-                    const text = result.candidates[0].content.parts[0].text;
-                    
-                    // Sửa đổi: Xử lý hiển thị câu hỏi
-                    if (isQuestion) {
-                        renderQuestions(text);
-                    } else {
-                        let htmlContent = text
-                            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                            .replace(/\*(.*?)\*/g, '<em>$1</em>')
-                            .replace(/^(#+)\s*(.*)/gm, (match, p1, p2) => `<h${p1.length}>${p2}</h${p1.length}>`)
-                            .replace(/\n/g, '<br>');
-                        modalContent.innerHTML = htmlContent;
-                    }
-                } else {
-                    throw new Error('Không nhận được phản hồi hợp lệ.');
-                }
-            } catch (error) {
-                modalContent.textContent = `Đã xảy ra lỗi: ${error.message}`;
-            }
-        }
-
-        function renderQuestions(text) {
-            modalContent.innerHTML = '';
-            const questionBlocks = text.split(/Câu hỏi \d+:/).filter(q => q.trim() !== '');
+        DOM.ai.sum.onclick = async () => {
+            const txt = DOM.editor.inp.value.trim().substring(0, 5000); 
+            if(txt.length < 50) return showNotification('Văn bản quá ngắn', 'error');
+            openModal('<i class="fas fa-compress-alt text-sky-500 mr-2"></i> Bản Tóm Tắt AI');
             
-            questionBlocks.forEach((block, index) => {
-                const lines = block.trim().split('\n').filter(line => line.trim() !== '');
-                const questionText = lines[0];
-                const options = lines.slice(1, -1);
-                const answerLine = lines[lines.length - 1];
+            const messages = [
+                { role: "system", content: "Bạn là chuyên gia tóm tắt. Tóm tắt siêu ngắn gọn văn bản bằng tiếng Việt, dùng Markdown đẹp mắt (gạch đầu dòng, in đậm)." },
+                { role: "user", content: txt }
+            ];
+            const res = await callFreeAI(messages);
+            if(res) DOM.modal.content.innerHTML = marked.parse(res);
+            else DOM.modal.content.innerHTML = `<div class="text-red-500 font-bold p-4 bg-red-50 rounded-lg">Lỗi máy chủ AI. Vui lòng thử lại sau.</div>`;
+        };
 
-                const questionContainer = document.createElement('div');
-                questionContainer.className = 'mb-6 p-4 border rounded-lg';
+        DOM.ai.quiz.onclick = async () => {
+            const txt = DOM.editor.inp.value.trim().substring(0, 4000); 
+            if(txt.length < 50) return showNotification('Văn bản quá ngắn', 'error');
+            openModal('<i class="fas fa-clipboard-question text-teal-500 mr-2"></i> Trắc Nghiệm Thông Minh');
+            
+            const messages = [
+                { role: "system", content: `Bạn là giáo viên. Ra 3-5 câu trắc nghiệm kiểm tra kiến thức dựa vào văn bản. 
+                CHỈ TRẢ VỀ DUY NHẤT MẢNG JSON, KHÔNG THÊM BẤT CỨ TỪ NÀO KHÁC. Cấu trúc mẫu bắt buộc:
+                [{"q":"Câu hỏi?","opts":["A.","B.","C.","D."],"ans":"A. Đáp án","exp":"Giải thích chi tiết"}]` },
+                { role: "user", content: txt }
+            ];
+            
+            const res = await callFreeAI(messages, true);
+            if(res) {
+                try {
+                    const quiz = JSON.parse(res);
+                    DOM.modal.content.innerHTML = quiz.map((item, i) => `
+                        <div class="mb-6 p-5 bg-slate-50 border border-slate-200 rounded-2xl">
+                            <h4 class="font-bold text-indigo-900 text-lg mb-4">Câu ${i+1}: ${item.q}</h4>
+                            <div class="space-y-2 mb-4 pl-2">
+                                ${item.opts.map(o => `<div class="p-3 bg-white border border-slate-200 rounded-xl text-slate-700 hover:border-indigo-400 transition cursor-pointer shadow-sm">${o}</div>`).join('')}
+                            </div>
+                            <details class="group bg-white border border-indigo-200 rounded-xl overflow-hidden shadow-sm">
+                                <summary class="p-4 font-bold text-indigo-600 bg-indigo-50/50 hover:bg-indigo-100 flex justify-between items-center outline-none transition"><span class="flex items-center"><i class="fas fa-eye mr-2"></i> Xem Đáp án & Giải thích</span> <i class="fas fa-chevron-down transform group-open:rotate-180 transition duration-300"></i></summary>
+                                <div class="p-5 border-t border-indigo-100 text-slate-700 bg-indigo-50/20 leading-relaxed">
+                                    <p class="font-bold text-emerald-600 mb-2 text-lg"><i class="fas fa-check-circle mr-1"></i> ${item.ans}</p>
+                                    <p class="text-sm italic text-slate-600">${item.exp}</p>
+                                </div>
+                            </details>
+                        </div>
+                    `).join('');
+                } catch(e) { DOM.modal.content.innerHTML = `<div class="text-red-500 font-bold p-4 bg-red-50 rounded-lg">Không thể tạo trắc nghiệm lúc này do máy chủ AI công cộng quá tải. Hãy thử bấm lại nút Bài tập.</div>`; }
+            } else {
+                DOM.modal.content.innerHTML = `<div class="text-red-500 font-bold">Lỗi kết nối máy chủ AI. Vui lòng thử lại.</div>`;
+            }
+        };
 
-                const questionP = document.createElement('p');
-                questionP.className = 'font-semibold';
-                questionP.textContent = `Câu hỏi ${index + 1}: ${questionText}`;
-                questionContainer.appendChild(questionP);
+        // ==========================================
+        // 7. GIA SƯ CHATBOT RAG (HIỂU BỐI CẢNH)
+        // ==========================================
+        DOM.chat.btn.onclick = () => { DOM.chat.win.classList.remove('hidden'); DOM.chat.win.classList.add('flex'); DOM.chat.btn.classList.add('hidden'); setTimeout(()=> DOM.chat.win.classList.replace('scale-0','scale-100'), 10); DOM.chat.inp.focus(); };
+        DOM.chat.close.onclick = () => { DOM.chat.win.classList.replace('scale-100','scale-0'); setTimeout(()=> { DOM.chat.win.classList.add('hidden'); DOM.chat.win.classList.remove('flex'); DOM.chat.btn.classList.remove('hidden'); }, 300); };
 
-                const optionsList = document.createElement('ul');
-                optionsList.className = 'list-none pl-0 mt-2 space-y-1';
-                options.forEach(opt => {
-                    const li = document.createElement('li');
-                    li.textContent = opt;
-                    optionsList.appendChild(li);
-                });
-                questionContainer.appendChild(optionsList);
+        const appendMsg = (isUser, txt, isTyping=false) => {
+            const div = document.createElement('div');
+            div.className = `flex items-end gap-2 w-full ${isUser ? 'flex-row-reverse' : ''}`;
+            const ava = `<div class="w-8 h-8 rounded-full shrink-0 flex items-center justify-center text-xs ${isUser ? 'bg-slate-200 text-slate-500' : 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-md'}"><i class="fas fa-${isUser?'user':'robot'}"></i></div>`;
+            const bub = `<div class="${isUser ? 'bg-indigo-600 text-white rounded-l-2xl rounded-tr-2xl' : 'bg-white border border-slate-200 text-slate-700 rounded-r-2xl rounded-tl-2xl prose prose-sm max-w-none'} px-4 py-3 text-[14px] shadow-sm max-w-[80%] leading-relaxed">${isTyping ? '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>' : (isUser ? txt : marked.parse(txt))}</div>`;
+            div.innerHTML = ava + bub;
+            DOM.chat.msgs.appendChild(div); DOM.chat.msgs.scrollTop = DOM.chat.msgs.scrollHeight;
+            return div;
+        };
 
-                const details = document.createElement('details');
-                details.className = 'mt-3';
+        DOM.chat.form.onsubmit = async (e) => {
+            e.preventDefault(); const msg = DOM.chat.inp.value.trim(); if(!msg) return;
+            const context = DOM.editor.inp.value.substring(0, 6000); 
 
-                const summary = document.createElement('summary');
-                summary.className = 'font-semibold text-indigo-600 cursor-pointer hover:underline';
-                summary.textContent = 'Xem đáp án';
-                details.appendChild(summary);
+            DOM.chat.inp.value = ''; appendMsg(true, msg); const loadEl = appendMsg(false, '', true);
 
-                const answerP = document.createElement('p');
-                answerP.className = 'mt-2 p-2 bg-green-100 text-green-800 rounded';
-                answerP.textContent = answerLine;
-                details.appendChild(answerP);
+            // Gắn ngữ cảnh vào não bộ AI
+            if(STATE.chatHistory.length === 0) {
+                STATE.chatHistory.push({ role: "system", content: `Đóng vai gia sư AI thông minh. Sử dụng bài viết sau làm kiến thức nền tảng để trả lời:\n\n${context}` });
+            }
+            STATE.chatHistory.push({ role: "user", content: msg });
 
-                questionContainer.appendChild(details);
-                modalContent.appendChild(questionContainer);
-            });
-        }
+            const ans = await callFreeAI(STATE.chatHistory);
+            
+            loadEl.remove();
+            if(ans) {
+                STATE.chatHistory.push({ role: "assistant", content: ans });
+                appendMsg(false, ans);
+            } else {
+                appendMsg(false, "❌ Xin lỗi, máy chủ AI miễn phí đang quá tải. Bạn hãy thử hỏi lại.");
+                STATE.chatHistory.pop(); 
+            }
+        };
 
-        summarizeBtn.addEventListener('click', () => {
-            const text = textInput.value;
-            if (text.trim().length < 50) { showNotification("Văn bản quá ngắn để tóm tắt."); return; }
-            const prompt = `Tóm tắt văn bản sau đây thành các gạch đầu dòng súc tích bằng tiếng Việt:\n\n---\n\n${text}`;
-            callGemini(prompt, "✨ Tóm tắt từ Gemini", false);
-        });
-
-        questionsBtn.addEventListener('click', () => {
-            const text = textInput.value;
-            if (text.trim().length < 50) { showNotification("Văn bản quá ngắn để tạo câu hỏi."); return; }
-            const prompt = `Dựa vào văn bản sau, hãy tạo 3-5 câu hỏi trắc nghiệm bằng tiếng Việt để kiểm tra mức độ hiểu bài. Với mỗi câu hỏi, hãy bắt đầu bằng "Câu hỏi [số]:", theo sau là các lựa chọn A, B, C, D trên các dòng riêng, và cuối cùng là đáp án trên một dòng riêng bắt đầu bằng "Đáp án:".\n\n---\n\n${text}`;
-            callGemini(prompt, "✨ Câu hỏi từ Gemini", true);
-        });
-
-        modalCloseBtn.addEventListener('click', () => geminiModal.classList.add('hidden'));
-
-        // =======================================================
-        // Chat AI Logic
-        // =======================================================
-        openChatBtn.addEventListener('click', () => { /* ... */ });
-        closeChatBtn.addEventListener('click', () => { /* ... */ });
-        chatForm.addEventListener('submit', async (e) => { /* ... */ });
-        function addMessageToChat(sender, text, isLoading = false) { /* ... */ }
-        function updateLastBotMessage(text) { /* ... */ }
-        async function callChatGemini(prompt) { /* ... */ }
-
-        // =======================================================
-        // Helper Functions & Event Listeners
-        // =======================================================
-        function showNotification(message, type = 'info') { /* ... */ }
-        textInput.addEventListener('input', () => { /* ... */ });
-        readPlayBtn.addEventListener('click', handlePlayReading);
-        readStopBtn.addEventListener('click', handleStopReading);
-        rateSlider.addEventListener('input', () => {
-            rateValue.textContent = parseFloat(rateSlider.value).toFixed(1);
-        });
-
-        // Initialize
-        (async () => {
-            await populateVoiceList();
-            switchView('editor');
-        })();
-
+        // KÍCH HOẠT HỆ THỐNG
+        window.onload = () => { initVoices(); switchView('welcome'); };
     </script>
 </body>
 </html>
