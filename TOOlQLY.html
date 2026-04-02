@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="vi" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event CRM Enterprise | Minh Sư Tịnh Quang</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script> <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #0f172a; color: #f8fafc; overflow-x: hidden; }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+        /* Glassmorphism Panel */
+        .glass-panel { background: rgba(30, 41, 59, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); }
+
+        /* Form Controls */
+        .form-control {
+            background-color: #1e293b; border: 1px solid #334155; color: #f8fafc;
+            border-radius: 0.5rem; padding: 0.6rem 1rem; width: 100%; transition: all 0.2s; outline: none; font-size: 0.875rem;
+        }
+        .form-control:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25); }
+
+        /* Buttons */
+        .btn { padding: 0.6rem 1rem; border-radius: 0.5rem; font-weight: 600; font-size: 0.875rem; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; transition: all 0.2s; cursor: pointer; border: none; }
+        .btn:active { transform: scale(0.96); }
+        .btn-primary { background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white; box-shadow: 0 4px 14px 0 rgba(37, 99, 235, 0.3); }
+        .btn-primary:hover { background: linear-gradient(135deg, #1d4ed8, #1e3a8a); }
+        .btn-secondary { background-color: #334155; color: white; border: 1px solid #475569; }
+        .btn-secondary:hover { background-color: #475569; }
+        .btn-danger { background-color: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); }
+        .btn-danger:hover { background-color: #ef4444; color: white; }
+        .btn-ai { background: linear-gradient(135deg, #9333ea, #db2777); color: white; box-shadow: 0 4px 14px 0 rgba(219, 39, 119, 0.3); }
+        .btn-ai:hover { background: linear-gradient(135deg, #7e22ce, #be185d); }
+
+        /* Spreadsheet-like Table */
+        .sheet-table { width: 100%; border-collapse: separate; border-spacing: 0; }
+        .sheet-table th { background: #1e293b; color: #94a3b8; font-weight: 600; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.05em; padding: 12px 16px; position: sticky; top: 0; z-index: 10; border-bottom: 2px solid #3b82f6; text-align: left; }
+        .sheet-table td { border-bottom: 1px solid #1e293b; padding: 12px 16px; font-size: 0.875rem; background: #0f172a; transition: background 0.2s; white-space: pre-wrap; vertical-align: top;}
+        .sheet-table tr:hover td { background-color: #1e293b; }
+        
+        /* Notion-style Inline Editing */
+        .editable-cell { cursor: text; }
+        .editable-cell:focus { background: #1e1b4b !important; outline: 2px solid #818cf8; outline-offset: -2px; border-radius: 4px; color: white; }
+
+        /* SweetAlert Override for Dark Mode */
+        .swal2-popup { background: #1e293b !important; color: #f8fafc !important; border-radius: 1rem !important; border: 1px solid #334155; }
+        .swal2-title { color: #f8fafc !important; font-family: 'Plus Jakarta Sans', sans-serif !important; }
+        .swal2-input, .swal2-textarea, .swal2-select { background: #0f172a !important; color: #fff !important; border: 1px solid #334155 !important; }
+        
+        /* Hidden Print Area */
+        #printable-report { position: absolute; left: -9999px; top: -9999px; background: white; color: black; padding: 40px; width: 1200px; z-index: -1; }
+    </style>
+</head>
+<body class="flex flex-col h-screen overflow-hidden">
+
+    <div id="loading-overlay" class="fixed inset-0 bg-slate-900/90 z-[9999] flex flex-col items-center justify-center transition-opacity duration-500">
+        <i class="fa-solid fa-circle-notch fa-spin text-5xl text-blue-500 mb-4"></i>
+        <div class="text-blue-400 text-sm tracking-widest font-medium animate-pulse uppercase">Đang khởi tạo hệ thống...</div>
+    </div>
+
+    <header class="glass-panel mx-6 mt-4 px-6 py-4 flex flex-col lg:flex-row items-center justify-between gap-4 z-40 shrink-0 rounded-2xl">
+        <div class="flex items-center gap-4 w-full lg:w-auto justify-center lg:justify-start">
+            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg text-white">
+                <i class="fa-solid fa-calendar-check text-2xl"></i>
+            </div>
+            <div>
+                <h1 class="text-2xl font-bold tracking-tight text-white">Event CRM <span class="bg-blue-500/20 text-blue-400 text-[10px] px-2 py-0.5 rounded-md uppercase ml-1 align-top">Pro</span></h1>
+                <p class="text-[11px] text-slate-400 font-semibold tracking-widest uppercase mt-1">Minh Sư Tịnh Quang</p>
+            </div>
+        </div>
+
+        <div class="flex flex-wrap items-center justify-center gap-2 bg-slate-800/50 p-1.5 rounded-xl border border-slate-700 w-full lg:w-auto">
+            <select id="eventSelector" class="form-control border-none bg-transparent font-semibold text-white focus:box-shadow-none cursor-pointer min-w-[250px]"></select>
+            <button onclick="App.db.createEvent()" class="btn btn-primary px-3" title="Tạo sự kiện mới"><i class="fa-solid fa-plus"></i></button>
+            <button onclick="App.ui.renameEvent()" class="btn btn-secondary px-3" title="Đổi tên sự kiện"><i class="fa-solid fa-pen"></i></button>
+            <button onclick="App.ui.shareEvent()" class="btn btn-secondary px-3" title="Chia sẻ Link"><i class="fa-solid fa-share-nodes"></i></button>
+            <button onclick="App.db.deleteEvent()" class="btn btn-danger px-3 hover:bg-red-500" title="Xóa sự kiện"><i class="fa-solid fa-trash"></i></button>
+        </div>
+
+        <div class="flex gap-2 w-full lg:w-auto justify-center">
+            <button onclick="App.export.showOptions()" class="btn bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-900/50"><i class="fa-solid fa-file-export"></i> Xuất File</button>
+            <button onclick="App.ai.openAssistant()" class="btn btn-ai shadow-lg shadow-purple-900/50"><i class="fa-solid fa-wand-magic-sparkles"></i> AI Copilot</button>
+            <button onclick="App.ai.configKey()" class="btn btn-secondary text-amber-400 border-amber-500/30 hover:bg-amber-500/20" title="Cài đặt API Key"><i class="fa-solid fa-key"></i></button>
+        </div>
+    </header>
+
+    <main class="flex-1 p-6 grid grid-cols-1 xl:grid-cols-4 gap-6 max-w-[1920px] w-full mx-auto overflow-hidden">
+        
+        <aside class="xl:col-span-1 flex flex-col gap-6 overflow-y-auto hide-scrollbar">
+            
+            <div class="glass-panel p-5 rounded-2xl">
+                <h3 id="formTitle" class="text-sm font-bold text-blue-400 uppercase tracking-wider mb-4 pb-3 border-b border-slate-700/50 flex justify-between items-center">
+                    <span><i class="fa-solid fa-keyboard mr-2"></i> Nhập liệu</span>
+                </h3>
+                <select id="formSectionSelect" class="form-control text-sm mb-4" onchange="App.ui.renderForm()"></select>
+                <form id="regForm" class="space-y-4"></form>
+                <button type="button" onclick="App.ui.saveForm()" class="btn btn-primary w-full mt-5"><i class="fa-solid fa-check"></i> Lưu vào Bảng</button>
+            </div>
+
+            <div class="glass-panel p-5 rounded-2xl flex flex-col h-[380px] shrink-0">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-sm font-bold text-emerald-400 uppercase tracking-wider"><i class="fa-solid fa-chart-pie mr-2"></i> Phân tích</h3>
+                    <select id="chartColSelect" class="form-control py-1 px-2 w-32 text-xs bg-slate-900 border-slate-700" onchange="App.chart.update()"></select>
+                </div>
+                <div class="flex-1 relative w-full h-full flex items-center justify-center">
+                    <canvas id="analyticsChart"></canvas>
+                </div>
+            </div>
+        </aside>
+
+        <section class="xl:col-span-3 glass-panel p-5 rounded-2xl flex flex-col overflow-hidden">
+            <div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4 shrink-0">
+                <h2 class="text-lg font-bold text-white"><i class="fa-solid fa-table-list mr-2 text-blue-500"></i> Cơ sở dữ liệu Sự kiện</h2>
+                <button onclick="App.ui.manageSections()" class="btn btn-secondary text-sm border-dashed"><i class="fa-solid fa-layer-group"></i> Quản lý Cấu trúc (Tab/Cột)</button>
+            </div>
+            
+            <div id="sectionsContainer" class="space-y-8 flex-1 overflow-y-auto pr-2 pb-10">
+                <div class="flex flex-col items-center justify-center h-full text-slate-500">
+                    <i class="fa-solid fa-folder-open text-6xl mb-4 opacity-50"></i>
+                    <p>Chưa có dữ liệu sự kiện.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div id="printable-report"></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getFirestore, doc, onSnapshot, collection, query, addDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+
+        // Khởi tạo SweetAlert
+        const Toast = Swal.mixin({ toast: true, position: 'bottom-end', showConfirmButton: false, timer: 3000, timerProgressBar: true });
+
+        // ========================================================
+        // KIẾN TRÚC ENTERPRISE OOP (Object-Oriented Programming)
+        // ========================================================
+        window.App = {
+            config: {
+                firebase: {
+                    apiKey: "AIzaSyBVAwc637Ql73tmvCe0VjXccg9Zg5KtT_g",
+                    authDomain: "noidungdanang.firebaseapp.com",
+                    projectId: "noidungdanang"
+                },
+                defaultCols: [
+                    { id: 'col_name', label: "Họ và Tên / Hạng mục" }, 
+                    { id: 'col_province', label: "Khu vực / Đơn vị" }, 
+                    { id: 'col_category', label: "Phân loại / Vai trò" },
+                    { id: 'col_notes', label: "Ghi chú" }
+                ]
+            },
+
+            state: {
+                db: null, auth: null, user: null,
+                events: [], currentEventId: null, currentEventData: null,
+                activeSectionId: null, chartInstance: null,
+                unsubEvent: null, unsubList: null
+            },
+
+            // 1. KHỞI TẠO APP
+            async init() {
+                try {
+                    const app = initializeApp(this.config.firebase);
+                    this.state.db = getFirestore(app);
+                    this.state.auth = getAuth(app);
+
+                    onAuthStateChanged(this.state.auth, async (user) => {
+                        if (user) {
+                            this.state.user = user;
+                            this.db.listenToEventList();
+                        } else {
+                            await signInAnonymously(this.state.auth);
+                        }
+                    });
+
+                    // Lắng nghe URL Hash để chia sẻ link
+                    window.addEventListener('hashchange', () => {
+                        const hashId = window.location.hash.substring(1);
+                        if (hashId && hashId !== this.state.currentEventId) this.db.loadEvent(hashId);
+                    });
+
+                    // Lắng nghe phím Enter khi Sửa trực tiếp (Inline Edit)
+                    document.getElementById('sectionsContainer').addEventListener('keydown', (e) => {
+                        if (e.target.classList.contains('editable-cell') && e.key === 'Enter') {
+                            e.preventDefault(); e.target.blur(); 
+                        }
+                    });
+                } catch (error) {
+                    Swal.fire('Lỗi Hệ Thống', 'Không thể kết nối Firebase. Kiểm tra mạng hoặc API Key.', 'error');
+                }
+            },
+
+            // 2. FIREBASE DATABASE LOGIC
+            db: {
+                listenToEventList() {
+                    const q = query(collection(App.state.db, "events"));
+                    if(App.state.unsubList) App.state.unsubList();
+
+                    App.state.unsubList = onSnapshot(q, (snapshot) => {
+                        App.state.events = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a,b) => b.createdAt - a.createdAt);
+                        
+                        const sel = document.getElementById('eventSelector');
+                        
+                        if (App.state.events.length === 0) {
+                            sel.innerHTML = '<option value="">Không có sự kiện. Hãy tạo mới!</option>';
+                            document.getElementById('loading-overlay').classList.add('opacity-0', 'pointer-events-none');
+                            return;
+                        }
+
+                        sel.innerHTML = App.state.events.map(e => `<option value="${e.id}">${e.name}</option>`).join('');
+
+                        const hashId = window.location.hash.substring(1);
+                        if (hashId && App.state.events.find(e => e.id === hashId)) {
+                            sel.value = hashId;
+                            if(App.state.currentEventId !== hashId) this.loadEvent(hashId);
+                        } else if (!App.state.currentEventId) {
+                            window.location.hash = App.state.events[0].id;
+                        } else {
+                            sel.value = App.state.currentEventId;
+                        }
+                    });
+
+                    document.getElementById('eventSelector').addEventListener('change', (e) => window.location.hash = e.target.value);
+                },
+
+                loadEvent(eventId) {
+                    if(App.state.unsubEvent) App.state.unsubEvent();
+                    App.state.currentEventId = eventId;
+                    document.getElementById('eventSelector').value = eventId;
+
+                    App.state.unsubEvent = onSnapshot(doc(App.state.db, 'events', eventId), (docSnap) => {
+                        document.getElementById('loading-overlay').classList.add('opacity-0', 'pointer-events-none');
+                        
+                        if (docSnap.exists()) {
+                            let data = docSnap.data();
+                            // Migration tự động fix lỗi data cũ
+                            if (!data.sections) {
+                                data.sections = [{ id: `sec_1`, title: "Bảng dữ liệu chính", columns: data.columns || App.config.defaultCols, registrations: data.registrations || [], isTransposed: false }];
+                                this.saveEventState();
+                            }
+                            
+                            App.state.currentEventData = data;
+                            if(!App.state.activeSectionId || !data.sections.find(s => s.id === App.state.activeSectionId)) {
+                                App.state.activeSectionId = data.sections[0].id;
+                            }
+                            
+                            App.ui.renderWorkspace();
+                        } else {
+                            window.location.hash = '';
+                        }
+                    });
+                },
+
+                async createEvent() {
+                    const { value: name } = await Swal.fire({ title: 'Tạo Sự Kiện Mới', input: 'text', inputPlaceholder: 'Tên sự kiện (VD: Gala Dinner 2026)', showCancelButton: true, background: '#1e293b', color: '#fff' });
+                    if (!name) return;
+
+                    const newEvent = {
+                        name: name.trim(), createdAt: Date.now(), owner: App.state.user.uid,
+                        sections: [{ id: `sec_${Date.now()}`, title: "Báo cáo Tổng hợp", columns: App.config.defaultCols, registrations: [], isTransposed: false }]
+                    };
+                    const docRef = await addDoc(collection(App.state.db, "events"), newEvent);
+                    window.location.hash = docRef.id;
+                    Toast.fire({ icon: 'success', title: 'Đã tạo sự kiện mới' });
+                },
+
+                async saveEventState(showToast = false) {
+                    if (!App.state.currentEventId) return;
+                    await updateDoc(doc(App.state.db, 'events', App.state.currentEventId), {
+                        name: App.state.currentEventData.name,
+                        sections: App.state.currentEventData.sections
+                    });
+                    if(showToast) Toast.fire({ icon: 'success', title: 'Đã lưu hệ thống' });
+                },
+
+                async deleteEvent() {
+                    if (!App.state.currentEventId) return;
+                    const confirm = await Swal.fire({ title: 'Xóa vĩnh viễn?', text: `Sự kiện "${App.state.currentEventData.name}" sẽ bị xóa hoàn toàn.`, icon: 'warning', showCancelButton: true, confirmButtonColor: '#ef4444', confirmButtonText: 'Đồng ý Xóa', background: '#1e293b', color: '#fff' });
+                    if (confirm.isConfirmed) {
+                        await deleteDoc(doc(App.state.db, 'events', App.state.currentEventId));
+                        window.location.hash = '';
+                        Toast.fire({ icon: 'success', title: 'Đã xóa sự kiện' });
+                    }
+                }
+            },
+
+            // 3. GIAO DIỆN & TƯƠNG TÁC (UI)
+            ui: {
+                renderWorkspace() {
+                    this.renderSections();
+                    this.renderForm();
+                    App.chart.setup();
+                },
+
+                renderSections() {
+                    const data = App.state.currentEventData;
+                    if (!data || !data.sections) return;
+
+                    document.getElementById('sectionsContainer').innerHTML = data.sections.map(sec => {
+                        const isTrans = sec.isTransposed;
+                        let tableHtml = '';
+
+                        if (isTrans) {
+                            // Render Bảng ngang
+                            tableHtml = `<thead><tr><th class="w-32 bg-slate-900 border-r border-slate-700 z-20" style="left:0">Hạng mục</th>${sec.registrations.map((r,i) => `<th class="text-center font-mono w-40 min-w-[150px]">${i+1}</th>`).join('')}</tr></thead><tbody>`;
+                            sec.columns.forEach(col => {
+                                tableHtml += `<tr><td class="font-bold bg-slate-800/80 text-blue-400 sticky left-0 z-10 border-r border-slate-700">${col.label}</td>`;
+                                sec.registrations.forEach(reg => {
+                                    tableHtml += `<td class="editable-cell" contenteditable="plaintext-only" onblur="App.ui.saveInlineCell(this, '${sec.id}', '${reg.id}', '${col.id}')">${reg.values[col.id] || ''}</td>`;
+                                });
+                                tableHtml += `</tr>`;
+                            });
+                            tableHtml += `<tr><td class="font-bold bg-slate-800/80 text-rose-400 sticky left-0 z-10 border-r border-slate-700">Tác vụ</td>${sec.registrations.map(r => `<td class="text-center"><button onclick="App.ui.deleteRow('${sec.id}', '${r.id}')" class="btn btn-danger py-1 px-2 text-xs"><i class="fa-solid fa-trash"></i> Xóa</button></td>`).join('')}</tr></tbody>`;
+                        } else {
+                            // Render Bảng dọc chuẩn
+                            tableHtml = `<thead><tr><th class="w-12 text-center">STT</th>${sec.columns.map(c => `<th class="min-w-[150px]">${c.label}</th>`).join('')}<th class="w-20 text-center"><i class="fa-solid fa-bolt"></i></th></tr></thead><tbody>`;
+                            if (sec.registrations.length === 0) tableHtml += `<tr><td colspan="100%" class="text-center py-10 text-slate-500 italic">Bảng trống. Hãy nhập dữ liệu ở Form bên trái.</td></tr>`;
+                            
+                            sec.registrations.forEach((reg, i) => {
+                                tableHtml += `<tr>
+                                    <td class="text-center text-slate-500 font-mono text-sm">${i + 1}</td>
+                                    ${sec.columns.map(c => `<td class="editable-cell" contenteditable="plaintext-only" title="Click để sửa" onblur="App.ui.saveInlineCell(this, '${sec.id}', '${reg.id}', '${c.id}')">${reg.values[c.id] || ''}</td>`).join('')}
+                                    <td class="text-center">
+                                        <button onclick="App.ui.deleteRow('${sec.id}', '${reg.id}')" class="text-slate-500 hover:text-red-400 transition" title="Xóa dòng"><i class="fa-solid fa-trash-can"></i></button>
+                                    </td>
+                                </tr>`;
+                            });
+                            tableHtml += `</tbody>`;
+                        }
+
+                        return `
+                            <div class="bg-slate-800/40 rounded-xl border border-slate-700/80 overflow-hidden shadow-lg">
+                                <div class="bg-slate-900/80 px-5 py-4 border-b border-slate-700 flex flex-wrap justify-between items-center gap-3">
+                                    <h3 class="font-bold text-lg text-white flex items-center gap-2"><i class="fa-solid fa-table-cells text-blue-500"></i> ${sec.title} <span class="bg-blue-900/50 text-blue-300 text-[10px] px-2 py-0.5 rounded-full uppercase ml-1">${sec.registrations.length}</span></h3>
+                                    <div class="flex gap-2">
+                                        <button onclick="App.ui.toggleTranspose('${sec.id}')" class="btn btn-secondary !py-1.5 !px-3 text-xs" data-tooltip="Lật bảng Ngang/Dọc"><i class="fa-solid fa-retweet"></i></button>
+                                        <button onclick="App.ui.manageColumns('${sec.id}')" class="btn btn-secondary !py-1.5 !px-3 text-xs" data-tooltip="Chỉnh sửa cột"><i class="fa-solid fa-columns"></i> Cột</button>
+                                    </div>
+                                </div>
+                                <div class="overflow-x-auto relative">
+                                    <table class="sheet-table">${tableHtml}</table>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                },
+
+                // Magic Inline Edit (Giống Google Sheets)
+                async saveInlineCell(el, secId, regId, colId) {
+                    const newVal = el.innerText.trim();
+                    const sec = App.state.currentEventData.sections.find(s => s.id === secId);
+                    const reg = sec.registrations.find(r => r.id === regId);
+                    
+                    if (reg.values[colId] !== newVal) {
+                        reg.values[colId] = newVal;
+                        
+                        // Hiệu ứng chớp xanh khi lưu thành công
+                        const oldBg = el.style.backgroundColor;
+                        el.style.backgroundColor = 'rgba(16, 185, 129, 0.2)'; 
+                        
+                        await App.db.saveEventState(); // Silent Save
+                        setTimeout(() => el.style.backgroundColor = oldBg, 300);
+                    }
+                },
+
+                async deleteRow(secId, regId) {
+                    const sec = App.state.currentEventData.sections.find(s => s.id === secId);
+                    sec.registrations = sec.registrations.filter(r => r.id !== regId);
+                    await App.db.saveEventState();
+                },
+
+                async toggleTranspose(secId) {
+                    const sec = App.state.currentEventData.sections.find(s => s.id === secId);
+                    sec.isTransposed = !sec.isTransposed;
+                    await App.db.saveEventState();
+                },
+
+                // Nhập liệu Form
+                renderForm() {
+                    const data = App.state.currentEventData;
+                    if(!data || !data.sections) return;
+
+                    const secSelect = document.getElementById('formSectionSelect');
+                    const oldVal = secSelect.value;
+                    secSelect.innerHTML = data.sections.map(s => `<option value="${s.id}">${s.title}</option>`).join('');
+                    if(oldVal && data.sections.find(s=>s.id===oldVal)) secSelect.value = oldVal;
+                    
+                    App.state.activeSectionId = secSelect.value;
+                    const sec = data.sections.find(s => s.id === App.state.activeSectionId);
+
+                    document.getElementById('regForm').innerHTML = sec.columns.map(col => `
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-400 mb-1 uppercase tracking-wider">${col.label}</label>
+                            ${col.label.toLowerCase().includes('ghi chú') || col.label.toLowerCase().includes('nội dung')
+                                ? `<textarea id="inp_${col.id}" rows="3" class="form-control resize-none" placeholder="Nhập ${col.label}..."></textarea>`
+                                : `<input type="text" id="inp_${col.id}" class="form-control" placeholder="Nhập ${col.label}...">`
+                            }
+                        </div>
+                    `).join('');
+                },
+
+                async saveForm() {
+                    const sec = App.state.currentEventData.sections.find(s => s.id === App.state.activeSectionId);
+                    const values = {};
+                    let hasData = false;
+                    
+                    sec.columns.forEach(c => {
+                        const val = document.getElementById(`inp_${c.id}`).value.trim();
+                        values[c.id] = val;
+                        if(val) hasData = true;
+                    });
+
+                    if(!hasData) return Toast.fire({ icon: 'warning', title: 'Vui lòng nhập ít nhất 1 ô' });
+
+                    sec.registrations.push({ id: `reg_${Date.now()}`, values });
+                    await App.db.saveEventState();
+                    
+                    // Reset form
+                    sec.columns.forEach(c => document.getElementById(`inp_${c.id}`).value = '');
+                    document.getElementById(`inp_${sec.columns[0].id}`)?.focus();
+                    Toast.fire({ icon: 'success', title: 'Đã thêm dòng mới' });
+                },
+
+                // Popup Quản lý Sections & Columns (Dynamic SweetAlert)
+                async manageSections() {
+                    let tempSecs = JSON.parse(JSON.stringify(App.state.currentEventData.sections));
+                    
+                    const renderHtml = () => `<div id="swalSortSecs" class="text-left space-y-2 max-h-64 overflow-y-auto pr-2">` + 
+                        tempSecs.map(s => `
+                            <div class="flex items-center gap-2 bg-slate-800 p-2 rounded border border-slate-600" data-id="${s.id}">
+                                <i class="fa-solid fa-grip-vertical text-slate-500 cursor-move mx-1"></i>
+                                <input type="text" class="form-control !py-1 !px-2 flex-1" value="${s.title}" onchange="App.ui._tmpUpdateSec('${s.id}', this.value)">
+                                <button onclick="App.ui._tmpDelSec('${s.id}')" class="text-rose-400 hover:text-rose-500 p-2"><i class="fa-solid fa-trash"></i></button>
+                            </div>
+                        `).join('') + `</div><button class="btn btn-secondary w-full mt-4 border border-dashed border-slate-500" onclick="App.ui._tmpAddSec()"><i class="fa-solid fa-plus"></i> Thêm Tab Mới</button>`;
+
+                    // Define helper functions globally for SweetAlert
+                    App.ui._tmpUpdateSec = (id, val) => { tempSecs.find(x => x.id === id).title = val; };
+                    App.ui._tmpDelSec = (id) => { if(tempSecs.length>1) { tempSecs = tempSecs.filter(x => x.id !== id); document.getElementById('swalStructDiv').innerHTML = renderHtml(); } else Swal.showValidationMessage('Phải giữ lại ít nhất 1 Bảng'); };
+                    App.ui._tmpAddSec = () => { tempSecs.push({ id: `sec_${Date.now()}`, title: 'Bảng Mới', columns: App.config.defaultCols, registrations: [], isTransposed: false }); document.getElementById('swalStructDiv').innerHTML = renderHtml(); };
+
+                    const res = await Swal.fire({
+                        title: '<i class="fa-solid fa-layer-group text-blue-400"></i> Quản lý Tab/Bảng',
+                        html: `<div id="swalStructDiv">${renderHtml()}</div>`,
+                        background: '#1e293b', color: '#fff', width: '500px', showCancelButton: true, confirmButtonText: 'Lưu thay đổi',
+                        didOpen: () => new Sortable(document.getElementById('swalSortSecs'), { animation: 150 })
+                    });
+
+                    if (res.isConfirmed) {
+                        // Cập nhật lại thứ tự dựa trên DOM sau khi kéo thả
+                        const newOrder = [...document.getElementById('swalSortSecs').children].map(el => el.dataset.id);
+                        App.state.currentEventData.sections = newOrder.map(id => tempSecs.find(s => s.id === id));
+                        await App.db.saveEventState(true);
+                    }
+                },
+
+                async manageColumns(secId) {
+                    const sec = App.state.currentEventData.sections.find(s => s.id === secId);
+                    let tempCols = JSON.parse(JSON.stringify(sec.columns));
+
+                    const renderHtml = () => `<div id="swalSortCols" class="text-left space-y-2 max-h-64 overflow-y-auto pr-2">` + 
+                        tempCols.map(c => `
+                            <div class="flex items-center gap-2 bg-slate-800 p-2 rounded border border-slate-600" data-id="${c.id}">
+                                <i class="fa-solid fa-grip-vertical text-slate-500 cursor-move mx-1"></i>
+                                <input type="text" class="form-control !py-1 !px-2 flex-1" value="${c.label}" onchange="App.ui._tmpUpdateCol('${c.id}', this.value)">
+                                <button onclick="App.ui._tmpDelCol('${c.id}')" class="text-rose-400 hover:text-rose-500 p-2"><i class="fa-solid fa-trash"></i></button>
+                            </div>
+                        `).join('') + `</div><button class="btn btn-secondary w-full mt-4 border border-dashed border-slate-500" onclick="App.ui._tmpAddCol()"><i class="fa-solid fa-plus"></i> Thêm Cột Mới</button>`;
+
+                    App.ui._tmpUpdateCol = (id, val) => { tempCols.find(x => x.id === id).label = val; };
+                    App.ui._tmpDelCol = (id) => { if(tempCols.length>1) { tempCols = tempCols.filter(x => x.id !== id); document.getElementById('swalColsDiv').innerHTML = renderHtml(); } else Swal.showValidationMessage('Phải giữ lại ít nhất 1 Cột'); };
+                    App.ui._tmpAddCol = () => { tempCols.push({ id: `col_${Date.now()}`, label: 'Cột mới' }); document.getElementById('swalColsDiv').innerHTML = renderHtml(); };
+
+                    const res = await Swal.fire({
+                        title: `<i class="fa-solid fa-columns text-emerald-400"></i> Cột của "${sec.title}"`,
+                        html: `<div id="swalColsDiv">${renderHtml()}</div>`,
+                        background: '#1e293b', color: '#fff', width: '500px', showCancelButton: true, confirmButtonText: 'Lưu thay đổi',
+                        didOpen: () => new Sortable(document.getElementById('swalSortCols'), { animation: 150 })
+                    });
+
+                    if (res.isConfirmed) {
+                        const newOrder = [...document.getElementById('swalSortCols').children].map(el => el.dataset.id);
+                        sec.columns = newOrder.map(id => tempCols.find(c => c.id === id));
+                        await App.db.saveEventState(true);
+                    }
+                },
+
+                async renameEvent() {
+                    const { value: name } = await Swal.fire({ title: 'Đổi tên sự kiện', input: 'text', inputValue: App.state.currentEventData.name, showCancelButton: true, background: '#1e293b', color: '#fff' });
+                    if (name && name.trim()) {
+                        App.state.currentEventData.name = name.trim();
+                        await App.db.saveEventState(true);
+                    }
+                },
+
+                shareEvent() {
+                    navigator.clipboard.writeText(window.location.href);
+                    Toast.fire({ icon: 'success', title: 'Đã copy Link sự kiện!' });
+                }
+            },
+
+            // 4. BIỂU ĐỒ (REAL-TIME ANALYTICS)
+            chart: {
+                setup() {
+                    const sec = App.state.currentEventData.sections[0];
+                    if (!sec) return;
+                    
+                    const sel = document.getElementById('chartColSelect');
+                    const oldVal = sel.value;
+                    
+                    // Chỉ lấy những cột không phải là Tên hoặc Ghi chú để thống kê
+                    const validCols = sec.columns.filter(c => !c.id.includes('name') && !c.id.includes('note'));
+                    sel.innerHTML = validCols.length > 0 
+                        ? validCols.map(c => `<option value="${c.id}">${c.label}</option>`).join('')
+                        : sec.columns.map(c => `<option value="${c.id}">${c.label}</option>`).join(''); // Fallback
+
+                    if (oldVal && sec.columns.some(c => c.id === oldVal)) sel.value = oldVal;
+                    
+                    this.update();
+                },
+
+                update() {
+                    const sec = App.state.currentEventData.sections[0];
+                    const colId = document.getElementById('chartColSelect').value;
+                    const ctx = document.getElementById('analyticsChart').getContext('2d');
+                    
+                    if (App.state.chartInstance) App.state.chartInstance.destroy();
+
+                    if (!sec || !colId || sec.registrations.length === 0) {
+                        ctx.canvas.style.display = 'none'; return;
+                    }
+                    ctx.canvas.style.display = 'block';
+
+                    // Group Data
+                    const counts = {};
+                    sec.registrations.forEach(r => {
+                        const val = r.values[colId]?.trim() || 'Chưa xác định';
+                        counts[val] = (counts[val] || 0) + 1;
+                    });
+
+                    Chart.defaults.color = '#94a3b8';
+                    App.state.chartInstance = new Chart(ctx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: Object.keys(counts),
+                            datasets: [{ data: Object.values(counts), backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#64748b'], borderWidth: 0 }]
+                        },
+                        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { family: 'Inter', size: 11 }, boxWidth: 12 } } }, cutout: '65%' }
+                    });
+                }
+            },
+
+            // 5. TRÍ TUỆ NHÂN TẠO (GEMINI) - BẢO MẬT & KHÁNG LỖI
+            ai: {
+                async configKey() {
+                    const { value: key } = await Swal.fire({
+                        title: '<i class="fa-solid fa-key text-amber-400"></i> Cấu hình Gemini API',
+                        html: `<p class="text-sm text-slate-400 text-left mb-4">Nhập API Key để kích hoạt AI. Mã được mã hóa và lưu an toàn trong máy bạn.</p>
+                               <input type="password" id="swalGeminiKey" class="form-control" value="${localStorage.getItem('gemini_api_key') || ''}" placeholder="AIzaSy...">
+                               <div class="text-left mt-2"><a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-xs text-blue-400 hover:underline">Nhận API Key miễn phí tại đây</a></div>`,
+                        background: '#1e293b', color: '#fff', showCancelButton: true, confirmButtonText: 'Lưu Hệ thống',
+                        preConfirm: () => document.getElementById('swalGeminiKey').value.trim()
+                    });
+
+                    if (key !== undefined) {
+                        localStorage.setItem('gemini_api_key', key);
+                        Toast.fire({ icon: 'success', title: 'Đã lưu cấu hình AI' });
+                    }
+                },
+
+                async openAssistant() {
+                    const key = localStorage.getItem('gemini_api_key');
+                    if (!key) return this.configKey();
+
+                    const secOpts = App.state.currentEventData.sections.map(s => `<option value="${s.id}">${s.title}</option>`).join('');
+
+                    const { value: form } = await Swal.fire({
+                        title: '✨ AI Copilot',
+                        html: `
+                            <div class="text-left space-y-4">
+                                <div>
+                                    <label class="text-sm font-semibold text-slate-300 block mb-1">Chủ đề sự kiện / Lời nhắc:</label>
+                                    <textarea id="aiPrompt" class="form-control h-20" placeholder="VD: Lên danh sách 5 trò chơi Team Building..."></textarea>
+                                </div>
+                                <div>
+                                    <label class="text-sm font-semibold text-slate-300 block mb-1">Loại nhiệm vụ:</label>
+                                    <select id="aiMode" class="form-control">
+                                        <option value="text">Chỉ hỏi & Trả lời (Văn bản)</option>
+                                        <option value="table">Tự động sinh dữ liệu đổ vào Bảng</option>
+                                    </select>
+                                </div>
+                                <div id="aiTargetBox" class="hidden">
+                                    <label class="text-sm font-semibold text-emerald-400 block mb-1">Chọn bảng để chèn dữ liệu:</label>
+                                    <select id="aiTarget" class="form-control bg-emerald-900/20 border-emerald-500/50">${secOpts}</select>
+                                </div>
+                            </div>
+                        `,
+                        background: '#1e293b', color: '#fff', showCancelButton: true, confirmButtonText: '<i class="fa-solid fa-paper-plane"></i> Xử lý ngay',
+                        didOpen: () => {
+                            document.getElementById('aiMode').onchange = (e) => {
+                                document.getElementById('aiTargetBox').style.display = e.target.value === 'table' ? 'block' : 'none';
+                            };
+                        },
+                        preConfirm: () => ({ prompt: document.getElementById('aiPrompt').value, mode: document.getElementById('aiMode').value, target: document.getElementById('aiTarget').value })
+                    });
+
+                    if (form && form.prompt) this.processAI(form, key);
+                },
+
+                async processAI(form, key) {
+                    Swal.fire({ title: 'AI đang phân tích...', html: 'Vui lòng chờ khoảng 5-10 giây.', allowOutsideClick: false, background: '#1e293b', color: '#fff', didOpen: () => Swal.showLoading() });
+
+                    const sec = form.mode === 'table' ? App.state.currentEventData.sections.find(s => s.id === form.target) : null;
+                    let sysPrompt = `Bạn là chuyên gia tổ chức sự kiện. Chủ đề: "${form.prompt}". `;
+                    
+                    if (form.mode === 'table') {
+                        const cols = sec.columns.map(c => `"${c.id}": "[Nội dung của ${c.label}]"`).join(', ');
+                        sysPrompt += `Hãy sinh ra 5 dòng dữ liệu giả định để thêm vào bảng. YÊU CẦU BẮT BUỘC: Trả về DUY NHẤT một mảng JSON hợp lệ chứa các Object. Cấu trúc Object phải CHÍNH XÁC như sau: {${cols}}. Không giải thích gì thêm, KHÔNG bọc trong markdown.`;
+                    } else {
+                        sysPrompt += `Trình bày bằng tiếng Việt, sử dụng Markdown rõ ràng (tiêu đề, in đậm, danh sách dấu chấm).`;
+                    }
+
+                    try {
+                        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`, {
+                            method: 'POST', headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ contents: [{ role: "user", parts: [{ text: sysPrompt }] }] })
+                        });
+                        
+                        if (!res.ok) throw new Error("API Key không hợp lệ hoặc máy chủ Google đang bận.");
+                        const data = await res.json();
+                        const textResult = data.candidates[0].content.parts[0].text;
+
+                        if (form.mode === 'table') {
+                            // Kỹ thuật Regex kháng lỗi bọc Markdown của Gemini (VD: ```json ... ```)
+                            const match = textResult.match(/```json\s*([\s\S]*?)\s*```/) || textResult.match(/\[([\s\S]*?)\]/);
+                            const jsonStr = match ? match[0].replace(/```json|```/g, '') : textResult;
+                            
+                            const arr = JSON.parse(jsonStr.trim());
+                            arr.forEach(item => sec.registrations.push({ id: `reg_ai_${Date.now()}_${Math.random()}`, values: item }));
+                            await App.db.saveEventState();
+                            
+                            Swal.fire({ icon: 'success', title: 'Thành công', text: `Đã tự động chèn ${arr.length} dòng dữ liệu vào bảng "${sec.title}".`, background: '#1e293b', color: '#fff' });
+                        } else {
+                            // Dùng marked.js để render HTML đẹp mắt
+                            Swal.fire({
+                                title: 'Kết quả từ AI', width: '800px', background: '#1e293b', color: '#fff',
+                                html: `<div class="text-left prose prose-invert prose-sm max-w-none bg-slate-900 border border-slate-700 p-5 rounded-lg overflow-y-auto max-h-[60vh]">${marked.parse(textResult)}</div>`,
+                                confirmButtonText: '<i class="fa-solid fa-copy"></i> Copy Văn bản'
+                            }).then(r => { if(r.isConfirmed) { navigator.clipboard.writeText(textResult); Toast.fire({icon: 'success', title: 'Đã copy'}); } });
+                        }
+                    } catch (error) {
+                        Swal.fire('Lỗi AI', 'Không thể đọc hiểu dữ liệu từ Gemini. Hãy thử viết câu lệnh rõ ràng hơn.', 'error');
+                    }
+                }
+            },
+
+            // 6. XUẤT FILE XỊN SÒ
+            export: {
+                showOptions() {
+                    if (!App.state.currentEventData || App.state.currentEventData.sections[0].registrations.length === 0) return Swal.fire('Lưu ý', 'Bảng chưa có dữ liệu để xuất!', 'warning');
+                    Swal.fire({
+                        title: 'Xuất Báo Cáo', background: '#1e293b', color: '#fff',
+                        html: `
+                            <div class="grid grid-cols-2 gap-4 mt-4">
+                                <button onclick="Swal.close(); App.export.toExcel()" class="btn bg-emerald-600 hover:bg-emerald-500 text-white py-4 flex flex-col items-center gap-2"><i class="fa-solid fa-file-excel text-3xl"></i> File Excel</button>
+                                <button onclick="Swal.close(); App.export.toPDF()" class="btn bg-rose-600 hover:bg-rose-500 text-white py-4 flex flex-col items-center gap-2"><i class="fa-solid fa-file-pdf text-3xl"></i> File PDF (In ấn)</button>
+                            </div>
+                        `,
+                        showConfirmButton: false, showCloseButton: true
+                    });
+                },
+
+                toExcel() {
+                    const wb = XLSX.utils.book_new();
+                    App.state.currentEventData.sections.forEach((sec, idx) => {
+                        const wsData = [ [sec.title.toUpperCase()], ['STT', ...sec.columns.map(c => c.label)] ];
+                        sec.registrations.forEach((reg, i) => wsData.push([i + 1, ...sec.columns.map(c => reg.values[c.id] || '')]));
+                        const ws = XLSX.utils.aoa_to_sheet(wsData);
+                        XLSX.utils.book_append_sheet(wb, ws, sec.title.substring(0, 30) || `Bang_${idx}`);
+                    });
+                    XLSX.writeFile(wb, `${App.state.currentEventData.name}.xlsx`);
+                    Toast.fire({ icon: 'success', title: 'Đã tải Excel' });
+                },
+
+                async toPDF() {
+                    Toast.fire({ icon: 'info', title: 'Đang tạo bản in PDF...' });
+                    const container = document.getElementById('printable-report');
+                    
+                    // Tạo DOM HTML tĩnh nền trắng để in PDF nét nhất
+                    let html = `<div style="font-family: Arial, sans-serif;">
+                                    <h1 style="text-align: center; color: #1e3a8a; margin-bottom: 20px; font-size: 24px; text-transform: uppercase;">BÁO CÁO: ${App.state.currentEventData.name}</h1>`;
+                    
+                    App.state.currentEventData.sections.forEach(sec => {
+                        html += `<h2 style="color: #2563eb; margin-top: 30px; font-size: 16px;">${sec.title}</h2>
+                                 <table style="width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 10px;">
+                                     <thead><tr style="background: #f1f5f9;">
+                                         <th style="border: 1px solid #94a3b8; padding: 8px; text-align: center;">STT</th>
+                                         ${sec.columns.map(c => `<th style="border: 1px solid #94a3b8; padding: 8px; text-align: left;">${c.label}</th>`).join('')}
+                                     </tr></thead><tbody>`;
+                        sec.registrations.forEach((reg, i) => {
+                            html += `<tr><td style="border: 1px solid #94a3b8; padding: 8px; text-align: center;">${i+1}</td>
+                                     ${sec.columns.map(c => `<td style="border: 1px solid #94a3b8; padding: 8px;">${reg.values[c.id] || ''}</td>`).join('')}</tr>`;
+                        });
+                        html += `</tbody></table>`;
+                    });
+                    
+                    container.innerHTML = html + `</div>`;
+                    container.classList.add('visible-for-capture');
+                    
+                    setTimeout(async () => {
+                        const canvas = await html2canvas(container.firstChild, { scale: 2 });
+                        const imgData = canvas.toDataURL('image/jpeg', 1.0);
+                        const { jsPDF } = window.jspdf;
+                        const pdf = new jsPDF('p', 'pt', 'a4');
+                        const pdfWidth = pdf.internal.pageSize.getWidth();
+                        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+                        pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+                        pdf.save(`${App.state.currentEventData.name}.pdf`);
+                        container.classList.remove('visible-for-capture');
+                        container.innerHTML = '';
+                    }, 500);
+                }
+            }
+        };
+
+        // Kích hoạt Ứng dụng
+        document.addEventListener('DOMContentLoaded', () => App.init());
+    </script>
+</body>
+</html>
