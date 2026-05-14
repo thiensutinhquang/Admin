@@ -1,1194 +1,673 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản lý Liên kết YouTube cho NotebookLM</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            /* Enhanced subtle background gradient with a hint of texture */
-            background: linear-gradient(to bottom right, #eef2f5, #e0e6eb);
-            /* Added subtle diagonal lines pattern for more depth and slightly more visible */
-            background-image: radial-gradient(circle at top left, rgba(255,255,255,0.4) 1%, transparent 60%), /* More opaque, larger spread */
-                              radial-gradient(circle at bottom right, rgba(255,255,255,0.4) 1%, transparent 60%), /* More opaque, larger spread */
-                              repeating-linear-gradient(45deg, rgba(255,255,255,0.3) 0, rgba(255,255,255,0.3) 8px, transparent 8px, transparent 80px); /* Increased visibility and spacing, more diffused */
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            padding: 20px;
-            box-sizing: border-box;
-        }
-        .container {
-            background-color: #ffffff;
-            padding: 40px; /* Increased padding */
-            border-radius: 35px; /* Even more rounded corners */
-            /* More pronounced, layered shadow for depth and a subtle glow */
-            box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.5), /* Deeper main shadow */
-                        0 15px 30px -8px rgba(0, 0, 0, 0.35), /* Secondary shadow */
-                        0 0 90px 30px rgba(0, 200, 200, 0.35); /* Soft teal/cyan glow, slightly more diffused and prominent */
-            max-width: 650px;
-            width: 100%;
-            text-align: center;
-            border: 1px solid #c8d1d8; /* Slightly more defined subtle border */
-        }
-        textarea {
-            resize: vertical;
-            min-height: 150px;
-            transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s;
-        }
-        textarea:focus {
-            border-color: #6366f1;
-            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.4);
-            outline: none;
-        }
-        textarea.input-active {
-            animation: inputGlow 0.5s ease-out;
-        }
-        @keyframes inputGlow {
-            0% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.2); }
-            100% { box-shadow: 0 0 0 4px rgba(99, 102, 241, 0); }
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#4f46e5" />
+  <title>Quản lý Liên kết YouTube cho NotebookLM</title>
+  <style>
+    :root {
+      --bg-1: #eef2ff;
+      --bg-2: #ecfeff;
+      --card: rgba(255, 255, 255, 0.94);
+      --text: #111827;
+      --muted: #64748b;
+      --line: #dbe4ef;
+      --primary: #4f46e5;
+      --primary-dark: #4338ca;
+      --success: #059669;
+      --success-soft: #ecfdf5;
+      --danger: #dc2626;
+      --danger-soft: #fef2f2;
+      --warning: #d97706;
+      --warning-soft: #fffbeb;
+      --info: #2563eb;
+      --info-soft: #eff6ff;
+      --shadow: 0 24px 70px rgba(15, 23, 42, 0.18);
+      --radius-xl: 28px;
+      --radius-lg: 18px;
+      --radius-md: 12px;
+    }
 
-        /* Drag and Drop styles for textarea */
-        textarea.drag-over {
-            border-color: #6366f1;
-            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.4);
-            background-color: #e0e7fa;
-        }
-        /* Hover effect for textareas */
-        textarea:not(:focus):hover {
-            border-color: #94a3b8; /* Slightly darker gray border on hover */
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15); /* More prominent shadow on hover */
-        }
+    * { box-sizing: border-box; }
 
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(79, 70, 229, 0.18), transparent 34%),
+        radial-gradient(circle at bottom right, rgba(14, 165, 233, 0.18), transparent 36%),
+        linear-gradient(135deg, var(--bg-1), var(--bg-2));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 22px;
+    }
 
-        .button-primary {
-            background-color: #4f46e5;
-            color: #ffffff;
-            padding: 14px 28px;
-            border-radius: 12px;
-            font-weight: 600;
-            font-size: 1.125rem;
-            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out, box-shadow 0.2s ease-in-out;
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4); /* Stronger initial shadow */
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            outline: none;
-        }
-        .button-primary:hover {
-            background-color: #4338ca;
-            transform: translateY(-6px); /* Even more pronounced lift */
-            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.6); /* Even more prominent shadow on hover */
-        }
-        .button-primary:active {
-            transform: translateY(0);
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.35);
-        }
-        .button-primary:focus-visible {
-            outline: 2px solid #6366f1;
-            outline-offset: 2px;
-        }
+    button, textarea, input { font: inherit; }
 
-        .button-secondary {
-            background-color: #10b981;
-            color: #ffffff;
-            padding: 14px 28px;
-            border-radius: 12px;
-            font-weight: 600;
-            font-size: 1.125rem;
-            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out, box-shadow 0.2s ease-in-out;
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            outline: none;
-        }
-        .button-secondary:hover {
-            background-color: #059669;
-            transform: translateY(-6px);
-            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.6);
-        }
-        .button-secondary:active {
-            transform: translateY(0);
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.35);
-        }
-        .button-secondary:focus-visible {
-            outline: 2px solid #059669;
-            outline-offset: 2px;
-        }
+    .app {
+      width: min(100%, 760px);
+      background: var(--card);
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow);
+      padding: clamp(20px, 5vw, 40px);
+      backdrop-filter: blur(12px);
+    }
 
-        .button-tertiary {
-            background-color: #ef4444;
-            color: #ffffff;
-            padding: 8px 16px;
-            border-radius: 8px;
-            font-weight: 500;
-            font-size: 0.9rem;
-            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out, box-shadow 0.2s ease-in-out;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 4px;
-            outline: none;
-        }
-        .button-tertiary:hover {
-            background-color: #dc2626;
-            transform: translateY(-3px);
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
-        }
-        .button-tertiary:active {
-            transform: translateY(0);
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
-        }
-        .button-tertiary:focus-visible {
-            outline: 2px solid #dc2626;
-            outline-offset: 2px;
-        }
+    .header { text-align: center; margin-bottom: 26px; }
 
-        .button-paste {
-            background-color: #f97316;
-            color: #ffffff;
-            padding: 8px 16px;
-            border-radius: 8px;
-            font-weight: 500;
-            font-size: 0.9rem;
-            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out, box-shadow 0.2s ease-in-out;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 4px;
-            outline: none;
-        }
-        .button-paste:hover {
-            background-color: #ea580c;
-            transform: translateY(-3px);
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
-        }
-        .button-paste:active {
-            transform: translateY(0);
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
-        }
-        .button-paste:focus-visible {
-            outline: 2px solid #ea580c;
-            outline-offset: 2px;
-        }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 12px;
+      border-radius: 999px;
+      background: var(--info-soft);
+      color: #1d4ed8;
+      font-weight: 700;
+      font-size: 0.86rem;
+      margin-bottom: 12px;
+    }
 
-        .button-reset {
-            background-color: #6b7280;
-            color: #ffffff;
-            padding: 12px 24px;
-            border-radius: 12px;
-            font-weight: 600;
-            font-size: 1.05rem;
-            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out, box-shadow 0.2s ease-in-out;
-            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.3);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            outline: none;
-        }
-        .button-reset:hover {
-            background-color: #4b5563;
-            transform: translateY(-4px);
-            box-shadow: 0 18px 32px rgba(0, 0, 0, 0.5);
-        }
-        .button-reset:active {
-            transform: translateY(0);
-            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.3);
-        }
-        .button-reset:focus-visible {
-            outline: 2px solid #4b5563;
-            outline-offset: 2px;
-        }
+    h1 {
+      margin: 0;
+      font-size: clamp(1.9rem, 5vw, 3rem);
+      line-height: 1.05;
+      letter-spacing: -0.045em;
+    }
 
-        .button-view-link {
-            background-color: #3b82f6;
-            color: #ffffff;
-            padding: 8px 16px;
-            border-radius: 8px;
-            font-weight: 500;
-            font-size: 0.9rem;
-            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out, box-shadow 0.2s ease-in-out;
-            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 4px;
-            margin-top: 10px;
-            margin-left: auto;
-            margin-right: auto;
-            outline: none;
-        }
-        .button-view-link:hover {
-            background-color: #2563eb;
-            transform: translateY(-2px);
-            box-shadow: 0 7px 14px rgba(0, 0, 0, 0.45);
-        }
-        .button-view-link:active {
-            transform: translateY(0);
-            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
-        }
-        .button-view-link:focus-visible {
-            outline: 2px solid #2563eb;
-            outline-offset: 2px;
-        }
+    .subtitle {
+      margin: 12px auto 0;
+      max-width: 610px;
+      color: var(--muted);
+      line-height: 1.55;
+      font-size: 1rem;
+    }
 
-        .button-clear-summary {
-            background-color: #9ca3af;
-            color: #ffffff;
-            padding: 8px 16px;
-            border-radius: 8px;
-            font-weight: 500;
-            font-size: 0.9rem;
-            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 4px;
-            margin-left: auto;
-            outline: none;
-        }
-        .button-clear-summary:hover {
-            background-color: #6b7280;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
-        }
-        .button-clear-summary:active {
-            transform: translateY(0);
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-        }
-        .button-clear-summary:focus-visible {
-            outline: 2px solid #6b7280;
-            outline-offset: 2px;
-        }
+    .field { text-align: left; margin: 22px 0; }
 
+    label {
+      display: block;
+      font-weight: 800;
+      color: #334155;
+      margin-bottom: 10px;
+    }
 
-        /* Styling for the copy confirmation message */
-        .copy-message {
-            opacity: 0;
-            transition: opacity 0.4s ease-in-out, transform 0.4s ease-in-out;
-            padding: 10px 20px;
-            border-radius: 10px;
-            margin-top: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            transform: translateY(15px);
-            font-size: 1rem;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        }
-        .copy-message.show {
-            opacity: 1;
-            transform: translateY(0);
-        }
-        .copy-message.success {
-            background-color: #d1fae5;
-            color: #065f46;
-            border: 1px solid #34d399;
-        }
-        .copy-message.error {
-            background-color: #fee2e2;
-            color: #991b1b;
-            border: 1px solid #f87171;
-        }
+    .input-wrap { position: relative; }
 
-        /* Styling for current link display */
-        #currentLink {
-            background-color: #f8fafc;
-            border: 1px solid #e2e8f0;
-            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
-            transition: all 0.3s ease-in-out;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            min-height: 80px;
-            font-size: 1.1rem;
-            font-weight: 500;
-            word-break: break-all;
-            position: relative;
-        }
-        #currentLink.completed-state {
-            background-color: #ecfdf5;
-            border-color: #34d399;
-            color: #065f46;
-            font-weight: 600;
-            box-shadow: 0 0 0 2px rgba(52, 211, 153, 0.5);
-        }
-        #currentLink.no-links-state {
-            background-color: #e0f2fe;
-            border-color: #93c5fd;
-            color: #1e40af;
-            font-weight: 500;
-            font-style: italic;
-            box-shadow: 0 0 0 2px rgba(147, 197, 253, 0.5);
-        }
-        #currentLink:hover {
-            border-color: #93c5fd;
-            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.08), 0 0 0 3px rgba(147, 197, 253, 0.6);
-        }
-        #currentLink svg {
-            flex-shrink: 0;
-        }
+    textarea {
+      width: 100%;
+      min-height: 180px;
+      resize: vertical;
+      padding: 16px;
+      border: 1px solid #cbd5e1;
+      border-radius: var(--radius-lg);
+      color: #0f172a;
+      background: #ffffff;
+      line-height: 1.5;
+      outline: none;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    }
 
-        /* Tooltip styles */
-        #currentLink[data-tooltip]:hover::after {
-            content: attr(data-tooltip);
-            position: absolute;
-            bottom: 100%;
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: #333;
-            color: #fff;
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-size: 0.8rem;
-            white-space: nowrap;
-            z-index: 10;
-            margin-bottom: 10px;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.3s ease, visibility 0.3s ease;
-        }
-        #currentLink[data-tooltip]:hover::before {
-            content: '';
-            position: absolute;
-            bottom: 100%;
-            left: 50%;
-            transform: translateX(-50%) translateY(10px);
-            border-width: 5px;
-            border-style: solid;
-            border-color: #333 transparent transparent transparent;
-            z-index: 11;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.3s ease, visibility 0.3s ease;
-        }
-        #currentLink[data-tooltip]:hover::after,
-        #currentLink[data-tooltip]:hover::before {
-            opacity: 1;
-            visibility: visible;
-        }
+    textarea:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.16);
+    }
 
+    textarea.drag-over {
+      border-color: var(--info);
+      background: #eff6ff;
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.16);
+    }
 
-        /* Instructions section */
-        .instructions {
-            background-color: #eff6ff;
-            border-left: 5px solid #60a5fa;
-            padding: 20px;
-            border-radius: 12px;
-            text-align: left;
-            margin-top: 24px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-        }
-        .instructions p {
-            font-weight: 700;
-            color: #1e40af;
-            margin-bottom: 12px;
-            font-size: 1.1rem;
-        }
-        .instructions ol {
-            list-style-type: decimal;
-            list-style-position: inside;
-            color: #374151;
-            font-size: 0.95rem;
-            line-height: 1.6;
-        }
-        .instructions ol li {
-            margin-bottom: 6px;
-        }
+    .mini-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 12px;
+    }
 
-        /* LLM Summary Section */
-        #summarySection {
-            background-color: #f0fdf4;
-            padding: 24px;
-            border-radius: 12px;
-            margin-top: 24px;
-            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.08);
-            text-align: left;
-        }
-        #summaryOutput {
-            background-color: #ffffff;
-            border: 1px solid #d1fae5;
-            padding: 16px;
-            border-radius: 8px;
-            min-height: 80px;
-            color: #1f2937;
-            line-height: 1.6;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.03);
-            animation: fadeIn 0.5s ease-out;
-        }
-        #summaryOutput.error-state {
-            background-color: #fef2f2;
-            border-color: #fca5a5;
-            color: #991b1b;
-            font-weight: 500;
-        }
-        .loader {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #4f46e5;
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        /* Style for disabled buttons */
-        button:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-        /* Prompt suggestion buttons */
-        .prompt-suggestion-btn {
-            border: 1px solid #cbd5e0;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-            transition: background-color 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.1s ease-in-out;
-            outline: none;
-        }
-        .prompt-suggestion-btn:hover {
-            background-color: #e2e8f0;
-            border-color: #a0aec0;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            transform: translateY(-1px);
-        }
-        .prompt-suggestion-btn:active {
-            transform: translateY(0);
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-        }
-        .prompt-suggestion-btn:focus-visible {
-            outline: 2px solid #6366f1;
-            outline-offset: 2px;
-        }
-        /* Loading text animation */
-        .loading-text::after {
-            content: '...';
-            animation: ellipsis 1s infinite;
-        }
-        @keyframes ellipsis {
-            0% { content: ''; }
-            33% { content: '.'; }
-            66% { content: '..'; }
-            100% { content: '...'; }
-        }
-        /* Animation for count updates */
-        .count-update-animation {
-            animation: pulseCount 0.5s ease-out;
-        }
-        @keyframes pulseCount {
-            0% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.05); opacity: 0.8; }
-            100% { transform: scale(1); opacity: 1; }
-        }
-    </style>
+    .btn {
+      border: 0;
+      border-radius: var(--radius-md);
+      padding: 12px 16px;
+      font-weight: 800;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      color: white;
+      transition: transform 0.14s ease, box-shadow 0.14s ease, background 0.14s ease, opacity 0.14s ease;
+      user-select: none;
+      text-decoration: none;
+      min-height: 46px;
+    }
+
+    .btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 12px 24px rgba(15, 23, 42, 0.18); }
+    .btn:active:not(:disabled) { transform: translateY(0); }
+    .btn:focus-visible { outline: 3px solid rgba(79, 70, 229, 0.28); outline-offset: 3px; }
+    .btn:disabled { opacity: 0.55; cursor: not-allowed; box-shadow: none; transform: none; }
+
+    .btn-primary { background: var(--primary); }
+    .btn-primary:hover:not(:disabled) { background: var(--primary-dark); }
+    .btn-success { background: var(--success); }
+    .btn-danger { background: var(--danger); }
+    .btn-warning { background: var(--warning); }
+    .btn-muted { background: #64748b; }
+    .btn-info { background: var(--info); }
+    .btn-wide { width: 100%; font-size: 1.1rem; padding: 15px 18px; }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin: 18px 0 22px;
+    }
+
+    .stat {
+      border: 1px solid var(--line);
+      background: #f8fafc;
+      border-radius: var(--radius-lg);
+      padding: 14px 12px;
+      text-align: center;
+    }
+
+    .stat strong {
+      display: block;
+      font-size: 1.7rem;
+      line-height: 1;
+      color: var(--primary);
+      margin-bottom: 6px;
+    }
+
+    .stat span { color: var(--muted); font-weight: 700; font-size: 0.88rem; }
+
+    .current-card {
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      padding: 18px;
+      background: #ffffff;
+      box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.04);
+      margin-bottom: 16px;
+    }
+
+    .current-card h2 {
+      margin: 0 0 12px;
+      font-size: 1.15rem;
+      color: #334155;
+    }
+
+    .current-link {
+      min-height: 76px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      gap: 10px;
+      word-break: break-all;
+      border: 1px dashed #cbd5e1;
+      background: #f8fafc;
+      border-radius: var(--radius-md);
+      padding: 14px;
+      color: #0f172a;
+      font-weight: 750;
+      line-height: 1.45;
+    }
+
+    .current-link.empty { color: #1d4ed8; background: var(--info-soft); border-color: #bfdbfe; font-style: italic; }
+    .current-link.done { color: #047857; background: var(--success-soft); border-color: #a7f3d0; }
+    .current-link.error { color: #991b1b; background: var(--danger-soft); border-color: #fecaca; }
+
+    .actions {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 12px;
+      margin: 14px 0 0;
+    }
+
+    .instructions {
+      margin-top: 24px;
+      text-align: left;
+      border-left: 5px solid var(--info);
+      background: var(--info-soft);
+      border-radius: var(--radius-lg);
+      padding: 18px;
+      color: #334155;
+    }
+
+    .instructions h3 {
+      margin: 0 0 12px;
+      color: #1e40af;
+      font-size: 1.15rem;
+    }
+
+    .instructions ol {
+      margin: 0;
+      padding-left: 22px;
+      line-height: 1.65;
+    }
+
+    .instructions li + li { margin-top: 5px; }
+
+    .footer-actions {
+      display: flex;
+      justify-content: center;
+      margin-top: 22px;
+    }
+
+    .toast-stack {
+      position: fixed;
+      left: 50%;
+      bottom: 22px;
+      transform: translateX(-50%);
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: min(calc(100vw - 28px), 520px);
+      pointer-events: none;
+    }
+
+    .toast {
+      pointer-events: auto;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 10px;
+      align-items: center;
+      padding: 13px 14px;
+      border-radius: 16px;
+      box-shadow: 0 18px 42px rgba(15, 23, 42, 0.24);
+      background: #111827;
+      color: #fff;
+      animation: toastIn 0.22s ease-out;
+    }
+
+    .toast.success { background: #065f46; }
+    .toast.error { background: #991b1b; }
+    .toast.warning { background: #92400e; }
+    .toast.info { background: #1e3a8a; }
+    .toast button { background: transparent; color: inherit; border: 0; cursor: pointer; padding: 4px; opacity: 0.75; }
+    .toast button:hover { opacity: 1; }
+
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateY(12px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    @media (max-width: 680px) {
+      body { padding: 12px; align-items: flex-start; }
+      .app { border-radius: 22px; }
+      .stats { grid-template-columns: 1fr; }
+      .actions { grid-template-columns: 1fr; }
+      .mini-actions .btn { width: 100%; }
+      .footer-actions .btn { width: 100%; }
+    }
+  </style>
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-height-100vh p-5">
-    <div class="container">
-        <h1 class="text-4xl font-extrabold text-gray-800 mb-8">Quản lý Liên kết YouTube</h1>
+<body>
+  <main class="app" aria-label="Công cụ quản lý liên kết YouTube cho NotebookLM">
+    <header class="header">
+      <div class="badge" aria-hidden="true">✓ Tool sạch • Chạy mượt • Không AI thừa</div>
+      <h1>Quản lý Liên kết YouTube</h1>
+      <p class="subtitle">Dán danh sách link YouTube, tool sẽ lọc link hợp lệ, sao chép từng link theo thứ tự và tự loại link đã xử lý khỏi danh sách.</p>
+    </header>
 
-        <!-- Input Section -->
-        <div class="mb-6 text-left">
-            <label for="linkInput" class="block text-gray-700 text-base font-medium mb-2">
-                Dán danh sách liên kết YouTube vào đây (mỗi liên kết một dòng):
-            </label>
-            <div class="relative">
-                <textarea
-                    id="linkInput"
-                    class="w-full p-4 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 text-gray-800 shadow-sm"
-                    placeholder="Ví dụ:&#x0A;https://www.youtube.com/watch?v=video1&#x0A;https://youtu.be/video2&#x0A;https://www.youtube.com/watch?v=another_video"
-                    aria-label="Dán danh sách liên kết YouTube"
-                ></textarea>
-                <div class="absolute top-3 right-3 flex gap-2">
-                    <button
-                        id="pasteLinksBtn"
-                        class="button-paste"
-                        title="Dán liên kết từ khay nhớ tạm"
-                        aria-label="Dán liên kết từ khay nhớ tạm"
-                    >
-                        <!-- Paste SVG Icon -->
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-clipboard-paste"><path d="M10 5H8a2 2 0 0 0-2 2v12c0 1.1.9 2 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><path d="M8 8H6a2 2 0 0 0-2 2v12c0 1.1.9 2 2 2h10a2 2 0 0 0 2-2v-2"/><path d="M16 5h-2a2 2 0 0 0-2 2v12c0 1.1.9 2 2 2h2"/><path d="M14 2v4"/><path d="M10 2v4"/><circle cx="12" cy="9" r="2"/><path d="m16 16-4 4-4-4"/></svg>
-                        <span id="pasteButtonText">Dán</span>
-                    </button>
-                    <button
-                        id="clearLinksBtn"
-                        class="button-tertiary"
-                        title="Xóa tất cả liên kết"
-                        aria-label="Xóa tất cả liên kết"
-                    >
-                        <!-- Trash Can SVG Icon -->
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash-2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
-                        Xóa
-                    </button>
-                </div>
-            </div>
-        </div>
+    <section class="field">
+      <label for="linkInput">Danh sách liên kết YouTube</label>
+      <div class="input-wrap">
+        <textarea id="linkInput" spellcheck="false" autocomplete="off" placeholder="Mỗi dòng một link. Ví dụ:
+https://www.youtube.com/watch?v=dQw4w9WgXcQ
+https://youtu.be/dQw4w9WgXcQ
+https://youtube.com/shorts/dQw4w9WgXcQ" aria-describedby="helpText"></textarea>
+      </div>
+      <div class="mini-actions">
+        <button id="pasteLinksBtn" class="btn btn-warning" type="button" title="Dán từ khay nhớ tạm">Dán từ clipboard</button>
+        <button id="clearLinksBtn" class="btn btn-danger" type="button" title="Xóa ô nhập">Xóa danh sách</button>
+      </div>
+    </section>
 
-        <div class="flex flex-col sm:flex-row items-center justify-center mb-8 gap-4">
-            <!-- Copy Link Button -->
-            <button
-                id="copyLinkBtn"
-                class="button-primary w-full sm:w-auto flex-grow"
-                aria-label="Sao chép liên kết hiện tại"
-            >
-                <span id="copyLinkIconContainer">
-                    <!-- Copy SVG Icon -->
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-copy"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
-                </span>
-                <span id="copyButtonText">Sao chép Liên kết</span>
-            </button>
-            <!-- Initial Link count display, with colored number -->
-            <span id="initialLinkCount" class="text-red-800 text-xl font-bold whitespace-nowrap mt-4 sm:mt-0">
-                Bạn đang có: <span class="text-purple-700">0</span> liên kết.
-            </span>
-        </div>
+    <section class="stats" aria-label="Thống kê liên kết">
+      <div class="stat"><strong id="validCount">0</strong><span>Hợp lệ</span></div>
+      <div class="stat"><strong id="invalidCount">0</strong><span>Bị bỏ qua</span></div>
+      <div class="stat"><strong id="remainingCount">0</strong><span>Còn lại</span></div>
+    </section>
 
+    <section class="current-card">
+      <h2>Liên kết hiện tại</h2>
+      <div id="currentLink" class="current-link empty" role="status" aria-live="polite">Dán liên kết YouTube để bắt đầu.</div>
+      <div class="actions">
+        <button id="copyLinkBtn" class="btn btn-primary btn-wide" type="button" disabled>Sao chép link hiện tại</button>
+        <button id="viewOriginalLinkBtn" class="btn btn-info" type="button" disabled>Mở link</button>
+      </div>
+    </section>
 
-        <!-- Display Section -->
-        <div id="linkDisplayArea" class="">
-            <h2 class="text-2xl font-semibold text-gray-700 mb-4">Liên kết Hiện tại:</h2>
-            <p id="currentLink" class="bg-gray-50 p-5 border border-gray-200 rounded-lg text-gray-900 break-words mb-4 text-lg font-mono shadow-inner">
-                Chưa có liên kết nào được hiển thị.
-            </p>
+    <section class="instructions" id="helpText">
+      <h3>Hướng dẫn sắp xếp quy trình</h3>
+      <ol>
+        <li>Chuẩn bị danh sách YouTube, mỗi link đặt trên một dòng riêng.</li>
+        <li>Dán vào ô nhập hoặc kéo thả file <strong>.txt</strong> chứa danh sách link.</li>
+        <li>Kiểm tra 3 chỉ số: <strong>Hợp lệ</strong>, <strong>Bị bỏ qua</strong>, <strong>Còn lại</strong>.</li>
+        <li>Bấm <strong>Sao chép link hiện tại</strong>; link đầu tiên sẽ được copy và tự xóa khỏi danh sách.</li>
+        <li>Sang NotebookLM → Thêm nguồn → Liên kết → URL YouTube → dán link vừa copy.</li>
+        <li>Quay lại tool và lặp lại cho đến khi báo đã xử lý hết.</li>
+        <li>Dùng <strong>Mở link</strong> khi cần kiểm tra nhanh video hiện tại trước khi nhập vào NotebookLM.</li>
+        <li>Dùng <strong>Xóa danh sách</strong> hoặc <strong>Đặt lại tool</strong> khi muốn làm sạch toàn bộ trạng thái.</li>
+      </ol>
+    </section>
 
-            <!-- View Original Link Button -->
-            <button
-                id="viewOriginalLinkBtn"
-                class="button-view-link hidden"
-                title="Mở liên kết hiện tại trong tab mới"
-                aria-label="Mở liên kết hiện tại"
-            >
-                <!-- External Link SVG Icon -->
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-external-link"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/></svg>
-                Xem Liên kết Gốc
-            </button>
-
-            <!-- Copy Confirmation Message -->
-            <p id="copyConfirmationMessage" class="copy-message font-medium text-center mb-4">
-                <!-- Icon for message -->
-                <svg id="messageIcon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check-circle"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>
-                <span id="messageText"></span>
-            </p>
-
-            <!-- LLM Feature Button -->
-            <button
-                id="summarizeVideoBtn"
-                class="button-secondary w-full py-3 px-6 rounded-lg font-semibold text-lg hover:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-opacity-50 shadow-md mb-6"
-                aria-label="Tóm tắt video hiện tại bằng AI"
-            >
-                <!-- Sparkle SVG Icon -->
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sparkles"><path d="M9.9 10.8c.3.9.9 1.6 1.6 1.6H22l-2.7-2.7c-.7-.7-1.6-1.2-2.5-1.4"/><path d="M14.2 2.2c-.3.9-.9 1.6-1.6 1.6H2l2.7 2.7c.7.7 1.6 1.2 2.5 1.4"/><path d="M10.8 14.2c.9-.3 1.6-.9 1.6-1.6V2L9.9 4.7c-.7.7-1.2 1.6-1.4 2.5"/><path d="M2.2 9.9c.9.3 1.6.9 1.6 1.6V22l2.7-2.7c.7-.7 1.2-1.6 1.4-2.5"/></svg>
-                Tóm tắt Video
-            </button>
-
-            <!-- LLM Summary Section -->
-            <div id="summarySection" class="hidden">
-                <h3 class="text-xl font-semibold text-gray-700 mb-4">Trợ lý Tóm tắt Video (bởi Gemini)</h3>
-                
-                <!-- Prompt Suggestions -->
-                <div class="flex flex-wrap gap-2 mb-4">
-                    <button class="prompt-suggestion-btn bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-sm hover:bg-gray-300 transition-colors" title="Điền gợi ý: Tóm tắt ngắn gọn video" aria-label="Gợi ý: Tóm tắt ngắn">
-                        Tóm tắt ngắn
-                    </button>
-                    <button class="prompt-suggestion-btn bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-sm hover:bg-gray-300 transition-colors" title="Điền gợi ý: Liệt kê các điểm chính của video" aria-label="Gợi ý: Các điểm chính">
-                        Các điểm chính
-                    </button>
-                    <button class="prompt-suggestion-btn bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-sm hover:bg-gray-300 transition-colors" title="Điền gợi ý: Tạo 3 câu hỏi thường gặp (FAQ) và câu trả lời ngắn gọn" aria-label="Gợi ý: Tạo FAQ">
-                        Tạo FAQ
-                    </button>
-                    <button class="prompt-suggestion-btn bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-sm hover:bg-gray-300 transition-colors" title="Điền gợi ý: Viết một đoạn mô tả video" aria-label="Gợi ý: Viết mô tả video">
-                        Viết mô tả video
-                    </button>
-                </div>
-
-                <label for="summaryPromptInput" class="block text-gray-700 text-sm font-medium mb-2">
-                    Nhập yêu cầu tóm tắt của bạn:
-                </label>
-                <textarea
-                    id="summaryPromptInput"
-                    class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-800 mb-4"
-                    placeholder="Ví dụ: Tóm tắt nội dung chính của video này."
-                    rows="3"
-                    aria-label="Ô nhập yêu cầu tóm tắt"
-                ></textarea>
-                <button
-                    id="generateSummaryBtn"
-                    class="button-primary bg-indigo-500 hover:bg-indigo-600 focus:ring-indigo-500 py-2 px-5 text-base rounded-lg shadow-sm mb-4"
-                    aria-label="Tạo tóm tắt từ yêu cầu"
-                >
-                    <span id="generateSummaryButtonText">Tạo Tóm tắt</span>
-                    <span id="generateSummaryLoader" class="hidden loader"></span>
-                </button>
-                <div id="summaryOutput" class="mb-4" aria-live="polite">
-                    <!-- Summary will be displayed here -->
-                </div>
-                <button
-                    id="copySummaryBtn"
-                    class="button-secondary bg-blue-500 hover:bg-blue-600 focus:ring-blue-500 py-2 px-5 text-base rounded-lg shadow-sm mb-4 hidden"
-                    aria-label="Sao chép tóm tắt đã tạo"
-                >
-                    <span id="copySummaryIconContainer">
-                        <!-- Copy SVG Icon -->
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-copy"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
-                    </span>
-                    <span id="copySummaryButtonText">Sao chép Tóm tắt</span>
-                </button>
-                <button
-                    id="closeSummaryBtn"
-                    class="bg-gray-300 text-gray-800 py-2 px-5 rounded-lg hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 text-base shadow-sm"
-                    aria-label="Đóng phần tóm tắt"
-                >
-                    Đóng
-                </button>
-            </div>
-
-            <!-- Remaining Link count display, with colored number -->
-            <p id="linkCount" class="text-red-800 text-xl font-bold mb-6">
-                Còn lại: <span class="text-purple-700">0</span> liên kết.
-            </p>
-
-            <!-- Instructions -->
-            <div class="instructions">
-                <p>Hướng dẫn:</p>
-                <ol>
-                    <li>Dán danh sách liên kết YouTube vào ô nhập liệu.</li>
-                    <li>Nhấp vào nút "Sao chép Liên kết" để sao chép liên kết hiện tại vào khay nhớ tạm. Liên kết sẽ tự động bị xóa khỏi danh sách và bộ đếm sẽ cập nhật.</li>
-                    <li>Mở dự án NotebookLM của bạn.</li>
-                    <li>Nhấp vào nút "Thêm nguồn" (Add source).</li>
-                    <li>Chọn "Liên kết" (Link) và sau đó chọn "URL YouTube" (YouTube URL).</li>
-                    <li>Dán liên kết đã sao chép vào trường nhập liệu.</li>
-                    <li>Nhấn "Thêm" (Add) hoặc "Chèn" (Insert).</li>
-                    <li>Quay lại ứng dụng này để sao chép liên kết tiếp theo.</li>
-                    <li>Sử dụng nút "Tóm tắt Video ✨" để nhận tóm tắt từ AI về liên kết hiện tại.</li>
-                    <li>Sau khi có tóm tắt, bạn có thể nhấp vào "Sao chép Tóm tắt" để sao chép nội dung tóm tắt.</li>
-                </ol>
-            </div>
-        </div>
-        <div class="mt-8 text-center">
-            <button
-                id="resetAppBtn"
-                class="button-reset"
-                title="Đặt lại toàn bộ ứng dụng về trạng thái ban đầu"
-                aria-label="Đặt lại ứng dụng"
-            >
-                <!-- Refresh CCW SVG Icon -->
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-refresh-ccw"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.76 2.75L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.76-2.75L21 16"/><path d="M21 21v-5h-5"/></svg>
-                Đặt lại Ứng dụng
-            </button>
-        </div>
+    <div class="footer-actions">
+      <button id="resetAppBtn" class="btn btn-muted" type="button">Đặt lại tool</button>
     </div>
+  </main>
 
-    <script>
-        // Get references to DOM elements
-        const linkInput = document.getElementById('linkInput');
-        const clearLinksBtn = document.getElementById('clearLinksBtn');
-        const pasteLinksBtn = document.getElementById('pasteLinksBtn');
-        const pasteButtonText = document.getElementById('pasteButtonText');
-        const initialLinkCountElement = document.getElementById('initialLinkCount');
-        const linkDisplayArea = document.getElementById('linkDisplayArea');
-        const currentLinkElement = document.getElementById('currentLink');
-        const copyLinkBtn = document.getElementById('copyLinkBtn');
-        const copyButtonText = document.getElementById('copyButtonText');
-        const copyLinkIconContainer = document.getElementById('copyLinkIconContainer');
-        const linkCountElement = document.getElementById('linkCount');
-        const copyConfirmationMessage = document.getElementById('copyConfirmationMessage');
-        const messageText = document.getElementById('messageText');
-        const messageIcon = document.getElementById('messageIcon');
-        const viewOriginalLinkBtn = document.getElementById('viewOriginalLinkBtn');
+  <div id="toastStack" class="toast-stack" aria-live="polite" aria-relevant="additions"></div>
 
-        // LLM Feature Elements
-        const summarizeVideoBtn = document.getElementById('summarizeVideoBtn');
-        const summarySection = document.getElementById('summarySection');
-        const summaryPromptInput = document.getElementById('summaryPromptInput');
-        const generateSummaryBtn = document.getElementById('generateSummaryBtn');
-        const generateSummaryButtonText = document.getElementById('generateSummaryButtonText');
-        const generateSummaryLoader = document.getElementById('generateSummaryLoader');
-        const summaryLoader = document.getElementById('summaryLoader');
-        const summaryOutput = document.getElementById('summaryOutput');
-        const closeSummaryBtn = document.getElementById('closeSummaryBtn');
-        const copySummaryBtn = document.getElementById('copySummaryBtn');
-        const copySummaryButtonText = document.getElementById('copySummaryButtonText');
-        const copySummaryIconContainer = document.getElementById('copySummaryIconContainer');
-        const promptSuggestionButtons = document.querySelectorAll('.prompt-suggestion-btn');
+  <script>
+    'use strict';
 
-        // Reset Button
-        const resetAppBtn = document.getElementById('resetAppBtn');
+    const $ = (id) => document.getElementById(id);
 
-        let links = [];
-        let messageTimeout;
-        let copyButtonTimeout;
-        let copySummaryButtonTimeout;
-        let pasteButtonTimeout;
-        let inputGlowTimeout;
+    const els = {
+      linkInput: $('linkInput'),
+      pasteLinksBtn: $('pasteLinksBtn'),
+      clearLinksBtn: $('clearLinksBtn'),
+      copyLinkBtn: $('copyLinkBtn'),
+      viewOriginalLinkBtn: $('viewOriginalLinkBtn'),
+      resetAppBtn: $('resetAppBtn'),
+      currentLink: $('currentLink'),
+      validCount: $('validCount'),
+      invalidCount: $('invalidCount'),
+      remainingCount: $('remainingCount'),
+      toastStack: $('toastStack')
+    };
 
-        // Regex for basic YouTube URL validation
-        const youtubeUrlRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/(watch\?v=|embed\/|v\/|)([\w-]{11})(.*)?$/;
+    const state = {
+      validLinks: [],
+      invalidLines: [],
+      lastToastKey: '',
+      lastToastAt: 0
+    };
 
-        // SVG Icons (defined once for reusability)
-        const copyIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-copy"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>`;
-        const checkIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check"><path d="M20 6 9 17l-5-5"/></svg>`;
-        const errorIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x-circle"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></circle></svg>`;
-        const successMessageIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check-circle"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>`;
-        const errorMessageIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucude-x-circle"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></circle></svg>`;
-        const clipboardPlusIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-clipboard-plus text-blue-600"><path d="M10 5H8a2 2 0 0 0-2 2v12c0 1.1.9 2 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><path d="M14 2v4"/><path d="M10 2v4"/><path d="M12 17v-6"/><path d="M9 14h6"/></svg>`;
-        const externalLinkIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-external-link"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/></svg>`;
+    const YOUTUBE_ID_REGEX = /^[a-zA-Z0-9_-]{11}$/;
 
+    function extractYouTubeId(input) {
+      const value = String(input || '').trim();
+      if (!value) return null;
+      if (YOUTUBE_ID_REGEX.test(value)) return value;
 
-        // Function to show a temporary message within the app
-        function showTemporaryMessage(message, isError = false) {
-            if (messageTimeout) {
-                clearTimeout(messageTimeout);
-            }
+      try {
+        const url = new URL(value.startsWith('http') ? value : `https://${value}`);
+        const host = url.hostname.replace(/^www\./, '').toLowerCase();
 
-            messageText.textContent = message;
-            copyConfirmationMessage.classList.remove('success', 'error'); 
-            copyConfirmationMessage.classList.add(isError ? 'error' : 'success', 'show'); 
-            
-            messageIcon.innerHTML = isError ? errorMessageIconSvg : successMessageIconSvg;
-            messageIcon.classList.remove(isError ? 'text-green-600' : 'text-red-600');
-            messageIcon.classList.add(isError ? 'text-red-600' : 'text-green-600');
-
-            messageTimeout = setTimeout(() => {
-                copyConfirmationMessage.classList.remove('show');
-                messageText.textContent = '';
-            }, 3000);
+        if (host === 'youtu.be') {
+          const id = url.pathname.split('/').filter(Boolean)[0];
+          return YOUTUBE_ID_REGEX.test(id) ? id : null;
         }
 
-        // Function to display the current link and update count
-        function displayCurrentLink() {
-            const rawInput = linkInput.value;
-            links = rawInput.split('\n')
-                            .map(link => link.trim())
-                            .filter(link => link !== '' && youtubeUrlRegex.test(link));
+        if (host === 'youtube.com' || host === 'm.youtube.com' || host === 'music.youtube.com' || host === 'youtube-nocookie.com') {
+          const watchId = url.searchParams.get('v');
+          if (YOUTUBE_ID_REGEX.test(watchId)) return watchId;
 
-            const allInputLines = rawInput.split('\n').map(link => link.trim()).filter(link => link !== '');
-            if (allInputLines.length > links.length) {
-                showTemporaryMessage(`Đã bỏ qua ${allInputLines.length - links.length} liên kết không phải YouTube hợp lệ.`, true);
-            }
-
-            if (links.length === 0) {
-                currentLinkElement.innerHTML = `${successMessageIconSvg} Đã xử lý tất cả liên kết!`;
-                currentLinkElement.classList.add('completed-state');
-                currentLinkElement.classList.remove('no-links-state');
-                currentLinkElement.removeAttribute('data-tooltip'); // Remove tooltip
-                linkCountElement.innerHTML = `Còn lại: <span class="text-purple-700">0</span> liên kết.`;
-                copyLinkBtn.disabled = true;
-                summarizeVideoBtn.disabled = true;
-                viewOriginalLinkBtn.classList.add('hidden');
-                summarySection.classList.add('hidden');
-                summaryOutput.textContent = '';
-                summaryPromptInput.value = '';
-                copySummaryBtn.classList.add('hidden');
-                return;
-            } else if (linkInput.value.trim() === '' || links.length === 0) {
-                currentLinkElement.innerHTML = `${clipboardPlusIconSvg} Dán liên kết YouTube của bạn vào đây để bắt đầu!`;
-                currentLinkElement.classList.add('no-links-state');
-                currentLinkElement.classList.remove('completed-state');
-                currentLinkElement.removeAttribute('data-tooltip'); // Remove tooltip
-                linkCountElement.innerHTML = `Còn lại: <span class="text-purple-700">0</span> liên kết.`;
-                copyLinkBtn.disabled = true;
-                summarizeVideoBtn.disabled = true;
-                viewOriginalLinkBtn.classList.add('hidden');
-                summarySection.classList.add('hidden');
-                summaryOutput.textContent = '';
-                summaryPromptInput.value = '';
-                copySummaryBtn.classList.add('hidden');
-                return;
-            }
-
-            currentLinkElement.textContent = links[0];
-            currentLinkElement.setAttribute('data-tooltip', links[0]); // Add tooltip with full URL
-            currentLinkElement.classList.remove('completed-state', 'no-links-state');
-            linkCountElement.innerHTML = `Còn lại: <span class="text-purple-700">${links.length}</span> liên kết.`;
-            copyLinkBtn.disabled = false;
-            summarizeVideoBtn.disabled = false;
-            viewOriginalLinkBtn.classList.remove('hidden');
+          const parts = url.pathname.split('/').filter(Boolean);
+          const knownPrefixes = ['embed', 'v', 'shorts', 'live'];
+          if (knownPrefixes.includes(parts[0]) && YOUTUBE_ID_REGEX.test(parts[1])) return parts[1];
         }
+      } catch (_) {
+        return null;
+      }
 
-        // Function to update the initial link count display
-        function updateInitialLinkCount() {
-            const rawInput = linkInput.value;
-            const currentLinks = rawInput.split('\n')
-                                        .map(link => link.trim())
-                                        .filter(link => link !== '' && youtubeUrlRegex.test(link));
-            initialLinkCountElement.innerHTML = `Bạn đang có: <span class="text-purple-700">${currentLinks.length}</span> liên kết.`;
-            
-            // Trigger animation for count update
-            initialLinkCountElement.classList.remove('count-update-animation');
-            void initialLinkCountElement.offsetWidth; // Trigger reflow
-            initialLinkCountElement.classList.add('count-update-animation');
+      return null;
+    }
 
-            linkCountElement.classList.remove('count-update-animation');
-            void linkCountElement.offsetWidth; // Trigger reflow
-            linkCountElement.classList.add('count-update-animation');
+    function normalizeYouTubeUrl(line) {
+      const id = extractYouTubeId(line);
+      return id ? `https://www.youtube.com/watch?v=${id}` : null;
+    }
 
-            displayCurrentLink();
+    function parseInput() {
+      const rows = els.linkInput.value
+        .split(/\r?\n/)
+        .map((line) => line.trim())
+        .filter(Boolean);
+
+      const seen = new Set();
+      const validLinks = [];
+      const invalidLines = [];
+      let duplicateCount = 0;
+
+      for (const row of rows) {
+        const normalized = normalizeYouTubeUrl(row);
+        if (!normalized) {
+          invalidLines.push(row);
+          continue;
         }
+        if (seen.has(normalized)) {
+          duplicateCount += 1;
+          continue;
+        }
+        seen.add(normalized);
+        validLinks.push(normalized);
+      }
 
-        // Event listener for input changes in the textarea
-        linkInput.addEventListener('input', () => {
-            updateInitialLinkCount();
-            linkInput.classList.remove('input-active');
-            void linkInput.offsetWidth;
-            linkInput.classList.add('input-active');
-        });
+      state.validLinks = validLinks;
+      state.invalidLines = invalidLines;
+      return { totalRows: rows.length, duplicateCount };
+    }
 
-        // Drag and Drop event listeners for textarea
-        linkInput.addEventListener('dragover', (e) => {
-            e.preventDefault(); // Prevent default to allow drop
-            linkInput.classList.add('drag-over');
-        });
+    function syncTextareaFromState() {
+      els.linkInput.value = state.validLinks.join('\n');
+    }
 
-        linkInput.addEventListener('dragleave', () => {
-            linkInput.classList.remove('drag-over');
-        });
+    function setCurrentBox(type, text) {
+      els.currentLink.className = `current-link ${type || ''}`.trim();
+      els.currentLink.textContent = text;
+      els.currentLink.title = type ? '' : text;
+    }
 
-        linkInput.addEventListener('drop', (e) => {
-            e.preventDefault(); // Prevent default action (opening file in new tab)
-            linkInput.classList.remove('drag-over');
+    function updateUI(options = {}) {
+      const meta = parseInput();
+      const valid = state.validLinks.length;
+      const invalid = state.invalidLines.length;
 
-            const files = e.dataTransfer.files;
-            if (files.length > 0) {
-                const file = files[0];
-                if (file.type === 'text/plain') {
-                    const reader = new FileReader();
-                    reader.onload = (event) => {
-                        const fileContent = event.target.result;
-                        linkInput.value = (linkInput.value ? linkInput.value + '\n' : '') + fileContent;
-                        updateInitialLinkCount();
-                        showTemporaryMessage('Đã dán nội dung từ tệp!', false, 'file');
-                        linkInput.classList.remove('input-active');
-                        void linkInput.offsetWidth;
-                        linkInput.classList.add('input-active');
-                    };
-                    reader.onerror = () => {
-                        showTemporaryMessage('Không thể đọc tệp. Vui lòng thử lại.', true);
-                    };
-                    reader.readAsText(file);
-                } else {
-                    showTemporaryMessage('Vui lòng kéo thả tệp văn bản (.txt) chứa liên kết.', true);
-                }
-            }
-        });
+      els.validCount.textContent = valid;
+      els.invalidCount.textContent = invalid;
+      els.remainingCount.textContent = valid;
 
+      const hasLink = valid > 0;
+      els.copyLinkBtn.disabled = !hasLink;
+      els.viewOriginalLinkBtn.disabled = !hasLink;
 
-        // Event listener for the "Paste Links" button
-        pasteLinksBtn.addEventListener('click', async () => {
-            try {
-                const clipboardText = await navigator.clipboard.readText();
-                if (clipboardText) {
-                    linkInput.value = (linkInput.value ? linkInput.value + '\n' : '') + clipboardText;
-                    updateInitialLinkCount();
-                    showTemporaryMessage('Đã dán liên kết từ khay nhớ tạm!');
+      if (!els.linkInput.value.trim()) {
+        setCurrentBox('empty', 'Dán liên kết YouTube để bắt đầu.');
+      } else if (!hasLink && invalid > 0) {
+        setCurrentBox('error', 'Chưa có link YouTube hợp lệ trong danh sách.');
+      } else if (!hasLink) {
+        setCurrentBox('done', 'Đã xử lý hết toàn bộ liên kết.');
+      } else {
+        setCurrentBox('', state.validLinks[0]);
+      }
 
-                    pasteButtonText.textContent = 'Đã Dán!';
-                    pasteLinksBtn.classList.add('bg-green-500', 'hover:bg-green-600');
-                    pasteLinksBtn.classList.remove('bg-orange-500', 'hover:bg-orange-600');
+      if (!options.silent) {
+        if (invalid > 0) showToast(`Đã bỏ qua ${invalid} dòng không phải link YouTube hợp lệ.`, 'warning', 'invalid-lines');
+        if (meta.duplicateCount > 0) showToast(`Đã tự loại ${meta.duplicateCount} link trùng lặp.`, 'info', 'duplicate-lines');
+      }
+    }
 
-                    if (pasteButtonTimeout) {
-                        clearTimeout(pasteButtonTimeout);
-                    }
-                    pasteButtonTimeout = setTimeout(() => {
-                        pasteButtonText.textContent = 'Dán';
-                        pasteLinksBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
-                        pasteLinksBtn.classList.add('bg-orange-500', 'hover:bg-orange-600');
-                    }, 1500);
+    function showToast(message, type = 'info', key = '') {
+      const now = Date.now();
+      const toastKey = key || `${type}:${message}`;
+      if (toastKey === state.lastToastKey && now - state.lastToastAt < 900) return;
+      state.lastToastKey = toastKey;
+      state.lastToastAt = now;
 
-                    linkInput.classList.remove('input-active');
-                    void linkInput.offsetWidth;
-                    linkInput.classList.add('input-active');
+      const icons = { success: '✓', error: '!', warning: '⚠', info: 'i' };
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.innerHTML = `<strong aria-hidden="true">${icons[type] || 'i'}</strong><span></span><button type="button" aria-label="Đóng thông báo">×</button>`;
+      toast.querySelector('span').textContent = message;
+      const close = () => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(10px) scale(0.98)';
+        setTimeout(() => toast.remove(), 180);
+      };
+      toast.querySelector('button').addEventListener('click', close);
+      els.toastStack.appendChild(toast);
+      setTimeout(close, type === 'error' ? 4600 : 3200);
+    }
 
-                } else {
-                    showTemporaryMessage('Khay nhớ tạm trống hoặc không có văn bản.', true);
-                    pasteButtonText.textContent = 'Lỗi Dán!';
-                    pasteLinksBtn.classList.add('bg-red-500', 'hover:bg-red-600');
-                    pasteLinksBtn.classList.remove('bg-orange-500', 'hover:bg-orange-600');
-                    if (pasteButtonTimeout) {
-                        clearTimeout(pasteButtonTimeout);
-                    }
-                    pasteButtonTimeout = setTimeout(() => {
-                        pasteButtonText.textContent = 'Dán';
-                        pasteLinksBtn.classList.remove('bg-red-500', 'hover:bg-red-600');
-                        pasteLinksBtn.classList.add('bg-orange-500', 'hover:bg-orange-600');
-                    }, 1500);
-                }
-            } catch (err) {
-                console.error('Lỗi khi đọc khay nhớ tạm:', err);
-                showTemporaryMessage('Không thể đọc khay nhớ tạm. Vui lòng dán thủ công.', true);
-                pasteButtonText.textContent = 'Lỗi Dán!';
-                pasteLinksBtn.classList.add('bg-red-500', 'hover:bg-red-600');
-                pasteLinksBtn.classList.remove('bg-orange-500', 'hover:bg-orange-600');
-                if (pasteButtonTimeout) {
-                    clearTimeout(pasteButtonTimeout);
-                }
-                pasteButtonTimeout = setTimeout(() => {
-                    pasteButtonText.textContent = 'Dán';
-                    pasteLinksBtn.classList.remove('bg-red-500', 'hover:bg-red-600');
-                    pasteLinksBtn.classList.add('bg-orange-500', 'hover:bg-orange-600');
-                }, 1500);
-            }
-        });
+    async function copyText(text) {
+      if (!text) throw new Error('Không có nội dung để sao chép.');
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+        return;
+      }
+      const area = document.createElement('textarea');
+      area.value = text;
+      area.setAttribute('readonly', '');
+      area.style.position = 'fixed';
+      area.style.left = '-9999px';
+      document.body.appendChild(area);
+      area.select();
+      const ok = document.execCommand('copy');
+      area.remove();
+      if (!ok) throw new Error('Trình duyệt không cho phép sao chép tự động.');
+    }
 
-        // Event listener for the "Clear Links" button
-        clearLinksBtn.addEventListener('click', () => {
-            linkInput.value = '';
-            updateInitialLinkCount();
-            showTemporaryMessage('Đã xóa tất cả liên kết khỏi danh sách.');
-            summarySection.classList.add('hidden');
-            summaryOutput.textContent = '';
-            summaryPromptInput.value = '';
-            copySummaryBtn.classList.add('hidden');
-        });
+    async function pasteFromClipboard() {
+      try {
+        if (!navigator.clipboard || !navigator.clipboard.readText) {
+          showToast('Trình duyệt không cho đọc clipboard. Hãy dán thủ công bằng Ctrl+V.', 'warning');
+          els.linkInput.focus();
+          return;
+        }
+        const text = await navigator.clipboard.readText();
+        if (!text.trim()) {
+          showToast('Clipboard đang trống.', 'warning');
+          return;
+        }
+        els.linkInput.value = `${els.linkInput.value.trim() ? els.linkInput.value.trim() + '\n' : ''}${text.trim()}`;
+        updateUI();
+        showToast('Đã dán nội dung từ clipboard.', 'success');
+      } catch (error) {
+        showToast('Không thể đọc clipboard. Hãy cấp quyền hoặc dán thủ công.', 'error');
+      }
+    }
 
-        // Event listener for the "Copy Link" button
-        copyLinkBtn.addEventListener('click', () => {
-            if (links.length > 0) {
-                const linkToCopy = links[0];
+    async function copyCurrentLink() {
+      updateUI({ silent: true });
+      if (!state.validLinks.length) {
+        showToast('Không có link hợp lệ để sao chép.', 'warning');
+        return;
+      }
 
-                const textArea = document.createElement('textarea');
-                textArea.value = linkToCopy;
-                document.body.appendChild(textArea);
-                textArea.select();
-                try {
-                    document.execCommand('copy');
-                    showTemporaryMessage('Đã sao chép liên kết vào khay nhớ tạm!');
+      const link = state.validLinks[0];
+      try {
+        await copyText(link);
+        state.validLinks.shift();
+        syncTextareaFromState();
+        updateUI({ silent: true });
+        showToast('Đã sao chép và xóa link khỏi danh sách.', 'success');
+      } catch (error) {
+        showToast(error.message || 'Không thể sao chép. Vui lòng sao chép thủ công.', 'error');
+      }
+    }
 
-                    copyButtonText.textContent = 'Đã Sao Chép!';
-                    copyLinkIconContainer.innerHTML = checkIconSvg;
-                    copyLinkBtn.classList.add('bg-green-500', 'hover:bg-green-600');
-                    copyLinkBtn.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
+    function openCurrentLink() {
+      updateUI({ silent: true });
+      if (!state.validLinks.length) {
+        showToast('Không có link hợp lệ để mở.', 'warning');
+        return;
+      }
+      const win = window.open(state.validLinks[0], '_blank', 'noopener,noreferrer');
+      if (!win) showToast('Trình duyệt đã chặn popup. Hãy cho phép mở tab mới.', 'warning');
+      else showToast('Đã mở link hiện tại trong tab mới.', 'info');
+    }
 
-                    if (copyButtonTimeout) {
-                        clearTimeout(copyButtonTimeout);
-                    }
-                    copyButtonTimeout = setTimeout(() => {
-                        copyButtonText.textContent = 'Sao chép Liên kết';
-                        copyLinkIconContainer.innerHTML = copyIconSvg;
-                        copyLinkBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
-                        copyLinkBtn.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
-                    }, 1500);
+    function clearLinks() {
+      els.linkInput.value = '';
+      state.validLinks = [];
+      state.invalidLines = [];
+      updateUI({ silent: true });
+      showToast('Đã xóa danh sách link.', 'success');
+      els.linkInput.focus();
+    }
 
-                    links.shift();
-                    linkInput.value = links.join('\n'); 
-                    updateInitialLinkCount();
-                } catch (err) {
-                    console.error('Không thể sao chép liên kết: ', err);
-                    showTemporaryMessage('Không thể sao chép liên kết. Vui lòng sao chép thủ công.', true);
-                } finally {
-                    document.body.removeChild(textArea);
-                }
-            } else {
-                showTemporaryMessage('Không có liên kết nào để sao chép.', true);
-            }
-        });
+    function resetApp() {
+      clearTimeouts();
+      els.toastStack.innerHTML = '';
+      els.linkInput.value = '';
+      state.validLinks = [];
+      state.invalidLines = [];
+      state.lastToastKey = '';
+      state.lastToastAt = 0;
+      updateUI({ silent: true });
+      showToast('Tool đã được đặt lại sạch trạng thái.', 'success');
+      els.linkInput.focus();
+    }
 
-        // Event listener for "View Original Link" button
-        viewOriginalLinkBtn.addEventListener('click', () => {
-            if (currentLinkElement.textContent && youtubeUrlRegex.test(currentLinkElement.textContent)) {
-                window.open(currentLinkElement.textContent, '_blank');
-            } else {
-                showTemporaryMessage('Không có liên kết hợp lệ để xem.', true);
-            }
-        });
+    function clearTimeouts() {
+      // Dự phòng cho các lần nâng cấp sau: gom điểm dọn trạng thái tại một nơi.
+    }
 
+    function handleDroppedFile(event) {
+      event.preventDefault();
+      els.linkInput.classList.remove('drag-over');
+      const file = event.dataTransfer.files && event.dataTransfer.files[0];
+      if (!file) {
+        const text = event.dataTransfer.getData('text/plain');
+        if (text) {
+          els.linkInput.value = `${els.linkInput.value.trim() ? els.linkInput.value.trim() + '\n' : ''}${text.trim()}`;
+          updateUI();
+          showToast('Đã nhận nội dung kéo thả.', 'success');
+        }
+        return;
+      }
+      if (!file.name.toLowerCase().endsWith('.txt') && file.type && file.type !== 'text/plain') {
+        showToast('Chỉ hỗ trợ file văn bản .txt.', 'warning');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        const text = String(reader.result || '').trim();
+        if (!text) {
+          showToast('File rỗng, không có link để thêm.', 'warning');
+          return;
+        }
+        els.linkInput.value = `${els.linkInput.value.trim() ? els.linkInput.value.trim() + '\n' : ''}${text}`;
+        updateUI();
+        showToast('Đã nhập danh sách từ file .txt.', 'success');
+      };
+      reader.onerror = () => showToast('Không đọc được file. Vui lòng thử lại.', 'error');
+      reader.readAsText(file, 'utf-8');
+    }
 
-        // Event listener for the "Summarize Video" button
-        summarizeVideoBtn.addEventListener('click', () => {
-            if (links.length > 0) {
-                summarySection.classList.remove('hidden');
-                summaryOutput.textContent = '';
-                summaryOutput.classList.remove('error-state');
-                copySummaryBtn.classList.add('hidden');
-                summaryPromptInput.value = `Tóm tắt video YouTube này: ${links[0]}.`;
-                summaryPromptInput.focus();
-            } else {
-                showTemporaryMessage('Không có liên kết nào để tóm tắt.', true);
-                summarySection.classList.add('hidden');
-            }
-        });
+    els.linkInput.addEventListener('input', () => updateUI());
+    els.linkInput.addEventListener('dragover', (event) => { event.preventDefault(); els.linkInput.classList.add('drag-over'); });
+    els.linkInput.addEventListener('dragleave', () => els.linkInput.classList.remove('drag-over'));
+    els.linkInput.addEventListener('drop', handleDroppedFile);
+    els.pasteLinksBtn.addEventListener('click', pasteFromClipboard);
+    els.clearLinksBtn.addEventListener('click', clearLinks);
+    els.copyLinkBtn.addEventListener('click', copyCurrentLink);
+    els.viewOriginalLinkBtn.addEventListener('click', openCurrentLink);
+    els.resetAppBtn.addEventListener('click', resetApp);
 
-        // Event listeners for prompt suggestion buttons
-        promptSuggestionButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                const currentLink = links.length > 0 ? links[0] : '';
-                let suggestion = button.textContent.trim();
-                if (suggestion === 'Tóm tắt ngắn') {
-                    summaryPromptInput.value = `Tóm tắt ngắn gọn video YouTube này: ${currentLink}.`;
-                } else if (suggestion === 'Các điểm chính') {
-                    summaryPromptInput.value = `Liệt kê các điểm chính của video YouTube này: ${currentLink}.`;
-                } else if (suggestion === 'Tạo FAQ') {
-                    summaryPromptInput.value = `Tạo 3 câu hỏi thường gặp (FAQ) và câu trả lời ngắn gọn dựa trên nội dung video YouTube này: ${currentLink}.`;
-                } else if (suggestion === 'Viết mô tả video') {
-                    summaryPromptInput.value = `Viết một đoạn mô tả video YouTube này (khoảng 150 ký tự) kèm theo các từ khóa liên quan: ${currentLink}.`;
-                }
-                summaryPromptInput.focus();
-            });
-        });
+    document.addEventListener('keydown', (event) => {
+      const isMod = event.ctrlKey || event.metaKey;
+      if (isMod && event.key.toLowerCase() === 'enter') {
+        event.preventDefault();
+        copyCurrentLink();
+      }
+      if (event.key === 'Escape') {
+        els.toastStack.innerHTML = '';
+      }
+    });
 
-        // Event listener for the "Generate Summary" button
-        generateSummaryBtn.addEventListener('click', async () => {
-            const prompt = summaryPromptInput.value.trim();
-            if (!prompt) {
-                showTemporaryMessage('Vui lòng nhập yêu cầu tóm tắt.', true);
-                return;
-            }
-
-            generateSummaryButtonText.textContent = 'Đang tạo...'; // Change text
-            generateSummaryLoader.classList.remove('hidden'); // Show loader
-            summaryOutput.textContent = 'Đang tạo tóm tắt...';
-            summaryOutput.classList.add('loading-text');
-            summaryOutput.classList.remove('error-state');
-            summaryLoader.classList.remove('hidden');
-            generateSummaryBtn.disabled = true;
-            copyLinkBtn.disabled = true;
-            summarizeVideoBtn.disabled = true;
-            viewOriginalLinkBtn.disabled = true;
-            copySummaryBtn.classList.add('hidden');
-
-            try {
-                let chatHistory = [];
-                chatHistory.push({ role: "user", parts: [{ text: prompt }] });
-                const payload = { contents: chatHistory };
-                const apiKey = ""; // Canvas will provide this
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-                const result = await response.json();
-                
-                if (result.candidates && result.candidates.length > 0 &&
-                    result.candidates[0].content && result.candidates[0].content.parts &&
-                    result.candidates[0].content.parts.length > 0) {
-                    const text = result.candidates[0].content.parts[0].text;
-                    summaryOutput.textContent = text;
-                    showTemporaryMessage('Tóm tắt đã được tạo thành công!');
-                    copySummaryBtn.classList.remove('hidden');
-                } else {
-                    summaryOutput.textContent = 'Không thể tạo tóm tắt. Cấu trúc phản hồi không mong muốn.';
-                    summaryOutput.classList.add('error-state');
-                    showTemporaryMessage('Lỗi khi tạo tóm tắt.', true);
-                }
-            } catch (error) {
-                console.error('Lỗi khi gọi API Gemini:', error);
-                summaryOutput.textContent = 'Đã xảy ra lỗi khi kết nối với AI. Vui lòng kiểm tra kết nối mạng và thử lại.';
-                summaryOutput.classList.add('error-state');
-                showTemporaryMessage('Lỗi kết nối AI.', true);
-            } finally {
-                generateSummaryButtonText.textContent = 'Tạo Tóm tắt'; // Revert text
-                generateSummaryLoader.classList.add('hidden'); // Hide loader
-                summaryLoader.classList.add('hidden');
-                summaryOutput.classList.remove('loading-text');
-                generateSummaryBtn.disabled = false;
-                if (links.length > 0) {
-                    copyLinkBtn.disabled = false;
-                    summarizeVideoBtn.disabled = false;
-                    viewOriginalLinkBtn.disabled = false;
-                }
-            }
-        });
-
-        // Event listener for the "Copy Summary" button
-        copySummaryBtn.addEventListener('click', () => {
-            const summaryText = summaryOutput.textContent;
-            if (summaryText && summaryText !== 'Đang tạo tóm tắt...') {
-                const textArea = document.createElement('textarea');
-                textArea.value = summaryText;
-                document.body.appendChild(textArea);
-                textArea.select();
-                try {
-                    document.execCommand('copy');
-                    showTemporaryMessage('Đã sao chép tóm tắt vào khay nhớ tạm!');
-
-                    copySummaryButtonText.textContent = 'Đã Sao Chép!';
-                    copySummaryIconContainer.innerHTML = checkIconSvg;
-                    copySummaryBtn.classList.add('bg-green-500', 'hover:bg-green-600');
-                    copySummaryBtn.classList.remove('bg-blue-500', 'hover:bg-blue-600');
-
-                    if (copySummaryButtonTimeout) {
-                        clearTimeout(copySummaryButtonTimeout);
-                    }
-                    copySummaryButtonTimeout = setTimeout(() => {
-                        copySummaryButtonText.textContent = 'Sao chép Tóm tắt';
-                        copySummaryIconContainer.innerHTML = copyIconSvg;
-                        copySummaryBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
-                        copySummaryBtn.classList.add('bg-blue-500', 'hover:bg-blue-600');
-                    }, 1500);
-
-                } catch (err) {
-                    console.error('Không thể sao chép tóm tắt: ', err);
-                    showTemporaryMessage('Không thể sao chép tóm tắt. Vui lòng sao chép thủ công.', true);
-                } finally {
-                    document.body.removeChild(textArea);
-                }
-            } else {
-                showTemporaryMessage('Không có tóm tắt nào để sao chép.', true);
-            }
-        });
-
-        // Event listener for the "Close Summary" button
-        closeSummaryBtn.addEventListener('click', () => {
-            summarySection.classList.add('hidden');
-            summaryOutput.textContent = '';
-            summaryOutput.classList.remove('error-state');
-            summaryPromptInput.value = '';
-            copySummaryBtn.classList.add('hidden');
-        });
-
-        // Event listener for the "Reset App" button
-        resetAppBtn.addEventListener('click', () => {
-            linkInput.value = '';
-            updateInitialLinkCount();
-            showTemporaryMessage('Ứng dụng đã được đặt lại.');
-            summarySection.classList.add('hidden');
-            summaryOutput.textContent = '';
-            summaryOutput.classList.remove('error-state');
-            summaryPromptInput.value = '';
-            copySummaryBtn.classList.add('hidden');
-            // Reset copy button visual state
-            copyButtonText.textContent = 'Sao chép Liên kết';
-            copyLinkIconContainer.innerHTML = copyIconSvg;
-            copyLinkBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
-            copyLinkBtn.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
-            // Reset paste button visual state
-            pasteButtonText.textContent = 'Dán';
-            pasteLinksBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
-            pasteLinksBtn.classList.add('bg-orange-500', 'hover:bg-orange-600');
-            // Hide view original link button on reset
-            viewOriginalLinkBtn.classList.add('hidden');
-            // Reset generate summary button visual state
-            generateSummaryButtonText.textContent = 'Tạo Tóm tắt';
-            generateSummaryLoader.classList.add('hidden');
-        });
-
-        // Initial display state and count update on page load
-        updateInitialLinkCount();
-    </script>
+    updateUI({ silent: true });
+  </script>
 </body>
 </html>
