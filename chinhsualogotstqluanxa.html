@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chỉnh sửa Logo Tịnh Quang</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: "Inter", sans-serif;
+            background-color: #1a202c; /* Dark background */
+            color: #e2e8f0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            background-color: #2d3748; /* Slightly lighter dark background for container */
+            padding: 2rem;
+            border-radius: 0.75rem; /* Rounded corners */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-width: 900px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        canvas {
+            border: 2px solid #4a5568;
+            border-radius: 0.5rem;
+            background-color: #000; /* Ensure black background for canvas */
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin-bottom: 1.5rem;
+        }
+        input[type="file"] {
+            margin-bottom: 1rem;
+            padding: 0.5rem;
+            border-radius: 0.375rem;
+            border: 1px solid #4a5568;
+            background-color: #4a5568;
+            color: #e2e8f0;
+        }
+        button {
+            background-color: #63b3ed; /* Blue */
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
+            margin: 0.5rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        button:hover {
+            background-color: #4299e1; /* Darker blue on hover */
+        }
+        .message-box {
+            background-color: #2f855a; /* Green for success */
+            color: white;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-top: 1rem;
+            text-align: center;
+            display: none; /* Hidden by default */
+        }
+        .error-box {
+            background-color: #e53e3e; /* Red for error */
+            color: white;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-top: 1rem;
+            text-align: center;
+            display: none; /* Hidden by default */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-3xl font-bold mb-6 text-center">Chỉnh sửa Logo Tịnh Quang</h1>
+
+        <input type="file" id="imageUpload" accept="image/*" class="mb-4">
+        <canvas id="logoCanvas"></canvas>
+
+        <div class="flex flex-wrap justify-center mt-4">
+            <button id="applyEditsBtn">Áp dụng chỉnh sửa</button>
+            <button id="downloadBtn">Tải xuống hình ảnh</button>
+        </div>
+
+        <div id="messageBox" class="message-box"></div>
+        <div id="errorBox" class="error-box"></div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('logoCanvas');
+        const ctx = canvas.getContext('2d');
+        const imageUpload = document.getElementById('imageUpload');
+        const applyEditsBtn = document.getElementById('applyEditsBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const messageBox = document.getElementById('messageBox');
+        const errorBox = document.getElementById('errorBox');
+
+        let originalImage = null;
+
+        // Function to show a message
+        function showMessage(message, type = 'success') {
+            if (type === 'success') {
+                messageBox.textContent = message;
+                messageBox.style.display = 'block';
+                errorBox.style.display = 'none';
+            } else {
+                errorBox.textContent = message;
+                errorBox.style.display = 'block';
+                messageBox.style.display = 'none';
+            }
+            setTimeout(() => {
+                messageBox.style.display = 'none';
+                errorBox.style.display = 'none';
+            }, 3000); // Hide after 3 seconds
+        }
+
+        // Function to load and display the image
+        imageUpload.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        originalImage = img;
+                        // Set canvas dimensions to match image
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear canvas
+                        ctx.drawImage(originalImage, 0, 0, canvas.width, canvas.height);
+                        showMessage('Hình ảnh đã được tải lên.', 'success');
+                    };
+                    img.onerror = () => {
+                        showMessage('Không thể tải hình ảnh. Vui lòng thử lại.', 'error');
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Function to apply edits
+        applyEditsBtn.addEventListener('click', () => {
+            if (!originalImage) {
+                showMessage('Vui lòng tải lên một hình ảnh trước.', 'error');
+                return;
+            }
+
+            // Redraw the original image to start fresh, effectively "removing" old elements
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(originalImage, 0, 0, canvas.width, canvas.height);
+
+            const width = canvas.width;
+            const height = canvas.height;
+
+            // Define 7 Chakra positions (adjusted for better visual accuracy based on meditation pose)
+            const chakras = [
+                { name: "Crown", y: height * 0.15 },       // Luân xa Vương miện: Đỉnh đầu
+                { name: "Third Eye", y: height * 0.25 },   // Luân xa Con mắt thứ ba: Giữa trán
+                { name: "Throat", y: height * 0.42 },      // Luân xa Cổ họng: Vùng cổ họng
+                { name: "Heart", y: height * 0.50 },       // Luân xa Tim: Trung tâm ngực
+                { name: "Solar Plexus", y: height * 0.60 },// Luân xa Búi mặt trời: Bụng trên, trên rốn
+                { name: "Sacral", y: height * 0.73 },      // Luân xa Xương cùng: Bụng dưới, dưới rốn
+                { name: "Root", y: height * 0.92 }         // Luân xa Gốc: Đáy cột sống/đáy chậu
+            ];
+
+            const chakraDotRadius = width * 0.01; // Kích thước chấm nhỏ hơn một chút
+            const faintGlowOpacity = 0.1;         // Độ mờ của ánh sáng tỏa ra (hơi rõ hơn)
+            const faintLineOpacity = 0.15;        // Độ mờ của đường kết nối (rõ hơn một chút)
+
+            // Draw chakras (dots) and their faint glow
+            chakras.forEach(chakra => {
+                const chakraX = width / 2;
+                // Draw gentle glow
+                for (let i = 0; i < 2; i++) { // Fewer glow circles, fainter
+                    ctx.beginPath();
+                    ctx.arc(chakraX, chakra.y, chakraDotRadius + (i * chakraDotRadius * 0.6), 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(255, 255, 255, ${faintGlowOpacity - i * 0.03})`;
+                    ctx.fill();
+                    ctx.closePath();
+                }
+                // Draw the main bright white dot
+                ctx.beginPath();
+                ctx.arc(chakraX, chakra.y, chakraDotRadius, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(255, 255, 255, 255)'; // Chấm trắng sáng
+                ctx.fill();
+                ctx.closePath();
+            });
+
+            // Draw faint connecting lines between chakras
+            ctx.beginPath();
+            ctx.moveTo(width / 2, chakras[0].y); // Bắt đầu từ Luân xa Vương miện
+            for (let i = 1; i < chakras.length; i++) {
+                ctx.lineTo(width / 2, chakras[i].y);
+            }
+            ctx.strokeStyle = `rgba(255, 255, 255, ${faintLineOpacity})`; // Đường mờ nhạt nhưng rõ hơn
+            ctx.lineWidth = width * 0.004; // Đường mỏng
+            ctx.stroke();
+            ctx.closePath();
+
+            // Text "TRỰC CHỈ CHÂN TÂM" - Dark Reddish-Brown, Bold, Smaller, 3D effect
+            const text = "TRỰC CHỈ CHÂN TÂM";
+            const fontSize = height * 0.018; // Kích thước nhỏ
+            ctx.font = `bold ${fontSize}px Arial, sans-serif`; // Font đậm
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'bottom';
+
+            const textX = width / 2;
+            const textY = height - (height * 0.01); // Đặt sát đáy logo hơn nữa
+
+            const mainTextColor = '#8B0000'; // Màu đỏ nâu đậm (Dark Red)
+            const shadowColor = 'rgba(0, 0, 0, 0.8)'; // Đổ bóng đen đậm hơn
+            const highlightColor = 'rgba(255, 255, 255, 0.4)'; // Ánh sáng trắng mờ cho hiệu ứng 3D
+
+            // Draw base shadow (for depth)
+            ctx.fillStyle = shadowColor;
+            ctx.fillText(text, textX + 2, textY + 2); // Offset cho bóng
+
+            // Draw slightly offset text for 3D effect (middle layer)
+            ctx.fillStyle = 'rgba(139, 0, 0, 0.8)'; // Màu đỏ nâu hơi trong suốt
+            ctx.fillText(text, textX + 1, textY + 1);
+
+            // Draw main text
+            ctx.fillStyle = mainTextColor;
+            ctx.fillText(text, textX, textY);
+
+            // Draw subtle highlight (for brightness/3D pop)
+            ctx.fillStyle = highlightColor;
+            ctx.fillText(text, textX - 0.5, textY - 0.5); // Offset nhỏ cho ánh sáng
+
+            showMessage('Chỉnh sửa đã được áp dụng!', 'success');
+        });
+
+        // Function to download the image
+        downloadBtn.addEventListener('click', () => {
+            if (!originalImage) {
+                showMessage('Không có hình ảnh để tải xuống.', 'error');
+                return;
+            }
+            const dataURL = canvas.toDataURL('image/png');
+            const link = document.createElement('a');
+            link.download = 'logo_tinhquang_edited.png';
+            link.href = dataURL;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showMessage('Hình ảnh đã được tải xuống.', 'success');
+        });
+
+        // Handle canvas resizing
+        window.addEventListener('resize', () => {
+            if (originalImage) {
+                // Re-apply edits on resize to maintain proportions
+                const tempCanvas = document.createElement('canvas');
+                const tempCtx = tempCanvas.getContext('2d');
+                tempCanvas.width = originalImage.width;
+                tempCanvas.height = originalImage.height;
+                tempCtx.drawImage(originalImage, 0, 0); // Draw original image to temp canvas
+                originalImage = new Image();
+                originalImage.onload = () => {
+                    canvas.width = originalImage.width;
+                    canvas.height = originalImage.height;
+                    ctx.drawImage(originalImage, 0, 0, canvas.width, canvas.height);
+                    applyEditsBtn.click(); // Re-apply edits
+                };
+                originalImage.src = tempCanvas.toDataURL(); // Get data URL from temp canvas
+            }
+        });
+    </script>
+</body>
+</html>
